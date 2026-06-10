@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>TaxNet Guardian | Admin Sandbox</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@500&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "on-background": "#e4e2e4",
+                      "on-tertiary-fixed": "#271901",
+                      "on-primary-fixed-variant": "#3f465c",
+                      "on-secondary-fixed": "#002113",
+                      "secondary": "#4edea3",
+                      "secondary-fixed": "#6ffbbe",
+                      "inverse-primary": "#565e74",
+                      "on-secondary-container": "#00311f",
+                      "on-error-container": "#ffdad6",
+                      "secondary-fixed-dim": "#4edea3",
+                      "surface-container-lowest": "#0e0e10",
+                      "surface-dim": "#131315",
+                      "risk-high": "#EF4444",
+                      "on-tertiary": "#3e2d11",
+                      "error-container": "#93000a",
+                      "surface-container-high": "#2a2a2b",
+                      "on-secondary": "#003824",
+                      "primary": "#bec6e0",
+                      "inverse-on-surface": "#303032",
+                      "risk-low": "#10B981",
+                      "surface-bright": "#39393b",
+                      "surface-container-highest": "#353436",
+                      "on-primary-container": "#798098",
+                      "outline": "#909097",
+                      "primary-fixed": "#dae2fd",
+                      "tertiary-container": "#231500",
+                      "surface-container": "#1f1f21",
+                      "on-primary-fixed": "#131b2e",
+                      "tertiary-fixed": "#fcdeb5",
+                      "on-primary": "#283044",
+                      "secondary-container": "#00a572",
+                      "tertiary": "#dec29a",
+                      "surface-container-low": "#1b1b1d",
+                      "on-tertiary-fixed-variant": "#574425",
+                      "on-error": "#690005",
+                      "surface-tint": "#bec6e0",
+                      "on-surface": "#e4e2e4",
+                      "outline-variant": "#45464d",
+                      "surface-variant": "#353436",
+                      "surface-subtle": "#334155",
+                      "risk-medium": "#F59E0B",
+                      "on-secondary-fixed-variant": "#005236",
+                      "surface": "#131315",
+                      "background": "#131315",
+                      "on-tertiary-container": "#957d5a",
+                      "primary-container": "#0f172a",
+                      "surface-border": "#1E293B",
+                      "error": "#ffb4ab",
+                      "tertiary-fixed-dim": "#dec29a",
+                      "inverse-surface": "#e4e2e4",
+                      "on-surface-variant": "#c6c6cd",
+                      "risk-critical": "#991B1B",
+                      "primary-fixed-dim": "#bec6e0"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.125rem",
+                      "lg": "0.25rem",
+                      "xl": "0.5rem",
+                      "full": "0.75rem"
+              },
+              "spacing": {
+                      "column-gap": "20px",
+                      "gutter": "16px",
+                      "base": "4px",
+                      "sidebar-width": "320px",
+                      "drawer-width": "480px",
+                      "margin-desktop": "24px"
+              },
+              "fontFamily": {
+                      "display-lg": ["Inter"],
+                      "body-lg": ["Inter"],
+                      "headline-lg": ["Inter"],
+                      "body-md": ["Inter"],
+                      "headline-md": ["Inter"],
+                      "label-md": ["JetBrains Mono"],
+                      "caption": ["Inter"]
+              },
+              "fontSize": {
+                      "display-lg": ["48px", {"lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                      "body-lg": ["18px", {"lineHeight": "28px", "fontWeight": "400"}],
+                      "headline-lg": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                      "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                      "headline-md": ["24px", {"lineHeight": "32px", "fontWeight": "600"}],
+                      "label-md": ["12px", {"lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "500"}],
+                      "caption": ["11px", {"lineHeight": "14px", "fontWeight": "500"}]
+              }
+            },
+          },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            display: inline-block;
+            vertical-align: middle;
+            line-height: 1;
+        }
+        body {
+            background-color: #0e0e10; /* surface-container-lowest */
+            color: #e4e2e4;
+        }
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #45464d; border-radius: 2px; }
+    </style>
+</head>
+<body class="font-body-md text-body-md overflow-hidden">
+<!-- SideNavBar (Shared Component Anchor) -->
+<aside class="flex flex-col h-screen fixed left-0 top-0 bg-surface-container-low dark:bg-surface-container-low border-r border-surface-border dark:border-surface-border w-sidebar-width z-50">
+<div class="p-6 flex items-center gap-3">
+<div class="w-10 h-10 bg-primary flex items-center justify-center rounded">
+<span class="material-symbols-outlined text-on-primary" style="font-variation-settings: 'FILL' 1;">terminal</span>
+</div>
+<div>
+<h1 class="font-headline-md text-headline-md font-bold text-on-surface">TaxNet Guardian</h1>
+<p class="font-label-md text-label-md text-on-surface-variant">Sandbox Admin</p>
+</div>
+</div>
+<nav class="flex-1 mt-4">
+<div class="px-4 space-y-1">
+<a class="flex items-center gap-3 px-4 py-3 transition-colors duration-150 text-primary dark:text-primary-fixed border-r-2 border-primary bg-surface-container-high/50" href="#">
+<span class="material-symbols-outlined" data-icon="dashboard">dashboard</span>
+<span class="font-body-md text-body-md">National Dashboard</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 transition-colors duration-150 text-on-surface-variant hover:bg-surface-container-high" href="#">
+<span class="material-symbols-outlined" data-icon="work">work</span>
+<span class="font-body-md text-body-md">Case Queue</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 transition-colors duration-150 text-on-surface-variant hover:bg-surface-container-high" href="#">
+<span class="material-symbols-outlined" data-icon="account_tree">account_tree</span>
+<span class="font-body-md text-body-md">Graph Explorer</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 transition-colors duration-150 text-on-surface-variant hover:bg-surface-container-high" href="#">
+<span class="material-symbols-outlined" data-icon="policy">policy</span>
+<span class="font-body-md text-body-md">RAG Policy Search</span>
+</a>
+</div>
+</nav>
+<div class="p-4 border-t border-surface-border">
+<div class="flex items-center gap-3 p-3 bg-surface-container rounded-lg">
+<img alt="Tax Auditor Profile" class="w-10 h-10 rounded-full object-cover" data-alt="A professional portrait of a senior male tax auditor with a focused, intelligent expression. He is wearing a dark, well-tailored business suit in a modern, clean government office environment with soft, high-key lighting. The style is clinical, authoritative, and corporate, reflecting the seriousness of tax investigations." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBe6XSUYtyngoAiCCg6K6LGsmd4y9BSUbRsfH00VoIf39kG_mGvYm_Bsakr1FfNLVFhoVi79CU-choT1ouedGIOcqUjHaTyzoHhqqPkVeV8NOXO2EJoKDVAC0hBKg9V278z0p36m5NU3IAtddB5wp0VlgTLV0o0NTkFdt625ZYviK9iyMQjHYMl6L17VFUsHLTfXonRRoxW8yAUMkBw7itI7ZF3etzSf0B5IXzTu9XKNp77zahyBdyMJQhp4zCF7Tp20e-QIn84CzE_"/>
+<div class="overflow-hidden">
+<p class="font-label-md text-label-md font-bold truncate">Tax Auditor - Region North</p>
+<p class="font-caption text-caption text-on-surface-variant truncate">Session: #ADM-9231</p>
+</div>
+</div>
+<div class="mt-4 space-y-1">
+<button class="w-full flex items-center gap-3 px-4 py-2 text-on-surface-variant hover:bg-surface-container-high transition-colors">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+<span class="font-label-md text-label-md">Settings</span>
+</button>
+<button class="w-full flex items-center gap-3 px-4 py-2 text-on-surface-variant hover:bg-surface-container-high transition-colors">
+<span class="material-symbols-outlined" data-icon="help">help</span>
+<span class="font-label-md text-label-md">Support</span>
+</button>
+</div>
+</div>
+</aside>
+<!-- TopAppBar (Shared Component Anchor) -->
+<header class="flex items-center justify-between px-margin-desktop ml-sidebar-width w-[calc(100%-320px)] h-16 bg-surface dark:bg-surface border-b border-surface-border dark:border-surface-border fixed top-0 z-40">
+<div class="flex items-center gap-4">
+<span class="font-headline-md text-headline-md font-bold text-on-surface">Sandbox Environment</span>
+<span class="px-2 py-0.5 bg-risk-medium/10 text-risk-medium font-label-md text-label-md border border-risk-medium/20 rounded">LIVE SIMULATION</span>
+</div>
+<div class="flex items-center gap-6">
+<div class="relative flex items-center">
+<input class="bg-surface-container border border-surface-border rounded-lg pl-10 pr-4 py-1.5 text-body-md focus:outline-none focus:border-primary transition-all w-64" placeholder="Search system logs..." type="text"/>
+<span class="material-symbols-outlined absolute left-3 text-on-surface-variant" style="font-size: 18px;">search</span>
+</div>
+<div class="flex items-center gap-4 text-on-surface-variant border-l border-surface-border pl-6">
+<span class="font-label-md text-label-md">Region North</span>
+<div class="flex gap-2">
+<button class="p-2 hover:bg-surface-container rounded-full transition-all">
+<span class="material-symbols-outlined" data-icon="notifications">notifications</span>
+</button>
+<button class="p-2 hover:bg-surface-container rounded-full transition-all">
+<span class="material-symbols-outlined" data-icon="account_circle">account_circle</span>
+</button>
+</div>
+</div>
+</div>
+</header>
+<!-- NavigationDrawer (AI Assistant) -->
+<aside class="fixed right-0 top-0 h-screen w-drawer-width z-40 flex flex-col bg-surface-container-high/90 dark:bg-surface-container-high/90 backdrop-blur-xl border-l border-surface-border shadow-2xl transition-all duration-300 translate-x-full lg:translate-x-0">
+<div class="p-6 border-b border-surface-border flex items-center justify-between">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-secondary" style="font-variation-settings: 'FILL' 1;">smart_toy</span>
+<h2 class="font-headline-sm text-headline-sm text-on-surface font-bold">AI Sandbox Assistant</h2>
+</div>
+<button class="p-2 hover:bg-surface-container-highest rounded-full">
+<span class="material-symbols-outlined">close</span>
+</button>
+</div>
+<div class="flex-1 p-6 overflow-y-auto custom-scrollbar space-y-6">
+<div class="bg-surface-container p-4 rounded border border-surface-border">
+<p class="font-label-md text-label-md text-secondary mb-2 uppercase tracking-widest">System Message</p>
+<p class="text-on-surface-variant">Admin access granted. You can now simulate data failures and generate synthetic citizen profiles to test the risk scoring engine.</p>
+</div>
+<div class="space-y-4">
+<div class="flex justify-between items-center text-on-surface-variant font-label-md">
+<span>RECENT CITATIONS</span>
+<span class="material-symbols-outlined" style="font-size: 16px;">history</span>
+</div>
+<div class="bg-surface p-3 border-l-2 border-secondary rounded flex gap-3">
+<span class="material-symbols-outlined text-secondary">description</span>
+<div>
+<p class="font-label-md text-label-md text-on-surface">Tax Policy 2024-A Section 12</p>
+<p class="text-[10px] text-on-surface-variant mt-1">Applied to Synthetic Citizen #G29</p>
+</div>
+</div>
+<div class="bg-surface p-3 border-l-2 border-surface-border rounded flex gap-3 opacity-50">
+<span class="material-symbols-outlined">description</span>
+<div>
+<p class="font-label-md text-label-md text-on-surface">Vehicle Registration Bylaws</p>
+<p class="text-[10px] text-on-surface-variant mt-1">Applied to Pattern "Non-filer Luxury"</p>
+</div>
+</div>
+</div>
+</div>
+<div class="p-6 border-t border-surface-border">
+<div class="relative">
+<input class="w-full bg-surface-container-highest border border-surface-border rounded-lg py-3 px-4 focus:outline-none focus:ring-1 focus:ring-secondary font-label-md" placeholder="Command sandbox..." type="text"/>
+<span class="absolute right-3 top-3 text-[10px] bg-surface p-1 rounded border border-surface-border text-on-surface-variant">⌘ K</span>
+</div>
+</div>
+</aside>
+<!-- Main Content Canvas -->
+<main class="ml-sidebar-width mr-0 lg:mr-drawer-width mt-16 p-margin-desktop h-[calc(100vh-64px)] overflow-y-auto custom-scrollbar">
+<!-- Bento Grid Layout -->
+<div class="grid grid-cols-12 gap-gutter max-w-7xl mx-auto">
+<!-- Section 1: Provider Health Dashboard -->
+<div class="col-span-12 lg:col-span-8 bg-surface-container-low border border-surface-border rounded-xl overflow-hidden">
+<div class="px-6 py-4 border-b border-surface-border flex justify-between items-center bg-surface">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary">analytics</span>
+<h3 class="font-headline-md text-headline-md">External Data Providers</h3>
+</div>
+<span class="font-label-md text-label-md text-on-surface-variant">5 Systems Connected</span>
+</div>
+<div class="p-6">
+<table class="w-full text-left">
+<thead>
+<tr class="text-on-surface-variant font-label-md text-label-md uppercase tracking-wider">
+<th class="pb-4 font-medium">Provider Name</th>
+<th class="pb-4 font-medium">Network Status</th>
+<th class="pb-4 font-medium">Latency</th>
+<th class="pb-4 font-medium text-right">Simulation Control</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-surface-border">
+<!-- Provider Rows -->
+<tr class="group hover:bg-surface-container-high/30 transition-all">
+<td class="py-4">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded bg-surface-container flex items-center justify-center font-bold text-primary">N</div>
+<span class="font-bold">NADRA</span>
+</div>
+</td>
+<td class="py-4">
+<span class="inline-flex items-center gap-1.5 px-2 py-1 bg-risk-low/10 text-risk-low text-[10px] font-bold rounded border border-risk-low/20">
+<span class="w-1 h-1 bg-risk-low rounded-full animate-pulse"></span>
+                                        HEALTHY
+                                    </span>
+</td>
+<td class="py-4 font-label-md text-on-surface-variant">12ms</td>
+<td class="py-4 text-right">
+<button class="px-3 py-1.5 bg-surface-container-highest hover:bg-risk-high hover:text-white border border-surface-border rounded transition-all font-label-md">Simulate Failure</button>
+</td>
+</tr>
+<tr class="group hover:bg-surface-container-high/30 transition-all">
+<td class="py-4">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded bg-surface-container flex items-center justify-center font-bold text-primary">F</div>
+<span class="font-bold">FBR IRIS</span>
+</div>
+</td>
+<td class="py-4">
+<span class="inline-flex items-center gap-1.5 px-2 py-1 bg-risk-medium/10 text-risk-medium text-[10px] font-bold rounded border border-risk-medium/20">
+                                        LATENCY
+                                    </span>
+</td>
+<td class="py-4 font-label-md text-on-surface-variant">1450ms</td>
+<td class="py-4 text-right">
+<button class="px-3 py-1.5 bg-surface-container-highest hover:bg-risk-high hover:text-white border border-surface-border rounded transition-all font-label-md">Simulate Failure</button>
+</td>
+</tr>
+<tr class="group hover:bg-surface-container-high/30 transition-all">
+<td class="py-4">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded bg-surface-container flex items-center justify-center font-bold text-primary">E</div>
+<span class="font-bold">Excise &amp; Taxation</span>
+</div>
+</td>
+<td class="py-4">
+<span class="inline-flex items-center gap-1.5 px-2 py-1 bg-risk-high/10 text-risk-high text-[10px] font-bold rounded border border-risk-high/20">
+                                        OFFLINE
+                                    </span>
+</td>
+<td class="py-4 font-label-md text-on-surface-variant">---</td>
+<td class="py-4 text-right">
+<button class="px-3 py-1.5 bg-risk-low text-white border border-surface-border rounded transition-all font-label-md">Restore Service</button>
+</td>
+</tr>
+<tr class="group hover:bg-surface-container-high/30 transition-all">
+<td class="py-4">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded bg-surface-container flex items-center justify-center font-bold text-primary">U</div>
+<span class="font-bold">Utility Corp</span>
+</div>
+</td>
+<td class="py-4">
+<span class="inline-flex items-center gap-1.5 px-2 py-1 bg-risk-low/10 text-risk-low text-[10px] font-bold rounded border border-risk-low/20">
+<span class="w-1 h-1 bg-risk-low rounded-full animate-pulse"></span>
+                                        HEALTHY
+                                    </span>
+</td>
+<td class="py-4 font-label-md text-on-surface-variant">42ms</td>
+<td class="py-4 text-right">
+<button class="px-3 py-1.5 bg-surface-container-highest hover:bg-risk-high hover:text-white border border-surface-border rounded transition-all font-label-md">Simulate Failure</button>
+</td>
+</tr>
+<tr class="group hover:bg-surface-container-high/30 transition-all">
+<td class="py-4">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded bg-surface-container flex items-center justify-center font-bold text-primary">S</div>
+<span class="font-bold">SECP</span>
+</div>
+</td>
+<td class="py-4">
+<span class="inline-flex items-center gap-1.5 px-2 py-1 bg-risk-low/10 text-risk-low text-[10px] font-bold rounded border border-risk-low/20">
+<span class="w-1 h-1 bg-risk-low rounded-full animate-pulse"></span>
+                                        HEALTHY
+                                    </span>
+</td>
+<td class="py-4 font-label-md text-on-surface-variant">28ms</td>
+<td class="py-4 text-right">
+<button class="px-3 py-1.5 bg-surface-container-highest hover:bg-risk-high hover:text-white border border-surface-border rounded transition-all font-label-md">Simulate Failure</button>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<!-- Section 2: Synthetic Citizen Generator -->
+<div class="col-span-12 lg:col-span-4 flex flex-col gap-gutter">
+<div class="bg-surface-container-low border border-surface-border rounded-xl p-6 flex flex-col h-full">
+<div class="flex items-center gap-3 mb-6">
+<span class="material-symbols-outlined text-secondary" style="font-variation-settings: 'FILL' 1;">person_add</span>
+<h3 class="font-headline-md text-headline-md">Synthetic Generator</h3>
+</div>
+<div class="space-y-6 flex-1">
+<div>
+<label class="block font-label-md text-label-md text-on-surface-variant mb-2">Population Size</label>
+<div class="flex items-center gap-4">
+<input class="flex-1 accent-secondary h-1.5 bg-surface-container rounded-full" max="10000" min="100" step="100" type="range" value="5000"/>
+<span class="bg-surface-container px-3 py-1 rounded font-label-md text-secondary border border-secondary/20 w-16 text-center">5000</span>
+</div>
+</div>
+<div>
+<label class="block font-label-md text-label-md text-on-surface-variant mb-2">Suspicious Case %</label>
+<div class="flex items-center gap-4">
+<input class="flex-1 accent-risk-high h-1.5 bg-surface-container rounded-full" max="100" min="0" step="1" type="range" value="15"/>
+<span class="bg-surface-container px-3 py-1 rounded font-label-md text-risk-high border border-risk-high/20 w-16 text-center">15%</span>
+</div>
+</div>
+<div class="bg-surface-container p-4 rounded border border-surface-border">
+<p class="font-caption text-caption text-on-surface-variant mb-2 uppercase">Real-time Preview</p>
+<div class="flex justify-between items-end">
+<div class="text-on-surface">
+<p class="text-2xl font-bold">750</p>
+<p class="text-[10px] text-on-surface-variant">Anomalies Detected</p>
+</div>
+<div class="flex gap-1">
+<div class="w-1 bg-risk-low h-8"></div>
+<div class="w-1 bg-risk-low h-10"></div>
+<div class="w-1 bg-risk-medium h-14"></div>
+<div class="w-1 bg-risk-high h-20"></div>
+<div class="w-1 bg-risk-low h-6"></div>
+</div>
+</div>
+</div>
+</div>
+<button class="mt-6 w-full bg-secondary hover:bg-secondary-fixed text-on-secondary py-3 rounded font-bold transition-all flex items-center justify-center gap-2 shadow-lg shadow-secondary/10">
+<span class="material-symbols-outlined">auto_fix_high</span>
+                        GENERATE DATASET
+                    </button>
+</div>
+</div>
+<!-- Section 3: Pattern Builder (Full Width) -->
+<div class="col-span-12">
+<div class="bg-surface-container-low border border-surface-border rounded-xl">
+<div class="px-6 py-4 border-b border-surface-border flex justify-between items-center">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-tertiary">hub</span>
+<h3 class="font-headline-md text-headline-md">Pattern Strategy Builder</h3>
+</div>
+<button class="text-on-surface-variant hover:text-on-surface flex items-center gap-1 font-label-md">
+<span class="material-symbols-outlined" style="font-size: 16px;">add</span>
+                            NEW RULE
+                        </button>
+</div>
+<div class="p-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-gutter">
+<!-- Pattern Card 1 -->
+<div class="bg-surface-container border border-surface-border p-5 rounded-lg hover:border-tertiary transition-all cursor-pointer group">
+<div class="flex justify-between mb-4">
+<span class="bg-tertiary/10 text-tertiary px-2 py-0.5 rounded font-label-md text-[10px] border border-tertiary/20">ASSET_MISMATCH</span>
+<span class="material-symbols-outlined text-on-surface-variant group-hover:text-tertiary">edit</span>
+</div>
+<h4 class="font-bold text-on-surface mb-2">Non-filer with 4x4 Luxury Vehicle</h4>
+<p class="text-on-surface-variant text-body-md mb-4 leading-relaxed">Identifies citizens without an active NTN but owning vehicles &gt; 2500cc registered in the last 24 months.</p>
+<div class="flex flex-wrap gap-2">
+<span class="px-2 py-1 bg-surface rounded text-[10px] text-on-surface-variant border border-surface-border">FBR: NO_NTN</span>
+<span class="px-2 py-1 bg-surface rounded text-[10px] text-on-surface-variant border border-surface-border">EXCISE: CC &gt; 2500</span>
+</div>
+</div>
+<!-- Pattern Card 2 -->
+<div class="bg-surface-container border border-surface-border p-5 rounded-lg hover:border-tertiary transition-all cursor-pointer group">
+<div class="flex justify-between mb-4">
+<span class="bg-tertiary/10 text-tertiary px-2 py-0.5 rounded font-label-md text-[10px] border border-tertiary/20">UTILITY_ANOMALY</span>
+<span class="material-symbols-outlined text-on-surface-variant group-hover:text-tertiary">edit</span>
+</div>
+<h4 class="font-bold text-on-surface mb-2">Industrial Utility on Residential NTN</h4>
+<p class="text-on-surface-variant text-body-md mb-4 leading-relaxed">Cross-references LESCO/K-Electric industrial bill sizes against residential property declarations.</p>
+<div class="flex flex-wrap gap-2">
+<span class="px-2 py-1 bg-surface rounded text-[10px] text-on-surface-variant border border-surface-border">UTIL: BILL &gt; 250k</span>
+<span class="px-2 py-1 bg-surface rounded text-[10px] text-on-surface-variant border border-surface-border">TYPE: RES</span>
+</div>
+</div>
+<!-- Pattern Card 3 (Draft) -->
+<div class="bg-surface-container border border-surface-border border-dashed p-5 rounded-lg flex flex-col items-center justify-center text-on-surface-variant hover:bg-surface-container-high transition-all">
+<span class="material-symbols-outlined text-3xl mb-2">add_circle</span>
+<p class="font-label-md">Define New Edge Case</p>
+</div>
+</div>
+</div>
+</div>
+<!-- Section 4: System Logs / Terminal -->
+<div class="col-span-12">
+<div class="bg-surface-container-lowest border border-surface-border rounded-xl overflow-hidden shadow-inner">
+<div class="bg-surface-container px-4 py-2 flex items-center justify-between border-b border-surface-border">
+<div class="flex gap-2">
+<div class="w-3 h-3 rounded-full bg-risk-high/30"></div>
+<div class="w-3 h-3 rounded-full bg-risk-medium/30"></div>
+<div class="w-3 h-3 rounded-full bg-risk-low/30"></div>
+</div>
+<span class="font-label-md text-label-md text-on-surface-variant">SANDBOX_DAEMON_V2.log</span>
+<span class="material-symbols-outlined text-on-surface-variant" style="font-size: 16px;">terminal</span>
+</div>
+<div class="p-4 font-label-md text-[12px] h-48 overflow-y-auto custom-scrollbar bg-black/40 text-secondary leading-relaxed">
+<p><span class="text-on-surface-variant">[14:22:01]</span> <span class="text-primary">INFO:</span> Initializing synthetic graph node generation...</p>
+<p><span class="text-on-surface-variant">[14:22:04]</span> <span class="text-primary">INFO:</span> Connecting to Mock NADRA API via secure tunnel.</p>
+<p><span class="text-on-surface-variant">[14:22:05]</span> <span class="text-risk-medium">WARN:</span> FBR latency threshold exceeded (1450ms). Retrying...</p>
+<p><span class="text-on-surface-variant">[14:22:08]</span> <span class="text-primary">INFO:</span> Successfully injected 5,000 nodes into primary knowledge graph.</p>
+<p><span class="text-on-surface-variant">[14:22:10]</span> <span class="text-risk-high">CRITICAL:</span> Excise API returned 503 Service Unavailable. Triggering auto-recovery.</p>
+<p><span class="text-on-surface-variant">[14:22:15]</span> <span class="text-secondary">SYSTEM:</span> AI Sandbox Assistant online. Waiting for command...</p>
+<p class="animate-pulse">_</p>
+</div>
+</div>
+</div>
+</div>
+</main>
+<!-- FAB (Suppressed as per rules for Admin screens, but provided here as visual component logic check) -->
+<!-- Hidden because it's an Admin/Detail screen -->
+<script>
+        // Micro-interactions for simulation toggles
+        document.querySelectorAll('button').forEach(btn => {
+            btn.addEventListener('mousedown', () => {
+                btn.style.transform = 'scale(0.98)';
+            });
+            btn.addEventListener('mouseup', () => {
+                btn.style.transform = 'scale(1)';
+            });
+        });
+
+        // Search Bar focus effect
+        const searchInput = document.querySelector('input[type="text"]');
+        searchInput.addEventListener('focus', () => {
+            searchInput.parentElement.classList.add('w-80');
+        });
+        searchInput.addEventListener('blur', () => {
+            searchInput.parentElement.classList.remove('w-80');
+        });
+    </script>
+</body></html>

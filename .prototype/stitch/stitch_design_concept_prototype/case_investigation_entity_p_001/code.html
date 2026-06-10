@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .glass-panel {
+            background: rgba(20, 30, 51, 0.7);
+            backdrop-filter: blur(12px);
+            border: 1px solid #1E293B;
+        }
+        .node-pulse {
+            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: .7; transform: scale(1.05); }
+        }
+        .graph-canvas {
+            background-image: radial-gradient(#1E293B 1px, transparent 1px);
+            background-size: 24px 24px;
+        }
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-track { background: #0e0e10; }
+        ::-webkit-scrollbar-thumb { background: #353436; border-radius: 10px; }
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-background": "#e4e2e4",
+                        "on-tertiary-fixed": "#271901",
+                        "on-primary-fixed-variant": "#3f465c",
+                        "on-secondary-fixed": "#002113",
+                        "secondary": "#4edea3",
+                        "secondary-fixed": "#6ffbbe",
+                        "inverse-primary": "#565e74",
+                        "on-secondary-container": "#00311f",
+                        "on-error-container": "#ffdad6",
+                        "secondary-fixed-dim": "#4edea3",
+                        "surface-container-lowest": "#0e0e10",
+                        "surface-dim": "#131315",
+                        "risk-high": "#EF4444",
+                        "on-tertiary": "#3e2d11",
+                        "error-container": "#93000a",
+                        "surface-container-high": "#2a2a2b",
+                        "on-secondary": "#003824",
+                        "primary": "#bec6e0",
+                        "inverse-on-surface": "#303032",
+                        "risk-low": "#10B981",
+                        "surface-bright": "#39393b",
+                        "surface-container-highest": "#353436",
+                        "on-primary-container": "#798098",
+                        "outline": "#909097",
+                        "primary-fixed": "#dae2fd",
+                        "tertiary-container": "#231500",
+                        "surface-container": "#1f1f21",
+                        "on-primary-fixed": "#131b2e",
+                        "tertiary-fixed": "#fcdeb5",
+                        "on-primary": "#283044",
+                        "secondary-container": "#00a572",
+                        "tertiary": "#dec29a",
+                        "surface-container-low": "#1b1b1d",
+                        "on-tertiary-fixed-variant": "#574425",
+                        "on-error": "#690005",
+                        "surface-tint": "#bec6e0",
+                        "on-surface": "#e4e2e4",
+                        "outline-variant": "#45464d",
+                        "surface-variant": "#353436",
+                        "surface-subtle": "#334155",
+                        "risk-medium": "#F59E0B",
+                        "on-secondary-fixed-variant": "#005236",
+                        "surface": "#131315",
+                        "background": "#131315",
+                        "on-tertiary-container": "#957d5a",
+                        "primary-container": "#0f172a",
+                        "surface-border": "#1E293B",
+                        "error": "#ffb4ab",
+                        "tertiary-fixed-dim": "#dec29a",
+                        "inverse-surface": "#e4e2e4",
+                        "on-surface-variant": "#c6c6cd",
+                        "risk-critical": "#991B1B",
+                        "primary-fixed-dim": "#bec6e0"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {
+                        "column-gap": "20px",
+                        "gutter": "16px",
+                        "base": "4px",
+                        "sidebar-width": "320px",
+                        "drawer-width": "480px",
+                        "margin-desktop": "24px"
+                    },
+                    "fontFamily": {
+                        "display-lg": ["Inter"],
+                        "body-lg": ["Inter"],
+                        "headline-lg": ["Inter"],
+                        "body-md": ["Inter"],
+                        "headline-md": ["Inter"],
+                        "label-md": ["JetBrains Mono"],
+                        "caption": ["Inter"]
+                    },
+                    "fontSize": {
+                        "display-lg": ["48px", {"lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                        "body-lg": ["18px", {"lineHeight": "28px", "fontWeight": "400"}],
+                        "headline-lg": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                        "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                        "headline-md": ["24px", {"lineHeight": "32px", "fontWeight": "600"}],
+                        "label-md": ["12px", {"lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "500"}],
+                        "caption": ["11px", {"lineHeight": "14px", "fontWeight": "500"}]
+                    }
+                },
+            },
+        }
+    </script>
+</head>
+<body class="bg-background text-on-surface font-body-md overflow-hidden h-screen flex">
+<!-- SideNavBar -->
+<aside class="flex flex-col h-screen fixed left-0 top-0 bg-surface-container-low dark:bg-surface-container-low h-full w-sidebar-width left-0 border-r border-surface-border dark:border-surface-border transition-colors duration-150 z-50">
+<div class="p-6">
+<h1 class="font-headline-md text-headline-md font-bold text-on-surface dark:text-on-surface">TaxNet Guardian</h1>
+<p class="text-on-surface-variant font-label-md mt-1">Tax Auditor - Region North</p>
+</div>
+<nav class="flex-1 mt-4 px-4 space-y-2">
+<div class="flex items-center gap-3 px-3 py-2 text-on-surface-variant dark:text-on-surface-variant hover:bg-surface-container-high dark:hover:bg-surface-container-high cursor-pointer transition-colors duration-150">
+<span class="material-symbols-outlined">dashboard</span>
+<span class="font-body-md text-body-md">National Dashboard</span>
+</div>
+<div class="flex items-center gap-3 px-3 py-2 text-primary dark:text-primary-fixed border-r-2 border-primary bg-surface-container-high cursor-pointer transition-colors duration-150">
+<span class="material-symbols-outlined">work</span>
+<span class="font-body-md text-body-md">Case Queue</span>
+</div>
+<div class="flex items-center gap-3 px-3 py-2 text-on-surface-variant dark:text-on-surface-variant hover:bg-surface-container-high dark:hover:bg-surface-container-high cursor-pointer transition-colors duration-150">
+<span class="material-symbols-outlined">account_tree</span>
+<span class="font-body-md text-body-md">Graph Explorer</span>
+</div>
+<div class="flex items-center gap-3 px-3 py-2 text-on-surface-variant dark:text-on-surface-variant hover:bg-surface-container-high dark:hover:bg-surface-container-high cursor-pointer transition-colors duration-150">
+<span class="material-symbols-outlined">policy</span>
+<span class="font-body-md text-body-md">RAG Policy Search</span>
+</div>
+</nav>
+<div class="mt-auto p-4 border-t border-surface-border">
+<button class="w-full bg-primary-container text-primary py-2 font-bold mb-4 rounded-lg hover:bg-on-primary-container hover:text-white transition-colors">
+                New Investigation
+            </button>
+<div class="space-y-2">
+<div class="flex items-center gap-3 px-3 py-2 text-on-surface-variant hover:bg-surface-container-high cursor-pointer transition-colors duration-150">
+<span class="material-symbols-outlined">settings</span>
+<span>Settings</span>
+</div>
+<div class="flex items-center gap-3 px-3 py-2 text-on-surface-variant hover:bg-surface-container-high cursor-pointer transition-colors duration-150">
+<span class="material-symbols-outlined">help</span>
+<span>Support</span>
+</div>
+</div>
+</div>
+</aside>
+<!-- Main Content Area -->
+<main class="ml-sidebar-width mr-drawer-width flex-1 flex flex-col h-screen overflow-hidden">
+<!-- TopAppBar -->
+<header class="flex items-center justify-between px-margin-desktop bg-surface dark:bg-surface w-full h-16 border-b border-surface-border dark:border-surface-border transition-all duration-200">
+<div class="flex items-center gap-4">
+<span class="font-label-md text-on-surface-variant">CASE ID: 2024-PK-9912</span>
+<span class="h-4 w-px bg-surface-border"></span>
+<span class="text-risk-critical font-bold text-label-md uppercase tracking-widest">Priority Critical</span>
+</div>
+<div class="flex items-center gap-6">
+<div class="relative group">
+<input class="bg-surface-container border border-surface-border px-4 py-1.5 rounded-full text-body-md w-64 focus:outline-none focus:border-primary transition-all" placeholder="Search investigation files..." type="text"/>
+<span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-on-surface-variant">search</span>
+</div>
+<div class="flex items-center gap-4 text-on-surface-variant">
+<span class="material-symbols-outlined cursor-pointer hover:text-primary transition-colors">notifications</span>
+<div class="flex items-center gap-2">
+<div class="text-right">
+<p class="text-on-surface font-bold text-body-md leading-none">Tax Auditor</p>
+<p class="text-caption">Region North</p>
+</div>
+<span class="material-symbols-outlined text-4xl text-on-surface-variant">account_circle</span>
+</div>
+</div>
+</div>
+</header>
+<!-- Workspace Container -->
+<div class="flex-1 overflow-hidden flex flex-col p-6 gap-6">
+<!-- Top Row: Summary & Action Bar -->
+<div class="flex items-stretch gap-6 h-[220px]">
+<!-- Case Summary Panel -->
+<div class="w-[380px] bg-surface-container rounded-xl border border-surface-border p-6 flex flex-col justify-between">
+<div class="flex justify-between items-start">
+<div>
+<h2 class="font-headline-md text-on-surface leading-tight">Entity Profile</h2>
+<p class="text-label-md text-on-surface-variant font-label-md mt-1">MASKED ID: PK-LAH-9821</p>
+</div>
+<div class="flex flex-col items-end">
+<span class="px-2 py-1 bg-risk-critical/10 text-risk-critical border border-risk-critical/30 rounded text-caption font-bold">CRITICAL</span>
+<span class="text-on-surface-variant text-caption mt-1">Lahore, Pakistan</span>
+</div>
+</div>
+<div class="flex items-center gap-6">
+<div class="relative flex items-center justify-center">
+<svg class="w-24 h-24 transform -rotate-90">
+<circle class="text-surface-border" cx="48" cy="48" fill="transparent" r="40" stroke="currentColor" stroke-width="8"></circle>
+<circle class="text-risk-critical" cx="48" cy="48" fill="transparent" r="40" stroke="currentColor" stroke-dasharray="251.2" stroke-dashoffset="20.1" stroke-width="8"></circle>
+</svg>
+<div class="absolute flex flex-col items-center">
+<span class="text-2xl font-bold font-display-lg leading-none">92</span>
+<span class="text-[10px] text-on-surface-variant uppercase tracking-tighter">Score</span>
+</div>
+</div>
+<div class="flex-1 space-y-2">
+<div class="flex justify-between text-caption">
+<span class="text-on-surface-variant">Wealth Incongruity</span>
+<span class="text-risk-high font-bold">Extreme</span>
+</div>
+<div class="flex justify-between text-caption">
+<span class="text-on-surface-variant">Asset-Tax Gap</span>
+<span class="text-risk-high font-bold">+182%</span>
+</div>
+<div class="flex justify-between text-caption">
+<span class="text-on-surface-variant">Last Audit</span>
+<span class="text-on-surface">None Found</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Action Toolbar & Meta -->
+<div class="flex-1 flex flex-col gap-4">
+<div class="flex-1 glass-panel rounded-xl p-4 flex items-center justify-around border-dashed">
+<button class="flex flex-col items-center gap-2 text-on-surface-variant hover:text-primary transition-all group">
+<div class="w-12 h-12 rounded-full border border-surface-border flex items-center justify-center group-hover:border-primary group-hover:bg-primary/5">
+<span class="material-symbols-outlined">outgoing_mail</span>
+</div>
+<span class="text-caption font-bold uppercase tracking-wider">Request Clarification</span>
+</button>
+<button class="flex flex-col items-center gap-2 text-on-surface-variant hover:text-secondary transition-all group">
+<div class="w-12 h-12 rounded-full border border-surface-border flex items-center justify-center group-hover:border-secondary group-hover:bg-secondary/5">
+<span class="material-symbols-outlined">security</span>
+</div>
+<span class="text-caption font-bold uppercase tracking-wider">Escalate Case</span>
+</button>
+<button class="flex flex-col items-center gap-2 text-on-surface-variant hover:text-risk-high transition-all group">
+<div class="w-12 h-12 rounded-full border border-surface-border flex items-center justify-center group-hover:border-risk-high group-hover:bg-risk-high/5">
+<span class="material-symbols-outlined">cancel</span>
+</div>
+<span class="text-caption font-bold uppercase tracking-wider">Close Action</span>
+</button>
+</div>
+<div class="h-14 bg-surface-container-high/50 border border-surface-border rounded-xl flex items-center px-6 gap-4">
+<span class="material-symbols-outlined text-secondary">verified_user</span>
+<p class="text-body-md text-on-surface-variant">Blockchain audit log active. Every interaction is cryptographically hashed for tribunal evidence.</p>
+</div>
+</div>
+</div>
+<!-- Middle Row: Graph Explorer -->
+<div class="flex-1 relative rounded-xl border border-surface-border overflow-hidden graph-canvas">
+<div class="absolute top-4 left-4 z-10 space-y-2">
+<div class="bg-surface/80 backdrop-blur-md border border-surface-border p-2 rounded-lg flex items-center gap-2 shadow-lg">
+<button class="p-1.5 hover:bg-surface-container rounded transition-colors"><span class="material-symbols-outlined text-lg">zoom_in</span></button>
+<button class="p-1.5 hover:bg-surface-container rounded transition-colors"><span class="material-symbols-outlined text-lg">zoom_out</span></button>
+<span class="h-4 w-px bg-surface-border"></span>
+<button class="p-1.5 hover:bg-surface-container rounded transition-colors"><span class="material-symbols-outlined text-lg">fit_screen</span></button>
+</div>
+<div class="bg-surface/80 backdrop-blur-md border border-surface-border px-3 py-1.5 rounded-lg flex items-center gap-2 shadow-lg text-caption text-on-surface-variant">
+<span class="w-2 h-2 rounded-full bg-secondary"></span> Live Data Sync
+                    </div>
+</div>
+<!-- Interactive Graph Mockup -->
+<div class="absolute inset-0 flex items-center justify-center">
+<!-- Central Node -->
+<div class="absolute z-20 flex flex-col items-center group cursor-pointer">
+<div class="w-20 h-20 bg-primary/20 border-2 border-primary rounded-full flex items-center justify-center node-pulse shadow-[0_0_30px_rgba(190,198,224,0.3)]">
+<span class="material-symbols-outlined text-primary text-4xl" style="font-variation-settings: 'FILL' 1;">person</span>
+</div>
+<div class="mt-2 bg-surface px-3 py-1 rounded-full border border-primary/50 text-caption font-label-md">PK-LAH-9821</div>
+</div>
+<!-- Connectors -->
+<svg class="absolute inset-0 w-full h-full pointer-events-none">
+<line stroke="#45464d" stroke-dasharray="4 4" stroke-width="2" x1="50%" x2="30%" y1="50%" y2="30%"></line>
+<line stroke="#45464d" stroke-dasharray="4 4" stroke-width="2" x1="50%" x2="70%" y1="50%" y2="35%"></line>
+<line stroke="#45464d" stroke-dasharray="4 4" stroke-width="2" x1="50%" x2="50%" y1="50%" y2="75%"></line>
+</svg>
+<!-- Property Node -->
+<div class="absolute top-[25%] left-[28%] flex items-center gap-3 bg-surface-container/80 border border-surface-border p-3 rounded-xl backdrop-blur-sm hover:border-risk-medium transition-all group">
+<div class="w-10 h-10 bg-risk-medium/10 border border-risk-medium/40 rounded-lg flex items-center justify-center">
+<span class="material-symbols-outlined text-risk-medium">home</span>
+</div>
+<div>
+<p class="text-caption font-bold">Property (PKR 45M)</p>
+<p class="text-[10px] text-on-surface-variant uppercase font-label-md">DHA Phase 6, Karachi</p>
+</div>
+</div>
+<!-- Vehicle Node -->
+<div class="absolute top-[30%] right-[25%] flex items-center gap-3 bg-surface-container/80 border border-surface-border p-3 rounded-xl backdrop-blur-sm hover:border-risk-medium transition-all">
+<div class="w-10 h-10 bg-risk-medium/10 border border-risk-medium/40 rounded-lg flex items-center justify-center">
+<span class="material-symbols-outlined text-risk-medium">directions_car</span>
+</div>
+<div>
+<p class="text-caption font-bold">2700cc SUV</p>
+<p class="text-[10px] text-on-surface-variant uppercase font-label-md">Model 2023 - White</p>
+</div>
+</div>
+<!-- Business Node -->
+<div class="absolute bottom-[20%] left-[45%] flex items-center gap-3 bg-surface-container/80 border border-surface-border p-3 rounded-xl backdrop-blur-sm hover:border-secondary transition-all">
+<div class="w-10 h-10 bg-secondary/10 border border-secondary/40 rounded-lg flex items-center justify-center">
+<span class="material-symbols-outlined text-secondary">store</span>
+</div>
+<div>
+<p class="text-caption font-bold">ABC Traders</p>
+<p class="text-[10px] text-on-surface-variant uppercase font-label-md">NTN: 44109-21-X</p>
+</div>
+</div>
+</div>
+<!-- Graph Legend -->
+<div class="absolute bottom-4 left-4 bg-surface/80 backdrop-blur-md border border-surface-border p-3 rounded-lg text-[10px] font-label-md space-y-2 uppercase tracking-tighter">
+<div class="flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-primary"></span> Primary Subject</div>
+<div class="flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-risk-medium"></span> Undeclared Asset</div>
+<div class="flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-secondary"></span> Registered Business</div>
+</div>
+</div>
+<!-- Bottom Row: Tabs -->
+<div class="h-[280px] bg-surface-container rounded-xl border border-surface-border flex flex-col overflow-hidden">
+<div class="flex border-b border-surface-border">
+<button class="px-6 py-3 text-primary font-bold border-b-2 border-primary bg-primary/5 text-body-md transition-all">Risk Score Components</button>
+<button class="px-6 py-3 text-on-surface-variant font-medium hover:text-on-surface text-body-md transition-all">AI Explanation</button>
+<button class="px-6 py-3 text-on-surface-variant font-medium hover:text-on-surface text-body-md transition-all">Audit Trail</button>
+</div>
+<div class="flex-1 p-6 overflow-y-auto">
+<!-- Score Components Content (Active) -->
+<div class="grid grid-cols-2 gap-x-12 gap-y-6">
+<div class="space-y-2">
+<div class="flex justify-between text-caption font-bold">
+<span>Asset Mismatch</span>
+<span class="text-risk-high">98/100</span>
+</div>
+<div class="w-full h-1.5 bg-surface-border rounded-full overflow-hidden">
+<div class="h-full bg-risk-high w-[98%]"></div>
+</div>
+<p class="text-[11px] text-on-surface-variant">Real estate holdings valued at PKR 45M exceed declared income by 450% over 3 years.</p>
+</div>
+<div class="space-y-2">
+<div class="flex justify-between text-caption font-bold">
+<span>Utility Consumption Mismatch</span>
+<span class="text-risk-medium">74/100</span>
+</div>
+<div class="w-full h-1.5 bg-surface-border rounded-full overflow-hidden">
+<div class="h-full bg-risk-medium w-[74%]"></div>
+</div>
+<p class="text-[11px] text-on-surface-variant">Monthly electricity bills average PKR 85,000 for a residential profile declaring PKR 60,000 income.</p>
+</div>
+<div class="space-y-2">
+<div class="flex justify-between text-caption font-bold">
+<span>Travel Anomalies</span>
+<span class="text-risk-high">88/100</span>
+</div>
+<div class="w-full h-1.5 bg-surface-border rounded-full overflow-hidden">
+<div class="h-full bg-risk-high w-[88%]"></div>
+</div>
+<p class="text-[11px] text-on-surface-variant">4 International business-class trips in last 12 months with no corresponding business expense records.</p>
+</div>
+<div class="space-y-2">
+<div class="flex justify-between text-caption font-bold">
+<span>Tax Filing Gaps</span>
+<span class="text-risk-low">22/100</span>
+</div>
+<div class="w-full h-1.5 bg-surface-border rounded-full overflow-hidden">
+<div class="h-full bg-risk-low w-[22%]"></div>
+</div>
+<p class="text-[11px] text-on-surface-variant">Filings are consistent in timeline but suspicious in declared volume vs lifestyle proxies.</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</main>
+<!-- AI Assistant NavigationDrawer -->
+<aside class="fixed right-0 top-0 h-screen z-40 flex flex-col bg-surface-container-high/90 dark:bg-surface-container-high/90 h-full w-drawer-width right-0 backdrop-blur-xl border-l border-surface-border dark:border-surface-border shadow-2xl transition-all duration-300">
+<div class="p-6 border-b border-surface-border flex items-center justify-between">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-secondary">smart_toy</span>
+<h2 class="font-headline-sm text-headline-sm text-on-surface">AI Assistant</h2>
+</div>
+<div class="flex gap-2">
+<div class="bg-secondary-container text-on-secondary-container px-3 py-1 rounded-lg font-label-md text-label-md flex items-center gap-1">
+<span class="material-symbols-outlined text-sm">history</span> Citations
+                </div>
+<div class="text-on-surface-variant px-3 py-1 rounded-lg font-label-md text-label-md flex items-center gap-1 hover:bg-surface-container-highest cursor-pointer">
+                    Audit Log
+                </div>
+</div>
+</div>
+<div class="flex-1 overflow-y-auto p-6 space-y-6">
+<!-- Message 1 -->
+<div class="flex gap-4">
+<div class="w-8 h-8 rounded bg-surface-border flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-on-surface-variant text-sm">account_circle</span>
+</div>
+<div class="bg-surface-container border border-surface-border p-4 rounded-xl rounded-tl-none">
+<p class="text-body-md text-on-surface">Why is the risk score so high for this entity despite no prior criminal record?</p>
+</div>
+</div>
+<!-- AI Response -->
+<div class="flex gap-4">
+<div class="w-8 h-8 rounded bg-secondary-container flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-on-secondary-container text-sm">smart_toy</span>
+</div>
+<div class="space-y-4">
+<div class="bg-surface-container-highest border border-secondary/30 p-4 rounded-xl rounded-tl-none">
+<p class="text-body-md text-on-surface leading-relaxed">
+                            The critical score of 92 is driven by <span class="text-secondary font-bold">extreme lifestyle-income variance</span>. While no criminal history exists, our graph engine detected three undeclared luxury assets linked via biometric ID mapping to Lahore property records. 
+                            <br/><br/>
+                            Under <a class="text-secondary underline decoration-secondary/30" href="#">FBR Notice 2026-A</a>, this degree of mismatch constitutes a "high-probability evasion case" requiring immediate physical verification.
+                        </p>
+</div>
+<!-- Evidence Citation Card -->
+<div class="border border-surface-border rounded-lg bg-surface p-3 flex items-start gap-3">
+<span class="material-symbols-outlined text-risk-medium">description</span>
+<div class="flex-1">
+<p class="text-caption font-bold">Citation: FBR Policy 2026-A</p>
+<p class="text-[10px] text-on-surface-variant">Section 4.2: Mandatory audits for asset acquisition &gt; 400% of tax paid in trailing 36 months.</p>
+</div>
+<span class="material-symbols-outlined text-on-surface-variant cursor-pointer hover:text-white">open_in_new</span>
+</div>
+</div>
+</div>
+</div>
+<div class="p-6 border-t border-surface-border">
+<div class="relative">
+<textarea class="w-full bg-surface border border-surface-border rounded-xl p-4 pr-12 text-body-md resize-none focus:outline-none focus:border-secondary transition-all" placeholder="Ask TaxNet AI about specific transactions or policy overlaps..." rows="3"></textarea>
+<button class="absolute bottom-3 right-3 w-10 h-10 bg-secondary text-on-secondary rounded-lg flex items-center justify-center shadow-lg hover:brightness-110 transition-all">
+<span class="material-symbols-outlined">send</span>
+</button>
+</div>
+<div class="mt-4 flex items-center justify-between">
+<p class="text-caption text-on-surface-variant flex items-center gap-1">
+<span class="material-symbols-outlined text-sm">bolt</span> Context: PKR 45M Property + 2700cc SUV
+                </p>
+<button class="text-secondary font-label-md text-label-md uppercase tracking-widest hover:underline">Clear Thread</button>
+</div>
+</div>
+</aside>
+<script>
+        // Simple micro-interactions
+        document.querySelectorAll('button').forEach(btn => {
+            btn.addEventListener('mousedown', () => btn.style.transform = 'scale(0.98)');
+            btn.addEventListener('mouseup', () => btn.style.transform = 'scale(1)');
+        });
+    </script>
+</body></html>

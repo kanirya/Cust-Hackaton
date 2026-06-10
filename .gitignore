@@ -5,6 +5,7 @@ obj/
 .vscode/
 .appdata/
 .nuget/
+.buildcheck/
 logs/
 *.user
 *.suo
