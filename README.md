@@ -4,22 +4,25 @@ Explainable graph intelligence MVP for the CUST hackathon problem: Graph AI for 
 
 ## What Is Implemented
 
-- White-theme auditor dashboard at `/`
-- Separate Gov Data Sandbox UI at `/sandbox`
-- Citizen correction portal at `/citizen`
+- React/Vite white-theme intelligence dashboard at `/`
+- React Gov Data Sandbox workspace at `/sandbox`
+- React Citizen correction portal at `/citizen`
 - Synthetic NADRA/FBR/Excise/SECP/Property/Utility/Travel provider records
 - Replaceable government provider API shape through sandbox endpoints
+- Dataset Feed Console for CSV/JSON imports into identity, tax, vehicle, property, utility, business, and travel domains
+- Provider readiness controls that switch sandbox providers to official-API-ready configuration
 - Identity resolution output with confidence and match reasons
 - Knowledge graph neighborhood API
 - Tax Compliance Deviation Score
 - Evidence-backed audit explanations
-- RAG policy memory metadata and citations
+- RAG policy memory metadata, citations, and UI-based policy document indexing
 - AI Orchestrator / Model Gateway mock route
 - Worker/SQS-style pipeline status
 - Cognito-ready role/scope metadata with development header auth
 - Runtime report generation endpoint
+- Stitch-inspired UI patterns: fixed analyst sidebar, command search, KPI cards, regional risk map, case worklist, graph workspace, evidence drawer, and assistant drawer
 
-The hackathon MVP runs as one .NET host for speed, but the code and API surface follow the service boundaries in `docs/TaxNetGuardian_System_Design.md`.
+The hackathon MVP runs as one .NET API/static host for speed, but the code and API surface follow the service boundaries in `docs/TaxNetGuardian_System_Design.md`. The React source lives in `TaxNetGuardian.Web` and builds into `TaxNetGuardian.Api/wwwroot`.
 
 ## Run Locally
 
@@ -41,17 +44,34 @@ http://localhost:5187/sandbox
 http://localhost:5187/citizen
 ```
 
+## Build Frontend
+
+```powershell
+cd TaxNetGuardian.Web
+npm install
+npm run build
+```
+
+The Vite build writes directly to:
+
+```text
+TaxNetGuardian.Api/wwwroot
+```
+
 ## Demo Flow
 
 1. Open the Gov Data Sandbox UI.
-2. Generate synthetic profiles with suspicious patterns and noisy identity fields.
-3. Open the Auditor Dashboard.
-4. Run import pipeline.
-5. Select a critical case.
-6. Inspect score breakdown, evidence cards, and graph explorer.
-7. Ask the audit assistant why the case was flagged.
-8. Generate a report.
-9. Open Citizen Portal and submit a correction.
+2. Use Dataset Feed Console to paste CSV/JSON, load templates, or upload a file.
+3. Keep Run risk pipeline enabled so the imported records immediately update scoring.
+4. Mark providers Official-ready to show how NADRA/FBR/Excise/etc. adapters can later swap to real APIs through Secrets Manager configuration.
+5. Open the Auditor Dashboard.
+6. Run import pipeline.
+7. Select a critical case.
+8. Inspect score breakdown, evidence cards, and graph explorer.
+9. Ask the audit assistant why the case was flagged.
+10. Open System Control and index a RAG policy document.
+11. Generate a report.
+12. Open Citizen Portal and submit a correction.
 
 ## Key APIs
 
@@ -66,6 +86,7 @@ POST /api/reports/cases/{caseId}
 POST /api/ingestion/run
 GET  /api/system/workers
 GET  /api/system/rag
+POST /api/system/rag/documents
 GET  /api/system/model-gateway
 GET  /api/authz
 ```
@@ -74,6 +95,10 @@ Sandbox APIs:
 
 ```http
 GET  /api/sandbox/providers
+PATCH /api/sandbox/providers/{providerCode}
+GET  /api/sandbox/datasets
+GET  /api/sandbox/datasets/templates
+POST /api/sandbox/datasets/feed
 GET  /api/sandbox/profiles
 GET  /api/sandbox/profiles/{id}
 POST /api/sandbox/admin/generate
@@ -86,6 +111,43 @@ GET /sandbox/secp/companies?identityToken={token}
 GET /sandbox/property/ownership?identityToken={token}
 GET /sandbox/utilities/bills?identityToken={token}
 GET /sandbox/travel/history?identityToken={token}
+```
+
+Dataset feed payload:
+
+```json
+{
+  "datasetType": "tax",
+  "format": "csv",
+  "fileName": "fbr-feed.csv",
+  "content": "personId,ntn,filerStatus,declaredAnnualIncome,taxPaid,taxYear\nEXT001,NTN-EXT001,Non-Filer,0,0,2025",
+  "runPipeline": true
+}
+```
+
+Provider replacement payload:
+
+```json
+{
+  "mode": "OfficialReady",
+  "baseUrl": "https://api.fbr.gov.pk",
+  "credentialSecretName": "/taxnet/dev/providers/fbr/credentials",
+  "enabled": true,
+  "rateLimitPerMinute": 120,
+  "notes": "Ready to replace sandbox with official provider adapter."
+}
+```
+
+RAG policy feed payload:
+
+```json
+{
+  "title": "Property valuation bulletin",
+  "sourceType": "GovernmentPage",
+  "url": "https://example.gov.pk/property-valuation",
+  "content": "Policy text, circular notes, valuation rules, or public guidance.",
+  "tags": ["property", "valuation", "tax-risk"]
+}
 ```
 
 ## Development Auth
@@ -120,5 +182,12 @@ Production target:
 Invoke-RestMethod -Uri 'http://localhost:5187/api/dashboard/summary'
 Invoke-RestMethod -Uri 'http://localhost:5187/api/cases'
 Invoke-RestMethod -Uri 'http://localhost:5187/api/graph/entities/entity-P001/neighborhood'
+Invoke-RestMethod -Uri 'http://localhost:5187/api/sandbox/datasets/templates'
 ```
 
+Latest local verification:
+
+- `dotnet build TaxNetGuardian.Api\TaxNetGuardian.Api.csproj --no-restore` passed.
+- `npm run build` passed and emitted static assets into `TaxNetGuardian.Api/wwwroot`.
+- Dataset feed, provider replacement, and RAG indexing endpoints were exercised successfully.
+- Playwright checked `/sandbox` and System Control for required panels, console errors, and layout overflow.

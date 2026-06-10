@@ -100,6 +100,40 @@ References:
 - Do not build too many physical microservices in the 3-day MVP if it slows delivery.
 - Do not put all intelligence in the LLM. The graph, rules, scoring, and evidence store must be authoritative.
 
+## 4A. Implemented MVP Service Map
+
+The current hackathon implementation runs as one .NET API/static host for speed, but it keeps the production service boundaries visible. The React app calls the same HTTP contracts that would later sit behind API Gateway and separate services.
+
+```mermaid
+flowchart LR
+    React["React Analyst UI\nDashboard, Sandbox, Citizen, System"] --> Api["TaxNetGuardian.Api\nBFF + demo auth headers"]
+    Api --> Sandbox["Gov Data Sandbox Service\nproviders + dataset feed"]
+    Api --> Intelligence["Intelligence Pipeline\nidentity, graph, scoring"]
+    Api --> Rag["RAG Policy Memory\npolicy documents + citations"]
+    Api --> Workers["Worker Control Plane\nSQS-style jobs"]
+    Sandbox --> Store["In-memory MVP store\nreplace with PostgreSQL/S3"]
+    Intelligence --> Store
+    Rag --> Store
+    Workers --> Store
+```
+
+Implemented UI modules:
+
+- `/` National Dashboard, case queue, investigation graph, evidence drawer, assistant drawer.
+- `/sandbox` Gov Data Sandbox with synthetic generation, provider cards, official-ready configuration, schema templates, CSV/JSON dataset feed, import jobs, and provider record preview.
+- `/citizen` Citizen-safe explanation and correction submission.
+- System Control inside the SPA with worker queues, Cognito-ready authorization matrix, RAG policy feed, and model gateway routing.
+
+Implemented service contracts:
+
+- `GET /api/sandbox/datasets/templates`: returns dataset schemas and CSV examples for `identity`, `tax`, `vehicle`, `property`, `utility`, `business`, and `travel`.
+- `POST /api/sandbox/datasets/feed`: accepts CSV or JSON records, applies them to the sandbox data store, and optionally reruns the scoring pipeline.
+- `PATCH /api/sandbox/providers/{providerCode}`: records official-provider readiness settings such as base URL, credential secret name, enabled status, rate limit, and notes.
+- `POST /api/system/rag/documents`: indexes a policy/circular/web document into the RAG memory surface.
+- `GET /api/system/workers`: returns worker health plus recent import/RAG jobs for the operational demo.
+
+The demo intentionally uses in-memory storage to remain portable during the hackathon. Production replacement targets remain PostgreSQL for normalized records, S3 for raw files, SQS for jobs, Qdrant/pgvector for embeddings, CloudWatch for logs/metrics, and Secrets Manager for provider credentials.
+
 ## 5. Personas
 
 ### 5.1 Tax Auditor

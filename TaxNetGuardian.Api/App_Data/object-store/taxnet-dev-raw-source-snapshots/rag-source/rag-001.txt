@@ -1,0 +1,1 @@
+Audit officers must treat AI-generated compliance deviations as prioritization signals only. A case requires human review, source verification, evidence quality checks, and a citizen correction window before escalation. Reports must include a watermark, evidence identifiers, policy citations, and a warning that the score does not prove fraud.

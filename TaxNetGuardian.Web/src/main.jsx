@@ -31,6 +31,7 @@ import {
   Network,
   PieChart,
   RefreshCw,
+  Save,
   Scale,
   Search,
   Settings,
@@ -45,6 +46,12 @@ import {
   Zap
 } from "lucide-react";
 import "./styles.css";
+import { BackendSystems, RagWorkspace, System } from "./components/system/SystemViews.jsx";
+import { EmptyState, FeedItem, InfoRows, JsonPreview, Metric, Panel, RadialScore } from "./components/common/Primitives.jsx";
+import { GraphCanvas } from "./components/graph/GraphCanvas.jsx";
+import { Sidebar, TopBar } from "./components/shell/AppShell.jsx";
+import { Overview } from "./pages/OverviewPage.jsx";
+import { CaseQueue } from "./pages/CaseQueuePage.jsx";
 
 const roles = [
   "taxnet-admin",
@@ -61,6 +68,8 @@ const navItems = [
   { id: "queue", label: "Case Queue", icon: BriefcaseBusiness },
   { id: "investigation", label: "Graph Investigation", icon: Network },
   { id: "sandbox", label: "Gov Data Sandbox", icon: TerminalSquare },
+  { id: "rag", label: "RAG Policy", icon: Layers3 },
+  { id: "backend", label: "Backend Systems", icon: Database },
   { id: "citizen", label: "Citizen Portal", icon: Users },
   { id: "system", label: "System Control", icon: Workflow }
 ];
@@ -84,7 +93,12 @@ const api = async (path, options = {}, role = getRole()) => {
 function getInitialPage() {
   const path = window.location.pathname.toLowerCase();
   if (path.includes("sandbox")) return "sandbox";
+  if (path.includes("rag") || path.includes("policy")) return "rag";
+  if (path.includes("backend") || path.includes("infra") || path.includes("audit")) return "backend";
+  if (path.includes("system")) return "system";
   if (path.includes("citizen")) return "citizen";
+  if (path.includes("cases") || path.includes("queue")) return "queue";
+  if (path.includes("graph") || path.includes("investigation")) return "investigation";
   return "overview";
 }
 
@@ -124,8 +138,17 @@ function App() {
   const [selectedProfile, setSelectedProfile] = useState(null);
   const [workers, setWorkers] = useState(null);
   const [rag, setRag] = useState(null);
+  const [datasetHub, setDatasetHub] = useState(null);
+  const [datasetTemplates, setDatasetTemplates] = useState([]);
   const [authz, setAuthz] = useState(null);
   const [modelGateway, setModelGateway] = useState(null);
+  const [infra, setInfra] = useState(null);
+  const [audit, setAudit] = useState(null);
+  const [objectStore, setObjectStore] = useState(null);
+  const [notifications, setNotifications] = useState(null);
+  const [persistence, setPersistence] = useState(null);
+  const [ragResult, setRagResult] = useState(null);
+  const [modelResult, setModelResult] = useState(null);
   const [assistantAnswer, setAssistantAnswer] = useState(null);
   const [query, setQuery] = useState("Why was this case marked critical?");
   const [toast, setToast] = useState("");
@@ -148,14 +171,21 @@ function App() {
   const selectedEntityId = selectedCase?.caseItem?.entityId || cases[0]?.entityId;
 
   async function refreshAll() {
-    const [summaryData, caseData, providerData, workerData, ragData, authData, modelData, citizenData] = await Promise.all([
+    const [summaryData, caseData, providerData, workerData, ragData, datasetData, templateData, authData, modelData, infraData, auditData, objectData, notificationData, persistenceData, citizenData] = await Promise.all([
       api("/api/dashboard/summary"),
       api("/api/cases"),
       api("/api/sandbox/providers"),
       api("/api/system/workers"),
       api("/api/system/rag"),
+      api("/api/sandbox/datasets"),
+      api("/api/sandbox/datasets/templates"),
       api("/api/authz"),
       api("/api/system/model-gateway"),
+      api("/api/system/infra"),
+      api("/api/system/audit"),
+      api("/api/system/object-store"),
+      api("/api/system/notifications"),
+      api("/api/system/persistence"),
       api("/api/citizen/me", {}, "taxnet-citizen")
     ]);
     setSummary(summaryData);
@@ -163,8 +193,15 @@ function App() {
     setProviders(providerData.value || providerData);
     setWorkers(workerData);
     setRag(ragData);
+    setDatasetHub(datasetData);
+    setDatasetTemplates(templateData);
     setAuthz(authData);
     setModelGateway(modelData);
+    setInfra(infraData);
+    setAudit(auditData);
+    setObjectStore(objectData);
+    setNotifications(notificationData);
+    setPersistence(persistenceData);
     setCitizen(citizenData);
     if (!selectedCaseId && caseData.items.length) setSelectedCaseId(caseData.items[0].id);
     await loadProfiles();
@@ -188,7 +225,17 @@ function App() {
 
   function navigate(id) {
     setPage(id);
-    const url = id === "sandbox" ? "/sandbox" : id === "citizen" ? "/citizen" : "/";
+    const urls = {
+      overview: "/",
+      queue: "/cases",
+      investigation: "/graph",
+      sandbox: "/sandbox",
+      rag: "/rag",
+      backend: "/backend",
+      citizen: "/citizen",
+      system: "/system"
+    };
+    const url = urls[id] || "/";
     window.history.pushState({}, "", url);
   }
 
@@ -210,13 +257,52 @@ function App() {
   async function generateReport() {
     const result = await api(`/api/reports/cases/${selectedCaseId}`, { method: "POST", body: "{}" }, role);
     setAssistantAnswer({
-      answer: `Report ${result.reportId} generated. ${result.caseSummary}`,
+      answer: `Report ${result.reportId} generated at ${result.storageUri}. ${result.caseSummary}`,
       evidenceIds: result.evidence.map((x) => x.id),
       citations: result.citations,
       warnings: [result.disclaimer],
       score: result.score.score,
       riskBand: result.score.riskBand
     });
+    await loadCase(selectedCaseId);
+  }
+
+  async function assignSelectedCase() {
+    if (!selectedCaseId) return;
+    const result = await api(`/api/cases/${selectedCaseId}/assign`, {
+      method: "POST",
+      body: JSON.stringify({ assignedTo: "Senior Auditor - Lahore" })
+    }, "taxnet-supervisor");
+    setToast(`${result.id} assigned to ${result.assignedTo}.`);
+    await refreshAll();
+    await loadCase(selectedCaseId);
+  }
+
+  async function requestClarification() {
+    if (!selectedCaseId) return;
+    const result = await api(`/api/cases/${selectedCaseId}/request-citizen-clarification`, {
+      method: "POST",
+      body: "{}"
+    }, "taxnet-auditor");
+    setToast(`${result.id}: citizen clarification requested.`);
+    await refreshAll();
+    await loadCase(selectedCaseId);
+  }
+
+  async function recordDecision(decision) {
+    if (!selectedCaseId) return;
+    const result = await api(`/api/cases/${selectedCaseId}/decision`, {
+      method: "POST",
+      body: JSON.stringify({
+        decision,
+        notes: decision === "ClosedFalsePositive"
+          ? "Citizen correction accepted after review of current ownership evidence."
+          : "Structured evidence verified and case moved to next human review state."
+      })
+    }, "taxnet-senior-auditor");
+    setToast(`${result.id} moved to ${result.status}.`);
+    await refreshAll();
+    await loadCase(selectedCaseId);
   }
 
   async function generateSandbox() {
@@ -225,6 +311,53 @@ function App() {
       body: JSON.stringify({ count: 180, suspiciousPercent: 28, noisePercent: 24 })
     }, "taxnet-sandbox-admin");
     setToast(`${result.profiles} sandbox profiles generated; ${result.cases} cases flagged.`);
+    await refreshAll();
+  }
+
+  async function feedDataset(payload) {
+    const result = await api("/api/sandbox/datasets/feed", {
+      method: "POST",
+      body: JSON.stringify(payload)
+    }, "taxnet-sandbox-admin");
+    setToast(`${result.batch.recordCount} ${result.batch.datasetType} records applied from ${result.batch.fileName}.`);
+    await refreshAll();
+  }
+
+  async function feedRagDocument(payload) {
+    const result = await api("/api/system/rag/documents", {
+      method: "POST",
+      body: JSON.stringify(payload)
+    }, "taxnet-policy-analyst");
+    setToast(`RAG indexed: ${result.job.source}`);
+    await refreshAll();
+  }
+
+  async function queryRag(payload) {
+    const result = await api("/api/system/rag/query", {
+      method: "POST",
+      body: JSON.stringify(payload)
+    }, "taxnet-policy-analyst");
+    setRagResult(result);
+    setToast(`RAG retrieved ${result.chunks.length} chunks at ${pct(result.retrievalConfidence)} confidence.`);
+    await refreshAll();
+  }
+
+  async function invokeModel(payload) {
+    const result = await api("/api/system/model-gateway/invoke", {
+      method: "POST",
+      body: JSON.stringify(payload)
+    }, "taxnet-model-admin");
+    setModelResult(result);
+    setToast(`${result.selectedProvider} handled ${result.taskType}.`);
+    await refreshAll();
+  }
+
+  async function updateProvider(providerCode, payload) {
+    const result = await api(`/api/sandbox/providers/${providerCode}`, {
+      method: "PATCH",
+      body: JSON.stringify(payload)
+    }, "taxnet-sandbox-admin");
+    setToast(`${result.providerCode} updated to ${result.mode} (${result.status}).`);
     await refreshAll();
   }
 
@@ -247,17 +380,20 @@ function App() {
     queue: "Auditor Case Queue",
     investigation: "Case Investigation",
     sandbox: "Gov Data Sandbox",
+    rag: "RAG Policy Service",
+    backend: "Backend Systems",
     citizen: "Citizen Correction Portal",
     system: "System Control Plane"
   }[page];
 
   return (
     <div className="app-shell">
-      <Sidebar page={page} navigate={navigate} />
+      <Sidebar page={page} navigate={navigate} navItems={navItems} />
       <main className="workspace">
         <TopBar
           title={pageTitle}
           role={role}
+          roles={roles}
           setRole={setRole}
           onRefresh={refreshAll}
           onPipeline={runPipeline}
@@ -291,6 +427,9 @@ function App() {
                 setQuery={setQuery}
                 askAssistant={askAssistant}
                 generateReport={generateReport}
+                assignSelectedCase={assignSelectedCase}
+                requestClarification={requestClarification}
+                recordDecision={recordDecision}
                 assistantAnswer={assistantAnswer}
               />
             )}
@@ -301,13 +440,56 @@ function App() {
                 selectedProfile={selectedProfile}
                 setSelectedProfile={setSelectedProfile}
                 generateSandbox={generateSandbox}
+                datasetHub={datasetHub}
+                datasetTemplates={datasetTemplates}
+                feedDataset={feedDataset}
+                updateProvider={updateProvider}
+              />
+            )}
+            {page === "rag" && (
+              <RagWorkspace
+                rag={rag}
+                feedRagDocument={feedRagDocument}
+                queryRag={queryRag}
+                ragResult={ragResult}
+                modelGateway={modelGateway}
+                invokeModel={invokeModel}
+                modelResult={modelResult}
+                selectedCaseId={selectedCaseId}
+              />
+            )}
+            {page === "backend" && (
+              <BackendSystems
+                workers={workers}
+                infra={infra}
+                audit={audit}
+                objectStore={objectStore}
+                notifications={notifications}
+                persistence={persistence}
+                providers={providers}
               />
             )}
             {page === "citizen" && (
               <Citizen citizen={citizen} submitCorrection={submitCorrection} />
             )}
             {page === "system" && (
-              <System workers={workers} rag={rag} authz={authz} modelGateway={modelGateway} />
+              <System
+                workers={workers}
+                rag={rag}
+                authz={authz}
+                modelGateway={modelGateway}
+                infra={infra}
+                audit={audit}
+                objectStore={objectStore}
+                notifications={notifications}
+                persistence={persistence}
+                feedRagDocument={feedRagDocument}
+                queryRag={queryRag}
+                ragResult={ragResult}
+                invokeModel={invokeModel}
+                modelResult={modelResult}
+                selectedCaseId={selectedCaseId}
+              />
             )}
           </section>
           <AssistantDrawer
@@ -323,175 +505,13 @@ function App() {
   );
 }
 
-function Sidebar({ page, navigate }) {
-  return (
-    <aside className="sidebar">
-      <div className="brand">
-        <div className="brand-mark"><Shield size={22} /></div>
-        <div>
-          <h1>TaxNet Guardian</h1>
-          <p>Intelligent compliance</p>
-        </div>
-      </div>
-      <nav className="nav">
-        {navItems.map((item) => {
-          const Icon = item.icon;
-          return (
-            <button key={item.id} className={page === item.id ? "active" : ""} onClick={() => navigate(item.id)}>
-              <Icon size={18} />
-              <span>{item.label}</span>
-            </button>
-          );
-        })}
-      </nav>
-      <button className="new-investigation"><Zap size={18} /> New Investigation</button>
-      <div className="user-card">
-        <div className="avatar"><UserCircle size={26} /></div>
-        <div>
-          <strong>Tax Auditor</strong>
-          <span>Region North</span>
-        </div>
-      </div>
-      <div className="sidebar-footer">
-        <button><Settings size={17} /> Settings</button>
-        <button><LifeBuoy size={17} /> Support</button>
-      </div>
-    </aside>
-  );
-}
-
-function TopBar({ title, role, setRole, onRefresh, onPipeline }) {
-  return (
-    <header className="topbar">
-      <div>
-        <p className="breadcrumb">Overview / {title}</p>
-        <h2>{title}</h2>
-      </div>
-      <div className="command-search">
-        <Search size={18} />
-        <input placeholder="Search by NTN, CNIC, Case ID, provider..." />
-        <kbd>⌘K</kbd>
-      </div>
-      <div className="top-actions">
-        <select value={role} onChange={(e) => setRole(e.target.value)} aria-label="Role">
-          {roles.map((r) => <option key={r}>{r}</option>)}
-        </select>
-        <button onClick={onPipeline}><RefreshCw size={16} /> Pipeline</button>
-        <button onClick={onRefresh}><Bell size={16} /></button>
-      </div>
-    </header>
-  );
-}
-
-function Overview({ summary, cases, providers, rag, setPage, setSelectedCaseId }) {
-  const riskDistribution = useMemo(() => {
-    const total = Math.max(1, cases.length);
-    return [
-      ["Critical", cases.filter((x) => x.riskBand === "Critical").length],
-      ["High", cases.filter((x) => x.riskBand === "High").length],
-      ["Medium", cases.filter((x) => x.riskBand === "Medium").length],
-      ["Low", Math.max(0, (summary?.totalProfiles || 0) - cases.length)]
-    ].map(([label, count]) => ({ label, count, pct: Math.round((count / total) * 100) }));
-  }, [cases, summary]);
-
-  return (
-    <div className="page-stack">
-      <div className="hero-strip">
-        <div>
-          <p className="eyebrow">Government-grade security meets modern intelligence</p>
-          <h3>Consolidated compliance intelligence across domestic economic regions.</h3>
-        </div>
-        <button onClick={() => setPage("queue")}>Open case queue <ArrowRight size={16} /></button>
-      </div>
-      <div className="metric-grid">
-        <Metric icon={CircleDollarSign} label="Revenue opportunity" value={compact(summary?.estimatedRecoverableTax)} trend="+12.4%" />
-        <Metric icon={AlertTriangle} label="Critical cases" value={summary?.criticalCases ?? "..."} trend="+5.2%" risk="critical" />
-        <Metric icon={Gauge} label="ER precision" value={pct(summary?.entityResolutionPrecision)} trend="Optimized" risk="low" />
-        <Metric icon={ClipboardCheck} label="False positive target" value="3.8%" trend="Steady" risk="medium" />
-      </div>
-      <div className="overview-layout">
-        <Panel title="Regional Risk Map" subtitle="Synthetic clusters by city and signal strength." icon={Globe2}>
-          <RiskMap summary={summary} />
-        </Panel>
-        <div className="stack">
-          <Panel title="Risk Distribution" icon={PieChart}>
-            {riskDistribution.map((item) => (
-              <div className="dist-row" key={item.label}>
-                <div><span>{item.label}</span><strong>{item.count}</strong></div>
-                <div className={`bar ${riskClass(item.label)}`}><i style={{ width: `${Math.min(100, item.pct)}%` }} /></div>
-              </div>
-            ))}
-          </Panel>
-          <Panel title="Intelligence Feed" icon={Activity}>
-            <FeedItem icon={GitBranch} title="Complex cluster found" text="Circular trading pattern detected between linked businesses and high-utility profiles." />
-            <FeedItem icon={ShieldCheck} title="Policy update applied" text={`${rag?.documents?.length || 0} RAG policy documents available for citations.`} />
-            <FeedItem icon={Database} title="Provider health" text={`${providers.filter((x) => x.status === "Healthy").length}/${providers.length} sandbox providers healthy.`} />
-          </Panel>
-        </div>
-      </div>
-      <Panel title="Priority Cases" subtitle="Fast path into investigations." icon={BriefcaseBusiness}>
-        <div className="case-card-grid">
-          {cases.slice(0, 4).map((c) => (
-            <button key={c.id} className="case-card" onClick={() => { setSelectedCaseId(c.id); setPage("investigation"); }}>
-              <span className={`risk-pill ${riskClass(c.riskBand)}`}>{c.riskBand}</span>
-              <strong>{c.id}</strong>
-              <p>{c.city}, {c.province}</p>
-              <div className="score-line"><span>{c.score}/100</span><i style={{ width: `${c.score}%` }} /></div>
-            </button>
-          ))}
-        </div>
-      </Panel>
-    </div>
-  );
-}
-
-function CaseQueue({ cases, selectedCaseId, setSelectedCaseId, setPage }) {
-  const [risk, setRisk] = useState("All");
-  const [city, setCity] = useState("All");
-  const [minScore, setMinScore] = useState(30);
-  const cities = ["All", ...Array.from(new Set(cases.map((x) => x.city))).sort()];
-  const filtered = cases.filter((c) =>
-    (risk === "All" || c.riskBand === risk) &&
-    (city === "All" || c.city === city) &&
-    c.score >= minScore
-  );
-
-  return (
-    <div className="page-stack">
-      <Panel title="Worklist filters" subtitle="Compact chips for rapid drill-down." icon={Filter}>
-        <div className="filter-grid">
-          <label>Risk band<select value={risk} onChange={(e) => setRisk(e.target.value)}><option>All</option><option>Critical</option><option>High</option><option>Medium</option></select></label>
-          <label>Geographic hub<select value={city} onChange={(e) => setCity(e.target.value)}>{cities.map((x) => <option key={x}>{x}</option>)}</select></label>
-          <label>Score range ({minScore}-100)<input type="range" min="0" max="100" value={minScore} onChange={(e) => setMinScore(Number(e.target.value))} /></label>
-        </div>
-      </Panel>
-      <Panel title="Active investigations" subtitle={`${filtered.length} cases visible with current filters.`} icon={BriefcaseBusiness}>
-        <div className="data-table">
-          <table>
-            <thead><tr><th>Case</th><th>Location</th><th>Risk</th><th>Score</th><th>Signals</th><th>Action</th></tr></thead>
-            <tbody>
-              {filtered.map((c) => (
-                <tr key={c.id} className={selectedCaseId === c.id ? "selected" : ""}>
-                  <td><strong>{c.id}</strong><small>{c.status}</small></td>
-                  <td>{c.city}<small>{c.province}</small></td>
-                  <td><span className={`risk-pill ${riskClass(c.riskBand)}`}>{c.riskBand}</span></td>
-                  <td><div className="score-cell"><strong>{c.score}</strong><div className="mini-bar"><i style={{ width: `${c.score}%` }} /></div></div></td>
-                  <td>{c.topReasons?.slice(0, 3).map((x) => <span className="signal" key={x}>{x}</span>)}</td>
-                  <td><button onClick={() => { setSelectedCaseId(c.id); setPage("investigation"); }}>Investigate</button></td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </Panel>
-    </div>
-  );
-}
-
-function Investigation({ selectedCase, graph, query, setQuery, askAssistant, generateReport, assistantAnswer }) {
+function Investigation({ selectedCase, graph, query, setQuery, askAssistant, generateReport, assignSelectedCase, requestClarification, recordDecision, assistantAnswer }) {
   if (!selectedCase) return <EmptyState title="Loading investigation" />;
   const c = selectedCase.caseItem;
   const p = selectedCase.person;
+  const timeline = selectedCase.timeline || [];
+  const corrections = selectedCase.corrections || [];
+  const reports = selectedCase.reports || [];
   return (
     <div className="investigation-layout">
       <section className="left-rail">
@@ -519,6 +539,15 @@ function Investigation({ selectedCase, graph, query, setQuery, askAssistant, gen
             </div>
           ))}
         </Panel>
+        <Panel title="Auditor Actions" subtitle="Human-in-the-loop lifecycle controls." icon={ClipboardCheck}>
+          <div className="action-stack">
+            <button onClick={assignSelectedCase}><UserCircle size={16} /> Assign</button>
+            <button onClick={requestClarification}><Users size={16} /> Clarify</button>
+            <button onClick={() => recordDecision("EvidenceVerified")}><BadgeCheck size={16} /> Verify</button>
+            <button onClick={() => recordDecision("ClosedEscalated")}><ArrowRight size={16} /> Escalate</button>
+            <button onClick={() => recordDecision("ClosedFalsePositive")}><CheckCircle2 size={16} /> False positive</button>
+          </div>
+        </Panel>
       </section>
       <section className="graph-stage">
         <Panel title="Knowledge Graph Explorer" subtitle="Person, assets, businesses, utilities, travel, and case relationships." icon={Network}>
@@ -532,7 +561,7 @@ function Investigation({ selectedCase, graph, query, setQuery, askAssistant, gen
               <article className="evidence-card" key={ev.id}>
                 <div><strong>{ev.title}</strong><span>{ev.type}</span></div>
                 <p>{ev.description}</p>
-                <footer>{ev.source} · {ev.id}</footer>
+                <footer>{ev.source} - {ev.id}</footer>
               </article>
             ))}
           </div>
@@ -547,12 +576,42 @@ function Investigation({ selectedCase, graph, query, setQuery, askAssistant, gen
             {assistantAnswer && <AssistantAnswer answer={assistantAnswer} />}
           </div>
         </Panel>
+        <Panel title="Case Timeline" subtitle="Audit log stream for reports, corrections, and decisions." icon={Activity}>
+          <div className="timeline-list">
+            {timeline.slice(0, 8).map((event) => (
+              <article className="timeline-event" key={event.id}>
+                <span>{new Date(event.timestampUtc).toLocaleString()}</span>
+                <strong>{event.eventType}</strong>
+                <p>{event.summary}</p>
+                <small>{event.actor}</small>
+              </article>
+            ))}
+            {timeline.length === 0 && <EmptyState title="No timeline events" />}
+          </div>
+        </Panel>
+        <Panel title="Corrections & Reports" icon={FileText}>
+          <div className="job-list">
+            {corrections.map((correction) => (
+              <article className="job-row" key={correction.id}>
+                <span className="risk-pill medium">{correction.status}</span>
+                <div><strong>{correction.correctionType}</strong><small>{correction.message}</small></div>
+              </article>
+            ))}
+            {reports.map((report) => (
+              <article className="job-row" key={report.id}>
+                <span className="risk-pill low">Report</span>
+                <div><strong>{report.id}</strong><small>{report.storageUri}</small></div>
+              </article>
+            ))}
+            {corrections.length === 0 && reports.length === 0 && <EmptyState title="No corrections or reports" />}
+          </div>
+        </Panel>
       </section>
     </div>
   );
 }
 
-function Sandbox({ providers, profiles, selectedProfile, setSelectedProfile, generateSandbox }) {
+function Sandbox({ providers, profiles, selectedProfile, setSelectedProfile, generateSandbox, datasetHub, datasetTemplates, feedDataset, updateProvider }) {
   async function openProfile(id) {
     setSelectedProfile(await api(`/api/sandbox/profiles/${id}`));
   }
@@ -565,6 +624,7 @@ function Sandbox({ providers, profiles, selectedProfile, setSelectedProfile, gen
         </div>
         <button onClick={generateSandbox}><Database size={16} /> Generate 180 profiles</button>
       </div>
+      <DatasetFeedCenter datasetHub={datasetHub} datasetTemplates={datasetTemplates} feedDataset={feedDataset} />
       <div className="provider-grid">
         {providers.map((provider) => (
           <article className="provider-card" key={provider.providerCode}>
@@ -575,6 +635,19 @@ function Sandbox({ providers, profiles, selectedProfile, setSelectedProfile, gen
               <span className={`risk-pill ${provider.status === "Healthy" ? "low" : "medium"}`}>{provider.status}</span>
             </div>
             <small>{provider.credentialSecretName}</small>
+            <button
+              className="inline-action"
+              onClick={() => updateProvider(provider.providerCode, {
+                mode: "OfficialReady",
+                baseUrl: `https://api.${provider.providerCode.toLowerCase().replaceAll("-", "")}.gov.pk`,
+                credentialSecretName: provider.credentialSecretName,
+                enabled: true,
+                rateLimitPerMinute: provider.supportsBulkImport ? 120 : 60,
+                notes: "Sandbox contract configured so official API credentials can be swapped through Secrets Manager."
+              })}
+            >
+              <KeyRound size={14} /> Official-ready
+            </button>
           </article>
         ))}
       </div>
@@ -590,7 +663,7 @@ function Sandbox({ providers, profiles, selectedProfile, setSelectedProfile, gen
                     <td><strong>{profile.fullName}</strong><small>{profile.cnicMasked}</small></td>
                     <td>{profile.city}</td>
                     <td><span className={`risk-pill ${riskClass(profile.expectedRiskBand)}`}>{profile.expectedRiskBand}</span></td>
-                    <td>{profile.vehicleCount} V · {profile.propertyCount} P · {profile.businessCount} B</td>
+                    <td>{profile.vehicleCount} V - {profile.propertyCount} P - {profile.businessCount} B</td>
                   </tr>
                 ))}
               </tbody>
@@ -605,6 +678,103 @@ function Sandbox({ providers, profiles, selectedProfile, setSelectedProfile, gen
   );
 }
 
+function DatasetFeedCenter({ datasetHub, datasetTemplates, feedDataset }) {
+  const firstType = datasetTemplates?.[0]?.datasetType || "identity";
+  const [datasetType, setDatasetType] = useState(firstType);
+  const [format, setFormat] = useState("csv");
+  const [fileName, setFileName] = useState("identity-seed.csv");
+  const [content, setContent] = useState("");
+  const [runPipeline, setRunPipeline] = useState(true);
+
+  useEffect(() => {
+    if (!datasetTemplates?.length) return;
+    const current = datasetTemplates.find((template) => template.datasetType === datasetType) || datasetTemplates[0];
+    setDatasetType(current.datasetType);
+    setFileName(`${current.datasetType}-feed.${format}`);
+    if (!content) setContent(current.csvExample);
+  }, [datasetTemplates]);
+
+  const selectedTemplate = datasetTemplates?.find((template) => template.datasetType === datasetType);
+
+  function loadExample(nextType = datasetType, nextFormat = format) {
+    const template = datasetTemplates?.find((item) => item.datasetType === nextType);
+    if (!template) return;
+    setDatasetType(nextType);
+    setFormat(nextFormat);
+    setFileName(`${nextType}-feed.${nextFormat}`);
+    if (nextFormat === "json") {
+      const [headerLine, ...rows] = template.csvExample.split("\n");
+      const headers = headerLine.split(",");
+      const records = rows.filter(Boolean).map((row) => {
+        const values = row.split(",");
+        return Object.fromEntries(headers.map((header, index) => [header, values[index] || ""]));
+      });
+      setContent(JSON.stringify({ records }, null, 2));
+      return;
+    }
+    setContent(template.csvExample);
+  }
+
+  function handleFile(event) {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      setContent(String(reader.result || ""));
+      setFileName(file.name);
+      setFormat(file.name.toLowerCase().endsWith(".json") ? "json" : "csv");
+    };
+    reader.readAsText(file);
+  }
+
+  async function submit() {
+    await feedDataset({ datasetType, format, fileName, content, runPipeline });
+  }
+
+  return (
+    <div className="feed-layout">
+      <Panel title="Dataset Feed Console" subtitle="Upload CSV or JSON into the sandbox adapter, then score it through the same risk pipeline." icon={Upload}>
+        <div className="feed-form">
+          <div className="feed-controls">
+            <label>Dataset<select value={datasetType} onChange={(e) => loadExample(e.target.value, format)}>
+              {datasetTemplates?.map((template) => <option key={template.datasetType} value={template.datasetType}>{template.datasetType}</option>)}
+            </select></label>
+            <label>Format<select value={format} onChange={(e) => loadExample(datasetType, e.target.value)}>
+              <option value="csv">CSV</option>
+              <option value="json">JSON</option>
+            </select></label>
+            <label>File name<input value={fileName} onChange={(e) => setFileName(e.target.value)} /></label>
+            <label className="checkbox-line"><input type="checkbox" checked={runPipeline} onChange={(e) => setRunPipeline(e.target.checked)} /> Run risk pipeline</label>
+          </div>
+          <div className="upload-strip">
+            <input type="file" accept=".csv,.json,text/csv,application/json" onChange={handleFile} />
+            <button onClick={() => loadExample()}><FileText size={15} /> Load template</button>
+            <button onClick={submit}><Upload size={15} /> Feed dataset</button>
+          </div>
+          <textarea className="textarea-large" value={content} onChange={(e) => setContent(e.target.value)} spellCheck="false" />
+        </div>
+      </Panel>
+      <Panel title="Feed Health" subtitle={`${datasetHub?.totals?.records || 0} records received across ${datasetHub?.totals?.batches || 0} batches.`} icon={ClipboardCheck}>
+        {selectedTemplate && (
+          <div className="template-card">
+            <strong>{selectedTemplate.description}</strong>
+            <p>{selectedTemplate.columns.join(", ")}</p>
+          </div>
+        )}
+        <div className="job-list">
+          {(datasetHub?.jobs || []).slice(0, 6).map((job) => (
+            <article key={job.id} className="job-row">
+              <span className={`risk-pill ${job.status === "Failed" ? "critical" : job.status === "SucceededWithWarnings" ? "medium" : "low"}`}>{job.status}</span>
+              <div><strong>{job.source}</strong><small>{job.recordsCreated}/{job.recordsProcessed} applied</small></div>
+            </article>
+          ))}
+          {(!datasetHub?.jobs || datasetHub.jobs.length === 0) && <EmptyState title="No dataset feeds yet" />}
+        </div>
+      </Panel>
+    </div>
+  );
+}
+
 function Citizen({ citizen, submitCorrection }) {
   if (!citizen) return <EmptyState title="Loading citizen portal" />;
   return (
@@ -614,7 +784,7 @@ function Citizen({ citizen, submitCorrection }) {
           <div className="avatar large"><UserCircle size={40} /></div>
           <div>
             <h3>{citizen.person.fullName}</h3>
-            <p>{citizen.person.cnicMasked} · {citizen.person.city}</p>
+            <p>{citizen.person.cnicMasked} - {citizen.person.city}</p>
             <span className={`risk-pill ${riskClass(citizen.riskBand)}`}>{citizen.riskBand}</span>
           </div>
         </div>
@@ -637,55 +807,6 @@ function Citizen({ citizen, submitCorrection }) {
           <FeedItem icon={CheckCircle2} title="Correctable" text="Citizens can submit corrections before escalation." />
         </div>
       </Panel>
-    </div>
-  );
-}
-
-function System({ workers, rag, authz, modelGateway }) {
-  return (
-    <div className="page-stack">
-      <div className="system-grid">
-        <Panel title="Worker Pipeline" subtitle="SQS-style queues, retries, and DLQs." icon={Workflow}>
-          <div className="cards-grid">
-            {workers?.workers?.map((w) => <WorkerCard worker={w} key={w.name} />)}
-          </div>
-        </Panel>
-        <Panel title="Authorization Matrix" subtitle="Cognito-ready roles and scopes." icon={LockKeyhole}>
-          <div className="cards-grid">
-            {authz?.roles?.slice(0, 8).map((role) => (
-              <article className="small-card" key={role.role}>
-                <strong>{role.role}</strong>
-                <p>{role.description}</p>
-                <small>{role.scopes.slice(0, 3).join(", ")}</small>
-              </article>
-            ))}
-          </div>
-        </Panel>
-      </div>
-      <div className="system-grid">
-        <Panel title="RAG Policy Memory" icon={Layers3}>
-          <div className="cards-grid">
-            {rag?.documents?.map((doc) => (
-              <article className="small-card" key={doc.id}>
-                <strong>{doc.title}</strong>
-                <p>{doc.summary}</p>
-                <small>{doc.sourceType}</small>
-              </article>
-            ))}
-          </div>
-        </Panel>
-        <Panel title="Model Gateway" icon={Sparkles}>
-          <div className="cards-grid">
-            {modelGateway?.routing?.map((route) => (
-              <article className="small-card" key={route.task}>
-                <strong>{route.task}</strong>
-                <p>{route.route}</p>
-                <small>{route.reason}</small>
-              </article>
-            ))}
-          </div>
-        </Panel>
-      </div>
     </div>
   );
 }
@@ -722,7 +843,7 @@ function AssistantDrawer({ selectedCase, answer, query, setQuery, askAssistant }
 function AssistantAnswer({ answer }) {
   return (
     <div className="assistant-answer">
-      <strong>{answer.riskBand ? `${answer.riskBand} · ${answer.score}/100` : "Assistant response"}</strong>
+      <strong>{answer.riskBand ? `${answer.riskBand} - ${answer.score}/100` : "Assistant response"}</strong>
       <p>{answer.answer}</p>
       {answer.evidenceIds?.length > 0 && <small>Evidence: {answer.evidenceIds.slice(0, 5).join(", ")}</small>}
       {answer.citations?.length > 0 && (
@@ -734,142 +855,14 @@ function AssistantAnswer({ answer }) {
   );
 }
 
-function Metric({ icon: Icon, label, value, trend, risk = "low" }) {
-  return (
-    <article className="metric-card">
-      <div className="metric-icon"><Icon size={20} /></div>
-      <span>{label}</span>
-      <strong>{value}</strong>
-      <em className={risk}>{trend}</em>
-    </article>
-  );
-}
-
-function Panel({ title, subtitle, icon: Icon, children }) {
-  return (
-    <section className="panel">
-      <header>
-        <div>
-          <h3>{Icon && <Icon size={17} />} {title}</h3>
-          {subtitle && <p>{subtitle}</p>}
-        </div>
-      </header>
-      <div className="panel-body">{children}</div>
-    </section>
-  );
-}
-
-function RiskMap({ summary }) {
-  const entries = Object.entries(summary?.casesByCity || {});
-  return (
-    <div className="risk-map">
-      <div className="pak-map">
-        {entries.slice(0, 7).map(([city, count], index) => (
-          <button
-            key={city}
-            className={`map-node node-${index} ${count > 5 ? "critical" : count > 3 ? "high" : "low"}`}
-            title={`${city}: ${count} cases`}
-          >
-            <span>{city}</span>
-          </button>
-        ))}
-      </div>
-      <div className="map-callout">
-        <strong>Sindh Region Intelligence</strong>
-        <p>Active audits: {summary?.casesByCity?.Karachi || 0}</p>
-        <span>Cluster identified in commercial import profiles.</span>
-      </div>
-    </div>
-  );
-}
-
-function FeedItem({ icon: Icon, title, text }) {
-  return (
-    <article className="feed-item">
-      <Icon size={18} />
-      <div><strong>{title}</strong><p>{text}</p></div>
-    </article>
-  );
-}
-
-function GraphCanvas({ graph }) {
-  const nodes = graph?.nodes || [];
-  const edges = graph?.edges || [];
-  const positions = useMemo(() => layoutNodes(nodes), [nodes]);
-  const byId = new Map(positions.map((n) => [n.id, n]));
-  return (
-    <svg className="graph-canvas" viewBox="0 0 900 560" role="img" aria-label="Knowledge graph">
-      <defs>
-        <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto">
-          <path d="M0,0 L0,6 L9,3 z" fill="#94a3b8" />
-        </marker>
-      </defs>
-      {edges.map((edge) => {
-        const a = byId.get(edge.source);
-        const b = byId.get(edge.target);
-        if (!a || !b) return null;
-        return (
-          <g key={edge.id}>
-            <line x1={a.x} y1={a.y} x2={b.x} y2={b.y} className="graph-edge" markerEnd="url(#arrow)" />
-            <text x={(a.x + b.x) / 2} y={(a.y + b.y) / 2 - 8} textAnchor="middle">{edge.type.replaceAll("_", " ")}</text>
-          </g>
-        );
-      })}
-      {positions.map((node) => (
-        <g key={node.id}>
-          <circle cx={node.x} cy={node.y} r={node.type === "Person" ? 34 : 25} className={`graph-node ${node.type.toLowerCase()}`} />
-          <text x={node.x} y={node.y + 4} textAnchor="middle" className="node-code">{node.type.slice(0, 2).toUpperCase()}</text>
-          <text x={node.x} y={node.y + 50} textAnchor="middle" className="node-label">{node.label}</text>
-        </g>
-      ))}
-    </svg>
-  );
-}
-
-function layoutNodes(nodes) {
-  const center = { x: 450, y: 280 };
-  const radius = 190;
-  return nodes.map((node, index) => {
-    if (index === 0) return { ...node, ...center };
-    const angle = (Math.PI * 2 * (index - 1)) / Math.max(1, nodes.length - 1) - Math.PI / 2;
-    return { ...node, x: center.x + Math.cos(angle) * radius, y: center.y + Math.sin(angle) * radius };
-  });
-}
-
-function RadialScore({ value, band }) {
-  const circumference = 2 * Math.PI * 42;
-  const offset = circumference - (circumference * value) / 100;
-  return (
-    <div className="radial">
-      <svg viewBox="0 0 104 104">
-        <circle cx="52" cy="52" r="42" />
-        <circle cx="52" cy="52" r="42" style={{ strokeDasharray: circumference, strokeDashoffset: offset }} className={riskClass(band)} />
-      </svg>
-      <strong>{value}</strong>
-    </div>
-  );
-}
-
-function InfoRows({ rows }) {
-  return <div className="info-rows">{rows.map(([k, v]) => <div key={k}><span>{k}</span><strong>{v}</strong></div>)}</div>;
-}
-
-function JsonPreview({ value }) {
-  return <pre className="json-preview">{JSON.stringify(value, null, 2)}</pre>;
-}
-
 function WorkerCard({ worker }) {
   return (
     <article className="small-card">
       <strong>{worker.name}</strong>
       <p>{worker.queueName}</p>
-      <small>{worker.status} · depth {worker.queueDepth} · {worker.processedToday} processed</small>
+      <small>{worker.status} - depth {worker.queueDepth} - {worker.processedToday} processed</small>
     </article>
   );
-}
-
-function EmptyState({ title }) {
-  return <div className="empty-state"><Command size={24} /><strong>{title}</strong></div>;
 }
 
 createRoot(document.getElementById("root")).render(<App />);

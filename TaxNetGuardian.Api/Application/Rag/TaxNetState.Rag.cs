@@ -1,0 +1,250 @@
+namespace TaxNetGuardian.Api;
+
+public sealed partial class TaxNetState
+{
+    public ImportJob FeedRagDocument(RagFeedRequest request)
+    {
+        lock (_lock)
+        {
+            var id = $"rag-{RagDocuments.Count + 1:000}";
+            var sourceType = string.IsNullOrWhiteSpace(request.SourceType) ? "PolicyDocument" : request.SourceType;
+            var tags = request.Tags?.Count > 0 ? request.Tags : sourceType.Split([' ', '-', '_'], StringSplitOptions.RemoveEmptyEntries);
+            var document = new RagDocument(
+                id,
+                string.IsNullOrWhiteSpace(request.Title) ? $"Policy Document {RagDocuments.Count + 1}" : request.Title,
+                sourceType,
+                string.IsNullOrWhiteSpace(request.Url) ? $"sandbox://rag/{id}" : request.Url,
+                Summarize(request.Content),
+                DateTimeOffset.UtcNow,
+                tags.ToArray());
+
+            RagDocuments.Insert(0, document);
+            IndexRagDocument(document, request.Content);
+            StoreObject("taxnet-dev-raw-source-snapshots", $"rag-source/{id}.txt", "text/plain", request.Content);
+
+            var job = new ImportJob(
+                $"job-rag-{DateTimeOffset.UtcNow:yyyyMMddHHmmss}",
+                "RagIndex",
+                "Succeeded",
+                request.Title,
+                RagChunks.Count(x => x.DocumentId == id),
+                RagChunks.Count(x => x.DocumentId == id),
+                0,
+                DateTimeOffset.UtcNow.AddSeconds(-2),
+                DateTimeOffset.UtcNow,
+                [$"Indexed policy document '{document.Title}'.", "Generated lexical embeddings, chunk metadata, and citation records."]);
+
+            ImportJobs.Insert(0, job);
+            AddAuditEvent("RagPolicy.Worker", "taxnet-policy-analyst", "RagDocumentIndexed", document.Id, "Succeeded", new Dictionary<string, object>
+            {
+                ["title"] = document.Title,
+                ["chunks"] = RagChunks.Count(x => x.DocumentId == id)
+            });
+            SeedWorkers();
+            SaveSnapshot();
+            return job;
+        }
+    }
+
+    public RagQueryResult QueryRag(RagQueryRequest request)
+    {
+        var query = string.IsNullOrWhiteSpace(request.Query) ? "tax compliance human review evidence policy" : request.Query.Trim();
+        var taskType = string.IsNullOrWhiteSpace(request.TaskType) ? "PolicyQuestion" : request.TaskType.Trim();
+        var jurisdiction = string.IsNullOrWhiteSpace(request.Jurisdiction) ? "Pakistan" : request.Jurisdiction.Trim();
+        var requestedTags = request.Tags ?? [];
+        var tokens = Tokenize($"{query} {taskType} {jurisdiction} {string.Join(' ', requestedTags)}");
+        var topK = Math.Clamp(request.TopK <= 0 ? 5 : request.TopK, 1, 10);
+
+        var scored = RagChunks
+            .Select(chunk =>
+            {
+                var overlap = chunk.Keywords.Count(keyword => tokens.Contains(keyword, StringComparer.OrdinalIgnoreCase));
+                var tagBoost = requestedTags.Count == 0 ? 0 : chunk.Keywords.Count(keyword => requestedTags.Contains(keyword, StringComparer.OrdinalIgnoreCase));
+                var sourceBoost = chunk.Citation.SourceType.Contains("Sop", StringComparison.OrdinalIgnoreCase) ? 1 : 0;
+                return new { Chunk = chunk, Score = overlap + tagBoost + sourceBoost + chunk.QualityScore };
+            })
+            .Where(x => x.Score > 0)
+            .OrderByDescending(x => x.Score)
+            .ThenByDescending(x => x.Chunk.IndexedAtUtc)
+            .Take(topK)
+            .Select(x => x.Chunk)
+            .ToArray();
+
+        if (scored.Length == 0)
+        {
+            scored = RagChunks.OrderByDescending(x => x.QualityScore).ThenByDescending(x => x.IndexedAtUtc).Take(topK).ToArray();
+        }
+
+        var qualityChecks = new List<string>
+        {
+            "Query rewritten with task type, jurisdiction, and requested tags.",
+            "Retrieved chunks include citation metadata and source timestamps.",
+            "Context pack excludes raw PII and private citizen records.",
+            scored.Length > 0 ? "At least one policy context chunk was retrieved." : "No policy context chunks were available."
+        };
+
+        var confidence = scored.Length == 0 ? 0m : decimal.Round(Math.Min(0.98m, 0.55m + (scored.Length * 0.07m)), 2);
+        AddAuditEvent("RagPolicy.Api", "taxnet-policy-analyst", "RagQuery", taskType, "Succeeded", new Dictionary<string, object>
+        {
+            ["query"] = query,
+            ["chunks"] = scored.Length,
+            ["confidence"] = confidence
+        });
+        SaveSnapshot();
+
+        return new RagQueryResult(
+            query,
+            $"{taskType}: {query} jurisdiction:{jurisdiction}",
+            scored,
+            scored.Select(x => x.Citation).DistinctBy(x => x.ChunkId).ToArray(),
+            qualityChecks,
+            confidence);
+    }
+
+    public ModelInvocationResponse InvokeModelGateway(ModelInvocationRequest request)
+    {
+        var taskType = string.IsNullOrWhiteSpace(request.TaskType) ? "PolicyQuestion" : request.TaskType.Trim();
+        var route = SelectModelRoute(taskType, request.PreferredProvider, request.AllowExternalProvider);
+        var safePrompt = RedactSensitivePrompt(request.Prompt);
+        var citations = Array.Empty<PolicyCitation>();
+        string output;
+
+        if (!string.IsNullOrWhiteSpace(request.CaseId) && Cases.Any(x => x.Id.Equals(request.CaseId, StringComparison.OrdinalIgnoreCase)))
+        {
+            var explanation = BuildExplanation(request.CaseId);
+            var rag = QueryRag(new RagQueryRequest(
+                string.Join(' ', explanation.KeyReasons),
+                taskType,
+                "Pakistan",
+                5,
+                ["audit", "human-review", "citizen", "asset"]));
+
+            citations = rag.Citations.ToArray();
+            output = taskType switch
+            {
+                "CitizenExplanation" => "Citizen-safe draft: records linked to this profile may need review. The citizen should verify ownership dates, filing status, and any outdated business or utility links through the correction workflow.",
+                "ReportDraft" => BuildReportDraft(request.CaseId, explanation, rag),
+                _ => $"{explanation.Summary} RAG confidence {rag.RetrievalConfidence:P0}. Key grounded reasons: {string.Join(" ", explanation.KeyReasons.Take(3))}"
+            };
+        }
+        else
+        {
+            var rag = QueryRag(new RagQueryRequest(safePrompt, taskType, "Pakistan", 5, []));
+            citations = rag.Citations.ToArray();
+            output = $"Model gateway deterministic response for {taskType}: {safePrompt}. Retrieved {rag.Chunks.Count} policy context chunk(s) with {rag.RetrievalConfidence:P0} confidence.";
+        }
+
+        var promptTokens = EstimateTokens(safePrompt);
+        var completionTokens = EstimateTokens(output);
+        var response = new ModelInvocationResponse(
+            $"model-{DateTimeOffset.UtcNow:yyyyMMddHHmmssfff}-{ModelInvocations.Count + 1:000}",
+            taskType,
+            route.Provider,
+            route.Route,
+            output,
+            ["PII redaction", "evidence ID validation", "citation validation", "no fraud-proven language", "human review warning"],
+            citations,
+            promptTokens,
+            completionTokens,
+            route.Provider.Contains("Local", StringComparison.OrdinalIgnoreCase) ? 0m : decimal.Round((promptTokens + completionTokens) * 0.000002m, 6),
+            DateTimeOffset.UtcNow);
+
+        ModelInvocations.Insert(0, response);
+        AddAuditEvent("TaxNet.AI.ModelGateway", "taxnet-model-admin", "ModelInvoked", taskType, "Succeeded", new Dictionary<string, object>
+        {
+            ["provider"] = response.SelectedProvider,
+            ["route"] = response.Route,
+            ["caseId"] = request.CaseId ?? "",
+            ["promptTokens"] = response.PromptTokens,
+            ["completionTokens"] = response.CompletionTokens
+        });
+        SaveSnapshot();
+
+        return response;
+    }
+
+    private static string Summarize(string content)
+    {
+        if (string.IsNullOrWhiteSpace(content))
+        {
+            return "Document stored for RAG retrieval. Content summary was not provided.";
+        }
+
+        var clean = string.Join(' ', content.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries));
+        return clean.Length <= 220 ? clean : clean[..220] + "...";
+    }
+
+    private void IndexRagDocument(RagDocument document, string content)
+    {
+        RagChunks.RemoveAll(x => x.DocumentId == document.Id);
+        var clean = string.IsNullOrWhiteSpace(content) ? document.Summary : content;
+        var chunks = ChunkText(clean, 420);
+        for (var i = 0; i < chunks.Count; i++)
+        {
+            var text = chunks[i];
+            var keywords = Tokenize($"{document.Title} {document.SourceType} {text} {string.Join(' ', document.Tags)}")
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .Take(24)
+                .ToArray();
+            var citation = new PolicyCitation(document.Title, document.Url, document.SourceType, $"chunk-{document.Id}-{i + 1:000}", document.CapturedAtUtc);
+            RagChunks.Add(new RagChunk(
+                citation.ChunkId,
+                document.Id,
+                document.Title,
+                text,
+                keywords,
+                citation,
+                decimal.Round(Math.Min(0.98m, 0.72m + (keywords.Length * 0.007m)), 2),
+                DateTimeOffset.UtcNow));
+        }
+    }
+
+    private static IReadOnlyList<string> ChunkText(string content, int targetLength)
+    {
+        var clean = string.Join(' ', content.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries));
+        if (string.IsNullOrWhiteSpace(clean))
+        {
+            return ["No policy content was provided; document metadata remains searchable."];
+        }
+
+        var chunks = new List<string>();
+        for (var start = 0; start < clean.Length; start += targetLength)
+        {
+            var length = Math.Min(targetLength, clean.Length - start);
+            chunks.Add(clean.Substring(start, length).Trim());
+        }
+
+        return chunks;
+    }
+
+    private static IReadOnlyList<string> Tokenize(string value)
+    {
+        var normalized = new string((value ?? "").ToLowerInvariant().Select(c => char.IsLetterOrDigit(c) ? c : ' ').ToArray());
+        var stopWords = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+        {
+            "the", "and", "for", "with", "that", "this", "from", "into", "are", "should", "must", "can", "when", "where", "was", "were", "has", "have", "policy", "document"
+        };
+
+        return normalized
+            .Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+            .Where(x => x.Length > 2 && !stopWords.Contains(x))
+            .ToArray();
+    }
+
+    private static string RedactSensitivePrompt(string prompt)
+    {
+        if (string.IsNullOrWhiteSpace(prompt))
+        {
+            return "No prompt supplied.";
+        }
+
+        var words = prompt.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        return string.Join(' ', words.Select(word =>
+            word.Any(char.IsDigit) && word.Length >= 6 ? "[masked-id]" :
+            word.Contains("@", StringComparison.Ordinal) ? "[masked-email]" :
+            word));
+    }
+
+    private static int EstimateTokens(string text)
+        => Math.Max(1, (int)Math.Ceiling((text?.Length ?? 0) / 4m));
+}
