@@ -24,10 +24,10 @@ app.MapGet("/", (IWebHostEnvironment env) =>
     Results.File(Path.Combine(env.WebRootPath, "index.html"), "text/html"));
 
 app.MapGet("/sandbox", (IWebHostEnvironment env) =>
-    Results.File(Path.Combine(env.WebRootPath, "sandbox.html"), "text/html"));
+    Results.File(Path.Combine(env.WebRootPath, "index.html"), "text/html"));
 
 app.MapGet("/citizen", (IWebHostEnvironment env) =>
-    Results.File(Path.Combine(env.WebRootPath, "citizen.html"), "text/html"));
+    Results.File(Path.Combine(env.WebRootPath, "index.html"), "text/html"));
 
 app.MapGet("/api/health", () => Results.Ok(new
 {

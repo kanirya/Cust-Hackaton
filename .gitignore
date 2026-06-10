@@ -6,6 +6,10 @@ obj/
 .appdata/
 .nuget/
 .buildcheck/
+.prototype/
+node_modules/
+TaxNetGuardian.Web/node_modules/
+TaxNetGuardian.Web/dist/
 logs/
 *.user
 *.suo
