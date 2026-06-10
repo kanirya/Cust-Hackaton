@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>TaxNet Guardian | Gov Data Sandbox</title>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body data-page="sandbox">
+  <div class="shell">
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-mark">GS</div>
+        <div>
+          <h1>Gov Data Sandbox</h1>
+          <p>Replaceable provider emulator</p>
+        </div>
+      </div>
+      <nav class="nav">
+        <a href="/">Auditor dashboard</a>
+        <a class="active" href="/sandbox">Gov data sandbox</a>
+        <a href="/citizen">Citizen portal</a>
+      </nav>
+    </aside>
+
+    <main class="main">
+      <section class="topbar">
+        <div>
+          <p class="eyebrow">Integration emulator</p>
+          <h2>Sandbox provider control room</h2>
+          <p class="subtle">Generate synthetic NADRA/FBR/Excise/SECP-style records, inspect profiles, and keep the API shape replaceable for future official integrations.</p>
+        </div>
+        <button id="sandboxRefresh" class="button" type="button">Refresh sandbox</button>
+      </section>
+
+      <section class="panel">
+        <div class="panel-header">
+          <div>
+            <h3>Synthetic data generator</h3>
+            <p>Create a localized dataset with controlled suspicious patterns and noisy identity fields.</p>
+          </div>
+        </div>
+        <div class="panel-body">
+          <div class="form-grid">
+            <label>
+              Profiles
+              <input id="generateCount" class="input" type="number" min="20" max="500" value="160">
+            </label>
+            <label>
+              Suspicious percent
+              <input id="generateSuspicious" class="input" type="number" min="0" max="70" value="26">
+            </label>
+            <label>
+              Noise percent
+              <input id="generateNoise" class="input" type="number" min="0" max="80" value="22">
+            </label>
+          </div>
+          <div class="toolbar" style="margin-top:12px">
+            <button id="generateButton" class="button primary" type="button">Generate sandbox data</button>
+            <span id="generateStatus" class="subtle"></span>
+          </div>
+        </div>
+      </section>
+
+      <section class="grid cols-2" style="margin-top:16px">
+        <div class="panel">
+          <div class="panel-header">
+            <div>
+              <h3>Mock government providers</h3>
+              <p>These contracts are designed to be replaced by official APIs later.</p>
+            </div>
+          </div>
+          <div id="providers" class="cards panel-body"></div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-header">
+            <div>
+              <h3>Real API readiness</h3>
+              <p>Provider adapter contracts, secret names, and modes.</p>
+            </div>
+          </div>
+          <div class="panel-body stack">
+            <div class="reason">
+              <strong>Integration rule</strong>
+              Main TaxNet services never call sandbox endpoints directly. They call an `IGovernmentDataProvider` implementation.
+            </div>
+            <div class="reason">
+              <strong>Secrets rule</strong>
+              Provider credentials are loaded at runtime from AWS Secrets Manager, never stored in frontend code.
+            </div>
+            <div class="reason">
+              <strong>Production rule</strong>
+              NADRA/FBR/Excise adapters stay disabled until official credentials and data-sharing approval exist.
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="split" style="margin-top:16px">
+        <div class="panel">
+          <div class="panel-header">
+            <div>
+              <h3>Synthetic profiles</h3>
+              <p>Click a profile to inspect provider records.</p>
+            </div>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Name</th>
+                  <th>City</th>
+                  <th>Expected</th>
+                  <th>Assets</th>
+                </tr>
+              </thead>
+              <tbody id="profilesTable"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-header">
+            <div>
+              <h3>Provider record preview</h3>
+              <p id="profileHint">Select a synthetic profile.</p>
+            </div>
+          </div>
+          <div id="profileDetail" class="panel-body"></div>
+        </div>
+      </section>
+    </main>
+  </div>
+  <script src="/app.js"></script>
+</body>
+</html>

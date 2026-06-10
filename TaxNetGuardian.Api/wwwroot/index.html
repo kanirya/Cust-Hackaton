@@ -1,0 +1,155 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>TaxNet Guardian | Auditor Dashboard</title>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body data-page="auditor">
+  <div class="shell">
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-mark">TG</div>
+        <div>
+          <h1>TaxNet Guardian</h1>
+          <p>Explainable graph intelligence</p>
+        </div>
+      </div>
+      <nav class="nav">
+        <a class="active" href="/">Auditor dashboard</a>
+        <a href="/sandbox">Gov data sandbox</a>
+        <a href="/citizen">Citizen portal</a>
+        <button id="runPipelineButton" type="button">Run import pipeline</button>
+      </nav>
+    </aside>
+
+    <main class="main">
+      <section class="topbar">
+        <div>
+          <p class="eyebrow">FBR-ready prototype</p>
+          <h2>Compliance intelligence workspace</h2>
+          <p class="subtle">Prioritize tax compliance deviations with graph evidence, policy citations, and human-reviewed AI explanations.</p>
+        </div>
+        <div class="toolbar">
+          <select id="roleSelect" class="select" aria-label="Demo role">
+            <option value="taxnet-admin">Platform Admin</option>
+            <option value="taxnet-supervisor">Supervisor</option>
+            <option value="taxnet-auditor">Auditor</option>
+            <option value="taxnet-readonly-analyst">Readonly Analyst</option>
+          </select>
+          <button class="button" id="refreshButton" type="button">Refresh</button>
+        </div>
+      </section>
+
+      <section id="metrics" class="grid cols-4"></section>
+
+      <section class="split" style="margin-top:16px">
+        <div class="stack">
+          <div class="panel">
+            <div class="panel-header">
+              <div>
+                <h3>Flagged cases</h3>
+                <p>Sorted by Tax Compliance Deviation Score.</p>
+              </div>
+              <select id="riskFilter" class="select" style="max-width:160px">
+                <option value="">All risk bands</option>
+                <option value="Critical">Critical</option>
+                <option value="High">High</option>
+                <option value="Medium">Medium</option>
+              </select>
+            </div>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Case</th>
+                    <th>City</th>
+                    <th>Risk</th>
+                    <th>Score</th>
+                    <th>Top reasons</th>
+                  </tr>
+                </thead>
+                <tbody id="casesTable"></tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="panel">
+            <div class="panel-header">
+              <div>
+                <h3>Worker pipeline</h3>
+                <p>SQS-style background jobs with retry and DLQ behavior.</p>
+              </div>
+            </div>
+            <div id="workers" class="cards panel-body"></div>
+          </div>
+        </div>
+
+        <div class="stack">
+          <div class="panel">
+            <div class="panel-header">
+              <div>
+                <h3>Case workspace</h3>
+                <p id="caseHint">Select a case to inspect graph, evidence, and explanation.</p>
+              </div>
+              <button id="reportButton" class="button" type="button">Generate report</button>
+            </div>
+            <div id="caseDetail" class="panel-body"></div>
+          </div>
+
+          <div class="panel">
+            <div class="panel-header">
+              <div>
+                <h3>Graph explorer</h3>
+                <p>Person, assets, utilities, businesses, travel, and case node.</p>
+              </div>
+            </div>
+            <div class="panel-body">
+              <svg id="graphSvg" class="graph" viewBox="0 0 720 430" role="img" aria-label="Case relationship graph"></svg>
+            </div>
+          </div>
+
+          <div class="panel">
+            <div class="panel-header">
+              <div>
+                <h3>Audit assistant</h3>
+                <p>RAG-grounded, evidence-backed support for human auditors.</p>
+              </div>
+            </div>
+            <div class="panel-body assistant">
+              <input id="assistantQuestion" class="input" value="Why was this case marked critical?">
+              <button id="askButton" class="button primary" type="button">Ask assistant</button>
+              <div id="assistantAnswer" class="answer">Select a case and ask a question.</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="grid cols-2" style="margin-top:16px">
+        <div class="panel">
+          <div class="panel-header">
+            <div>
+              <h3>RAG policy memory</h3>
+              <p>Public policy and SOP snapshots used for explanations.</p>
+            </div>
+          </div>
+          <div id="ragDocs" class="cards panel-body"></div>
+        </div>
+        <div class="panel">
+          <div class="panel-header">
+            <div>
+              <h3>Security model</h3>
+              <p>Cognito-ready RBAC, OAuth scopes, and runtime secrets.</p>
+            </div>
+          </div>
+          <div id="authz" class="cards panel-body"></div>
+        </div>
+      </section>
+
+      <p class="footer-note">Development auth uses demo headers. Production target: Cognito JWTs, service OAuth scopes, AWS Secrets Manager, CloudWatch, SQS, S3, and replaceable government provider contracts.</p>
+    </main>
+  </div>
+  <script src="/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>TaxNet Guardian | Citizen Portal</title>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body data-page="citizen">
+  <div class="shell">
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-mark">CP</div>
+        <div>
+          <h1>Citizen Portal</h1>
+          <p>Transparent correction path</p>
+        </div>
+      </div>
+      <nav class="nav">
+        <a href="/">Auditor dashboard</a>
+        <a href="/sandbox">Gov data sandbox</a>
+        <a class="active" href="/citizen">Citizen portal</a>
+      </nav>
+    </aside>
+
+    <main class="main">
+      <section class="topbar">
+        <div>
+          <p class="eyebrow">Fairness workflow</p>
+          <h2>Review and correct linked records</h2>
+          <p class="subtle">Citizens see a safe explanation, submit corrections, and upload evidence before an auditor escalates a case.</p>
+        </div>
+      </section>
+
+      <section class="grid cols-2">
+        <div class="panel">
+          <div class="panel-header">
+            <div>
+              <h3>My compliance summary</h3>
+              <p>Citizen-safe view without exposing investigative internals.</p>
+            </div>
+          </div>
+          <div id="citizenSummary" class="panel-body"></div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-header">
+            <div>
+              <h3>Submit a correction</h3>
+              <p>Use this if a linked record is stale, wrong, or already declared.</p>
+            </div>
+          </div>
+          <div class="panel-body stack">
+            <label>
+              Correction type
+              <select id="correctionType" class="select"></select>
+            </label>
+            <label>
+              Explanation
+              <textarea id="correctionMessage" class="textarea" rows="6">The linked vehicle/property/business record should be reviewed because the ownership details may be outdated.</textarea>
+            </label>
+            <button id="submitCorrection" class="button primary" type="button">Submit correction</button>
+            <div id="correctionStatus" class="answer">No correction submitted in this session.</div>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel" style="margin-top:16px">
+        <div class="panel-header">
+          <div>
+            <h3>Why this matters</h3>
+            <p>The system is built for review, not automatic punishment.</p>
+          </div>
+        </div>
+        <div class="panel-body cards">
+          <div class="mini-card">
+            <h4>Explainable</h4>
+            <p>Every flag must be backed by structured evidence and policy citations.</p>
+          </div>
+          <div class="mini-card">
+            <h4>Correctable</h4>
+            <p>Citizens can challenge stale or mismatched records before escalation.</p>
+          </div>
+          <div class="mini-card">
+            <h4>Human-reviewed</h4>
+            <p>AI prioritizes cases; authorized auditors make decisions.</p>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+  <script src="/app.js"></script>
+</body>
+</html>
