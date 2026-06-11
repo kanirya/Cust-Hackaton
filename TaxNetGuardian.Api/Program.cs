@@ -473,12 +473,14 @@ app.MapPost("/api/system/rag/documents", (TaxNetState state, RagFeedRequest requ
 
 app.MapGet("/api/system/model-gateway", () =>
 {
-    var config = new ModelGatewayClient().GetConfig();
+    var client = new ModelGatewayClient();
+    var config = client.GetConfig();
     return Results.Ok(new
     {
         service = "TaxNet.AI.ModelGateway",
         defaultProvider = config.DefaultProvider,
         providerStatus = config.Providers,
+        secretDiagnostics = client.GetSecretDiagnosticsAsync().GetAwaiter().GetResult(),
         routing = new[]
         {
             new { task = "AuditExplanation", route = "OpenAI/Claude/Gemini/DeepSeek when allowed and key exists; deterministic fallback otherwise", reason = "quality and reasoning" },

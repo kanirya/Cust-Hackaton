@@ -30,6 +30,7 @@ var api = builder
     .WithHttpEndpoint(port: 5191, name: "http")
     .WithEnvironment("TAXNET_QUEUE_MODE", "LocalStack")
     .WithEnvironment("TAXNET_OBJECT_STORE_MODE", "LocalStack")
+    .WithEnvironment("TAXNET_SECRET_PROVIDER", "LocalStack")
     .WithEnvironment("TAXNET_WORKER_DATA_ROOT", workerDataRoot)
     .WithEnvironment("TAXNET_API_BASE_URL", apiBaseUrl)
     .WithEnvironment("LOCALSTACK_ENDPOINT", localStackEndpoint)
@@ -64,6 +65,5 @@ void AddWorker<TProject>(string resourceName, string workerName, string queueNam
         .WithEnvironment("TAXNET_API_BASE_URL", apiBaseUrl)
         .WithEnvironment("TAXNET_DEMO_ROLE", "taxnet-admin")
         .WithEnvironment("LOCALSTACK_ENDPOINT", localStackEndpoint)
-        .WaitForCompletion(terraformApply)
-        .WaitFor(api);
+        .WaitForCompletion(terraformApply);
 }

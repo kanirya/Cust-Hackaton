@@ -18,3 +18,8 @@ variable "project" {
   default = "taxnet"
 }
 
+variable "enable_cognito" {
+  type        = bool
+  default     = false
+  description = "Enable Cognito resources when the LocalStack edition supports cognito-idp."
+}

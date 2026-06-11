@@ -146,6 +146,8 @@ resource "aws_secretsmanager_secret_version" "secrets" {
 }
 
 resource "aws_cognito_user_pool" "taxnet" {
+  count = var.enable_cognito ? 1 : 0
+
   name = "taxnet-dev-users"
 
   username_attributes      = ["email"]
@@ -161,9 +163,11 @@ resource "aws_cognito_user_pool" "taxnet" {
 }
 
 resource "aws_cognito_resource_server" "taxnet_api" {
+  count = var.enable_cognito ? 1 : 0
+
   identifier   = "taxnet-api"
   name         = "TaxNet Guardian API"
-  user_pool_id = aws_cognito_user_pool.taxnet.id
+  user_pool_id = aws_cognito_user_pool.taxnet[0].id
 
   scope {
     scope_name        = "cases.read"
@@ -187,15 +191,17 @@ resource "aws_cognito_resource_server" "taxnet_api" {
 }
 
 resource "aws_cognito_user_group" "groups" {
-  for_each     = local.cognito_groups
+  for_each     = var.enable_cognito ? local.cognito_groups : toset([])
   name         = each.value
-  user_pool_id = aws_cognito_user_pool.taxnet.id
+  user_pool_id = aws_cognito_user_pool.taxnet[0].id
   description  = "Local TaxNet Guardian role ${each.value}"
 }
 
 resource "aws_cognito_user_pool_client" "spa" {
+  count = var.enable_cognito ? 1 : 0
+
   name                                 = "taxnet-dev-spa"
-  user_pool_id                         = aws_cognito_user_pool.taxnet.id
+  user_pool_id                         = aws_cognito_user_pool.taxnet[0].id
   generate_secret                      = false
   allowed_oauth_flows_user_pool_client = true
   allowed_oauth_flows                  = ["code"]
@@ -206,8 +212,10 @@ resource "aws_cognito_user_pool_client" "spa" {
 }
 
 resource "aws_cognito_user_pool_client" "service" {
+  count = var.enable_cognito ? 1 : 0
+
   name                                 = "taxnet-dev-service-client"
-  user_pool_id                         = aws_cognito_user_pool.taxnet.id
+  user_pool_id                         = aws_cognito_user_pool.taxnet[0].id
   generate_secret                      = true
   allowed_oauth_flows_user_pool_client = true
   allowed_oauth_flows                  = ["client_credentials"]
@@ -275,4 +283,3 @@ resource "aws_iam_role_policy_attachment" "worker_policy" {
   role       = aws_iam_role.worker_role.name
   policy_arn = aws_iam_policy.worker_policy.arn
 }
-

@@ -6,15 +6,63 @@ namespace TaxNetGuardian.Api;
 
 public sealed class ModelGatewayClient
 {
+    private readonly ISecretProvider _secretProvider;
     private readonly JsonSerializerOptions _jsonOptions = new(JsonSerializerDefaults.Web)
     {
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase
     };
 
+    public ModelGatewayClient()
+        : this(new LocalStackSecretsManagerSecretProvider())
+    {
+    }
+
+    public ModelGatewayClient(ISecretProvider secretProvider)
+    {
+        _secretProvider = secretProvider;
+    }
+
     public ModelGatewayConfig GetConfig()
+        => GetConfigAsync().GetAwaiter().GetResult();
+
+    public async Task<ModelGatewayConfig> GetConfigAsync(CancellationToken cancellationToken = default)
     {
         var defaultProvider = Environment.GetEnvironmentVariable("MODEL_GATEWAY_DEFAULT_PROVIDER") ?? "auto";
-        return new ModelGatewayConfig(defaultProvider, ProviderStatuses());
+        return new ModelGatewayConfig(defaultProvider, await ProviderStatusesAsync(cancellationToken));
+    }
+
+    public async Task<IReadOnlyList<ModelSecretDiagnostic>> GetSecretDiagnosticsAsync(CancellationToken cancellationToken = default)
+    {
+        var secrets = new[]
+        {
+            ("openai", "OPENAI_API_KEY", "taxnet/dev/model-gateway/openai"),
+            ("deepseek", "DEEPSEEK_API_KEY", "taxnet/dev/model-gateway/deepseek"),
+            ("gemini", "GEMINI_API_KEY", "taxnet/dev/model-gateway/gemini"),
+            ("claude", "CLAUDE_API_KEY", "taxnet/dev/model-gateway/claude")
+        };
+
+        var diagnostics = new List<ModelSecretDiagnostic>();
+        foreach (var (provider, environmentVariable, secretName) in secrets)
+        {
+            var environmentValue = Environment.GetEnvironmentVariable(environmentVariable);
+            var secretRead = _secretProvider is LocalStackSecretsManagerSecretProvider localStackSecrets
+                ? await localStackSecrets.GetSecretAsync(secretName, cancellationToken)
+                : new SecretReadResult(secretName, false, await _secretProvider.GetSecretStringAsync(secretName, cancellationToken), "", null, null);
+            var secretString = secretRead.SecretString;
+            diagnostics.Add(new ModelSecretDiagnostic(
+                provider,
+                environmentVariable,
+                secretName,
+                !string.IsNullOrWhiteSpace(environmentValue),
+                !string.IsNullOrWhiteSpace(secretString),
+                secretString?.Length ?? 0,
+                !string.IsNullOrWhiteSpace(secretString) && !string.IsNullOrWhiteSpace(ExtractApiKey(secretString)),
+                secretRead.Endpoint,
+                secretRead.StatusCode,
+                secretRead.Error is null ? null : secretRead.Error.Length <= 180 ? secretRead.Error : secretRead.Error[..180]));
+        }
+
+        return diagnostics;
     }
 
     public async Task<ModelGatewayProviderResult> InvokeAsync(
@@ -25,7 +73,7 @@ public sealed class ModelGatewayClient
         IReadOnlyList<RagChunk> contextChunks,
         CancellationToken cancellationToken = default)
     {
-        var selected = SelectProvider(preferredProvider, allowExternalProvider);
+        var selected = await SelectProviderAsync(preferredProvider, allowExternalProvider, cancellationToken);
         if (selected.Provider.Equals("deterministic-template", StringComparison.OrdinalIgnoreCase))
         {
             return new ModelGatewayProviderResult("Deterministic template fallback", selected.Route, selected.Model, "", false, "No external provider selected or configured.");
@@ -51,7 +99,7 @@ public sealed class ModelGatewayClient
         }
     }
 
-    private ProviderSelection SelectProvider(string preferredProvider, bool allowExternalProvider)
+    private async Task<ProviderSelection> SelectProviderAsync(string preferredProvider, bool allowExternalProvider, CancellationToken cancellationToken)
     {
         if (!allowExternalProvider)
         {
@@ -60,10 +108,10 @@ public sealed class ModelGatewayClient
 
         var providers = new[]
         {
-            ProviderSelection.OpenAi(),
-            ProviderSelection.DeepSeek(),
-            ProviderSelection.Gemini(),
-            ProviderSelection.Claude()
+            await OpenAiAsync(cancellationToken),
+            await DeepSeekAsync(cancellationToken),
+            await GeminiAsync(cancellationToken),
+            await ClaudeAsync(cancellationToken)
         };
 
         if (!string.IsNullOrWhiteSpace(preferredProvider) && !preferredProvider.Equals("auto", StringComparison.OrdinalIgnoreCase))
@@ -85,14 +133,14 @@ public sealed class ModelGatewayClient
         return providers.FirstOrDefault(x => x.HasKey) ?? ProviderSelection.Fallback("no provider keys configured");
     }
 
-    private IReadOnlyList<ModelProviderStatus> ProviderStatuses()
+    private async Task<IReadOnlyList<ModelProviderStatus>> ProviderStatusesAsync(CancellationToken cancellationToken)
     {
         var providers = new[]
         {
-            ProviderSelection.OpenAi(),
-            ProviderSelection.DeepSeek(),
-            ProviderSelection.Gemini(),
-            ProviderSelection.Claude()
+            await OpenAiAsync(cancellationToken),
+            await DeepSeekAsync(cancellationToken),
+            await GeminiAsync(cancellationToken),
+            await ClaudeAsync(cancellationToken)
         };
 
         return providers
@@ -203,22 +251,115 @@ public sealed class ModelGatewayClient
 
     private sealed record ProviderSelection(string Provider, bool HasKey, string ApiKey, string Endpoint, string Model, string Route)
     {
-        public static ProviderSelection OpenAi()
-            => new("openai", Has("OPENAI_API_KEY"), Environment.GetEnvironmentVariable("OPENAI_API_KEY") ?? "", Environment.GetEnvironmentVariable("OPENAI_API_BASE_URL") ?? "https://api.openai.com/v1/chat/completions", Environment.GetEnvironmentVariable("OPENAI_MODEL") ?? "gpt-4o-mini", "openai-chat-completions");
-
-        public static ProviderSelection DeepSeek()
-            => new("deepseek", Has("DEEPSEEK_API_KEY"), Environment.GetEnvironmentVariable("DEEPSEEK_API_KEY") ?? "", Environment.GetEnvironmentVariable("DEEPSEEK_API_BASE_URL") ?? "https://api.deepseek.com/chat/completions", Environment.GetEnvironmentVariable("DEEPSEEK_MODEL") ?? "deepseek-chat", "deepseek-openai-compatible");
-
-        public static ProviderSelection Gemini()
-            => new("gemini", Has("GEMINI_API_KEY"), Environment.GetEnvironmentVariable("GEMINI_API_KEY") ?? "", Environment.GetEnvironmentVariable("GEMINI_API_BASE_URL") ?? "https://generativelanguage.googleapis.com", Environment.GetEnvironmentVariable("GEMINI_MODEL") ?? "gemini-1.5-flash", "gemini-generate-content");
-
-        public static ProviderSelection Claude()
-            => new("claude", Has("CLAUDE_API_KEY"), Environment.GetEnvironmentVariable("CLAUDE_API_KEY") ?? "", Environment.GetEnvironmentVariable("CLAUDE_API_BASE_URL") ?? "https://api.anthropic.com/v1/messages", Environment.GetEnvironmentVariable("CLAUDE_MODEL") ?? "claude-3-5-haiku-latest", "claude-messages");
-
         public static ProviderSelection Fallback(string reason)
             => new("deterministic-template", true, "", "offline://template", "taxnet-template-v1", $"offline-template: {reason}");
+    }
 
-        private static bool Has(string name)
-            => !string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable(name));
+    private async Task<ProviderSelection> OpenAiAsync(CancellationToken cancellationToken)
+    {
+        var key = await ResolveApiKeyAsync("OPENAI_API_KEY", "taxnet/dev/model-gateway/openai", cancellationToken);
+        return new(
+            "openai",
+            !string.IsNullOrWhiteSpace(key),
+            key ?? "",
+            Environment.GetEnvironmentVariable("OPENAI_API_BASE_URL") ?? "https://api.openai.com/v1/chat/completions",
+            Environment.GetEnvironmentVariable("OPENAI_MODEL") ?? "gpt-4o-mini",
+            "openai-chat-completions");
+    }
+
+    private async Task<ProviderSelection> DeepSeekAsync(CancellationToken cancellationToken)
+    {
+        var key = await ResolveApiKeyAsync("DEEPSEEK_API_KEY", "taxnet/dev/model-gateway/deepseek", cancellationToken);
+        return new(
+            "deepseek",
+            !string.IsNullOrWhiteSpace(key),
+            key ?? "",
+            Environment.GetEnvironmentVariable("DEEPSEEK_API_BASE_URL") ?? "https://api.deepseek.com/chat/completions",
+            Environment.GetEnvironmentVariable("DEEPSEEK_MODEL") ?? "deepseek-chat",
+            "deepseek-openai-compatible");
+    }
+
+    private async Task<ProviderSelection> GeminiAsync(CancellationToken cancellationToken)
+    {
+        var key = await ResolveApiKeyAsync("GEMINI_API_KEY", "taxnet/dev/model-gateway/gemini", cancellationToken);
+        return new(
+            "gemini",
+            !string.IsNullOrWhiteSpace(key),
+            key ?? "",
+            Environment.GetEnvironmentVariable("GEMINI_API_BASE_URL") ?? "https://generativelanguage.googleapis.com",
+            Environment.GetEnvironmentVariable("GEMINI_MODEL") ?? "gemini-1.5-flash",
+            "gemini-generate-content");
+    }
+
+    private async Task<ProviderSelection> ClaudeAsync(CancellationToken cancellationToken)
+    {
+        var key = await ResolveApiKeyAsync("CLAUDE_API_KEY", "taxnet/dev/model-gateway/claude", cancellationToken);
+        return new(
+            "claude",
+            !string.IsNullOrWhiteSpace(key),
+            key ?? "",
+            Environment.GetEnvironmentVariable("CLAUDE_API_BASE_URL") ?? "https://api.anthropic.com/v1/messages",
+            Environment.GetEnvironmentVariable("CLAUDE_MODEL") ?? "claude-3-5-haiku-latest",
+            "claude-messages");
+    }
+
+    private async Task<string?> ResolveApiKeyAsync(string environmentVariable, string secretName, CancellationToken cancellationToken)
+    {
+        var environmentValue = Environment.GetEnvironmentVariable(environmentVariable);
+        if (!string.IsNullOrWhiteSpace(environmentValue))
+        {
+            return environmentValue;
+        }
+
+        var secretString = await _secretProvider.GetSecretStringAsync(secretName, cancellationToken);
+        if (string.IsNullOrWhiteSpace(secretString))
+        {
+            return null;
+        }
+
+        return ExtractApiKey(secretString);
+    }
+
+    private static string? ExtractApiKey(string secretString)
+    {
+        var trimmed = secretString.Trim();
+        if (!trimmed.StartsWith('{'))
+        {
+            return string.IsNullOrWhiteSpace(trimmed) ? null : trimmed;
+        }
+
+        try
+        {
+            using var json = JsonDocument.Parse(trimmed);
+            foreach (var name in new[] { "apiKey", "api_key", "key", "value", "secret" })
+            {
+                if (json.RootElement.TryGetProperty(name, out var property))
+                {
+                    var value = property.GetString();
+                    if (!string.IsNullOrWhiteSpace(value))
+                    {
+                        return value;
+                    }
+                }
+            }
+        }
+        catch (JsonException)
+        {
+            return null;
+        }
+
+        return null;
     }
 }
+
+public sealed record ModelSecretDiagnostic(
+    string Provider,
+    string EnvironmentVariable,
+    string SecretName,
+    bool HasEnvironmentValue,
+    bool SecretReadable,
+    int SecretStringLength,
+    bool SecretHasApiKey,
+    string Endpoint,
+    int? StatusCode,
+    string? Error);

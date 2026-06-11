@@ -11,18 +11,17 @@ output "s3_buckets" {
 }
 
 output "cognito_user_pool_id" {
-  value = aws_cognito_user_pool.taxnet.id
+  value = try(aws_cognito_user_pool.taxnet[0].id, null)
 }
 
 output "cognito_spa_client_id" {
-  value = aws_cognito_user_pool_client.spa.id
+  value = try(aws_cognito_user_pool_client.spa[0].id, null)
 }
 
 output "cognito_service_client_id" {
-  value = aws_cognito_user_pool_client.service.id
+  value = try(aws_cognito_user_pool_client.service[0].id, null)
 }
 
 output "secret_names" {
   value = keys(aws_secretsmanager_secret.secrets)
 }
-

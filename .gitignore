@@ -11,6 +11,7 @@ node_modules/
 TaxNetGuardian.Web/node_modules/
 TaxNetGuardian.Web/dist/
 logs/
+infra/localstack/terraform.tfstate*
 *.user
 *.suo
 *.tmp

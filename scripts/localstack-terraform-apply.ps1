@@ -55,6 +55,7 @@ function Invoke-Terraform {
     "-e", "TF_DATA_DIR=/state/.terraform",
     "-e", "TF_VAR_localstack_endpoint=$containerEndpoint",
     "-e", "TF_VAR_aws_region=us-east-1",
+    "-e", "TF_VAR_enable_cognito=false",
     $terraformImage
   ) + $TerraformArgs
 
@@ -66,6 +67,6 @@ function Invoke-Terraform {
 }
 
 Invoke-Terraform @("init", "-input=false")
-Invoke-Terraform @("apply", "-auto-approve", "-input=false")
+Invoke-Terraform @("apply", "-auto-approve", "-input=false", "-state=/state/terraform.tfstate")
 
 Write-Host "LocalStack Terraform provisioning completed."
