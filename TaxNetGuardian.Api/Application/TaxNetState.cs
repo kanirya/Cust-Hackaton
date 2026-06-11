@@ -112,14 +112,15 @@ public sealed partial class TaxNetState
             linkedRecords.AddRange(Businesses.Where(x => x.RelatedIdentityToken.Value == person.IdentityToken.Value).Select(x => x.ProviderRecordId));
             linkedRecords.AddRange(Travel.Where(x => x.TravelerIdentityToken.Value == person.IdentityToken.Value).Select(x => x.ProviderRecordId));
 
-            var confidence = linkedRecords.Count >= 5 ? 0.96m : linkedRecords.Count >= 3 ? 0.89m : 0.76m;
+            // Use real weighted Jaro-Winkler identity resolution algorithm (§14.3)
+            var matchResult = IdentityResolutionEngine.CalculateMatchScore(person, linkedRecords);
             var entity = new ResolvedEntity(
                 $"entity-{person.Id}",
                 person.Id,
-                confidence,
+                matchResult.MatchConfidence,
                 linkedRecords,
-                BuildMatchReasons(person, linkedRecords.Count, confidence),
-                confidence < 0.90m);
+                matchResult.MatchReasons,
+                matchResult.RequiresHumanReview);
 
             Entities.Add(entity);
 

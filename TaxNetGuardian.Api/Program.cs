@@ -618,6 +618,28 @@ app.MapPost("/api/connectors/{providerCode}/test", (TaxNetState state, string pr
     }
 });
 
+app.MapGet("/api/connectors/providers", async (IGovernmentProviderRegistry registry, CancellationToken cancellationToken) =>
+{
+    var providers = registry.GetAllProviders();
+    var healthTasks = providers.Select(p => p.CheckHealthAsync(cancellationToken)).ToArray();
+    var healths = await Task.WhenAll(healthTasks);
+    return Results.Ok(new
+    {
+        providers = providers.Zip(healths).Select(x => new
+        {
+            x.First.ProviderCode,
+            x.First.ProviderName,
+            x.Second.IsHealthy,
+            x.Second.Status,
+            x.Second.LatencyMs,
+            x.Second.CheckedAtUtc,
+            x.Second.Error,
+            replacementStrategy = "Implement IGovernmentDataProvider and register in GovernmentProviderRegistry"
+        }),
+        note = "SandboxGovernmentDataProvider is active. Register NadraGovernmentDataProvider/FbrGovernmentDataProvider when official APIs are available."
+    });
+});
+
 app.MapGet("/api/system/rag", (TaxNetState state) => Results.Ok(new
 {
     service = "TaxNet.RagPolicy",
