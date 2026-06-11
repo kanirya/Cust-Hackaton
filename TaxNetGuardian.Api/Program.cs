@@ -1,11 +1,26 @@
 using System.Threading.RateLimiting;
 using Microsoft.AspNetCore.RateLimiting;
+using Serilog;
+using Serilog.Formatting.Compact;
 using TaxNetGuardian.Api;
 using TaxNetGuardian.Worker.Shared;
 
 var builder = WebApplication.CreateBuilder(args);
 var platformOptions = new TaxNetPlatformOptions();
 builder.Configuration.GetSection(TaxNetPlatformOptions.SectionName).Bind(platformOptions);
+
+builder.Host.UseSerilog((context, services, configuration) => configuration
+    .ReadFrom.Configuration(context.Configuration)
+    .ReadFrom.Services(services)
+    .Enrich.FromLogContext()
+    .Enrich.WithMachineName()
+    .Enrich.WithThreadId()
+    .WriteTo.Console(new CompactJsonFormatter())
+    .WriteTo.File(
+        new CompactJsonFormatter(),
+        Path.Combine("App_Data", "logs", "taxnet-.log"),
+        rollingInterval: RollingInterval.Day,
+        retainedFileCountLimit: 7));
 
 builder.Services.ConfigureHttpJsonOptions(options =>
 {
@@ -20,12 +35,63 @@ builder.Services.AddSingleton(sp => new TaxNetState(
 builder.Services.AddSingleton<ISecretProvider>(_ => SecretProviderFactory.Create(platformOptions));
 builder.Services.AddSingleton<ModelGatewayClient>();
 builder.Services.AddSingleton<CognitoIdentityProviderStatus>();
+
+builder.Services.AddSingleton<IGovernmentProviderRegistry>(sp =>
+    new GovernmentProviderRegistry(sp.GetRequiredService<TaxNetState>()));
+
+builder.Services.AddHealthChecks();
+
+// Wire real JWT bearer authentication when CognitoJwt mode is configured
+if (platformOptions.Auth.RequireJwt)
+{
+    builder.Services
+        .AddAuthentication("Bearer")
+        .AddJwtBearer("Bearer", options =>
+        {
+            options.Authority = platformOptions.Auth.Authority;
+            options.Audience = platformOptions.Auth.Audience;
+            options.RequireHttpsMetadata = platformOptions.Auth.RequireHttpsMetadata;
+            options.TokenValidationParameters = new Microsoft.IdentityModel.Tokens.TokenValidationParameters
+            {
+                ValidateIssuer = true,
+                ValidateAudience = true,
+                ValidateLifetime = true,
+                ValidateIssuerSigningKey = true,
+                NameClaimType = "sub",
+                RoleClaimType = platformOptions.Auth.RoleClaim
+            };
+        });
+
+    builder.Services.AddAuthorization(options =>
+    {
+        options.AddPolicy("CasesRead", policy =>
+            policy.RequireAuthenticatedUser());
+
+        options.AddPolicy("SandboxAdmin", policy =>
+            policy.RequireAuthenticatedUser()
+                  .RequireAssertion(ctx =>
+                      ctx.User.IsInRole("taxnet-admin") ||
+                      ctx.User.IsInRole("taxnet-sandbox-admin")));
+
+        options.AddPolicy("AuditorsOnly", policy =>
+            policy.RequireAuthenticatedUser()
+                  .RequireAssertion(ctx =>
+                      ctx.User.IsInRole("taxnet-admin") ||
+                      ctx.User.IsInRole("taxnet-auditor") ||
+                      ctx.User.IsInRole("taxnet-senior-auditor")));
+    });
+}
+else
+{
+    builder.Services.AddAuthentication();
+    builder.Services.AddAuthorization();
+}
+
 builder.Services.AddCors(options =>
 {
     options.AddDefaultPolicy(policy =>
         policy.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod());
 });
-builder.Services.AddHealthChecks();
 builder.Services.AddRateLimiter(options =>
 {
     options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
@@ -49,10 +115,14 @@ builder.Services.AddRateLimiter(options =>
 
 var app = builder.Build();
 
+app.UseMiddleware<GlobalExceptionMiddleware>();
+app.UseSerilogRequestLogging();
 app.UseCors();
 app.UseMiddleware<CorrelationIdMiddleware>();
 app.UseMiddleware<RequestAuditMiddleware>();
 app.UseRateLimiter();
+app.UseAuthentication();
+app.UseAuthorization();
 app.UseDefaultFiles();
 app.UseStaticFiles();
 if (platformOptions.Auth.RequireJwt)
