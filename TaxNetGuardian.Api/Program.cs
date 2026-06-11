@@ -1,25 +1,82 @@
+using System.Threading.RateLimiting;
+using Microsoft.AspNetCore.RateLimiting;
 using TaxNetGuardian.Api;
 using TaxNetGuardian.Worker.Shared;
 
 var builder = WebApplication.CreateBuilder(args);
+var platformOptions = new TaxNetPlatformOptions();
+builder.Configuration.GetSection(TaxNetPlatformOptions.SectionName).Bind(platformOptions);
 
 builder.Services.ConfigureHttpJsonOptions(options =>
 {
     options.SerializerOptions.PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase;
     options.SerializerOptions.WriteIndented = true;
 });
+builder.Services.AddSingleton(platformOptions);
 builder.Services.AddSingleton(sp => new TaxNetState(sp.GetRequiredService<IWebHostEnvironment>()));
+builder.Services.AddSingleton<ISecretProvider, LocalStackSecretsManagerSecretProvider>();
+builder.Services.AddSingleton<ModelGatewayClient>();
 builder.Services.AddCors(options =>
 {
     options.AddDefaultPolicy(policy =>
         policy.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod());
 });
+builder.Services.AddHealthChecks();
+builder.Services.AddRateLimiter(options =>
+{
+    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+    options.GlobalLimiter = PartitionedRateLimiter.Create<HttpContext, string>(context =>
+    {
+        var key = AuthorizationCatalog.GetCurrentActor(context);
+        if (string.IsNullOrWhiteSpace(key) || key.Equals("taxnet-admin", StringComparison.OrdinalIgnoreCase))
+        {
+            key = context.Connection.RemoteIpAddress?.ToString() ?? "anonymous";
+        }
+
+        return RateLimitPartition.GetFixedWindowLimiter(key, _ => new FixedWindowRateLimiterOptions
+        {
+            PermitLimit = Math.Max(1, platformOptions.RateLimits.PermitLimit),
+            Window = TimeSpan.FromSeconds(Math.Max(1, platformOptions.RateLimits.WindowSeconds)),
+            QueueLimit = Math.Max(0, platformOptions.RateLimits.QueueLimit),
+            QueueProcessingOrder = QueueProcessingOrder.OldestFirst
+        });
+    });
+});
 
 var app = builder.Build();
 
 app.UseCors();
+app.UseMiddleware<CorrelationIdMiddleware>();
+app.UseMiddleware<RequestAuditMiddleware>();
+app.UseRateLimiter();
 app.UseDefaultFiles();
 app.UseStaticFiles();
+if (platformOptions.Auth.RequireJwt)
+{
+    app.UseMiddleware<JwtClaimsProjectionMiddleware>();
+}
+app.Use(async (context, next) =>
+{
+    var path = context.Request.Path.Value ?? "";
+    var isProtectedApi = path.StartsWith("/api", StringComparison.OrdinalIgnoreCase) ||
+                         path.StartsWith("/sandbox", StringComparison.OrdinalIgnoreCase);
+    var isHealth = path.StartsWith("/api/health", StringComparison.OrdinalIgnoreCase) ||
+                   path.StartsWith("/health", StringComparison.OrdinalIgnoreCase);
+
+    if (platformOptions.Auth.RequireJwt && isProtectedApi && !isHealth && context.User.Identity?.IsAuthenticated != true)
+    {
+        context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+        await context.Response.WriteAsJsonAsync(new
+        {
+            message = "Authentication required. Configure Cognito JWT bearer token for production mode.",
+            authMode = platformOptions.Auth.Mode,
+            correlationId = context.TraceIdentifier
+        });
+        return;
+    }
+
+    await next();
+});
 app.Use(async (context, next) =>
 {
     if (AuthorizationCatalog.TryGetAccessDecision(context, out var decision) && !decision.Allowed)
@@ -70,13 +127,40 @@ app.MapGet("/api/health", () => Results.Ok(new
     timestampUtc = DateTimeOffset.UtcNow
 }));
 
+app.MapGet("/health/live", () => Results.Ok(new
+{
+    status = "Live",
+    service = platformOptions.Observability.ServiceName,
+    timestampUtc = DateTimeOffset.UtcNow
+}));
+
+app.MapGet("/health/ready", async (TaxNetState state, ModelGatewayClient modelGatewayClient, TaxNetPlatformOptions options, CancellationToken cancellationToken) =>
+{
+    var modelConfig = await modelGatewayClient.GetConfigAsync(cancellationToken);
+    var diagnostics = await modelGatewayClient.GetSecretDiagnosticsAsync(cancellationToken);
+    var report = ProductionReadiness.Build(state, options, modelConfig, diagnostics);
+    var httpStatus = report.Status == "ProductionReady" || options.Auth.AllowDevelopmentHeaders
+        ? StatusCodes.Status200OK
+        : StatusCodes.Status503ServiceUnavailable;
+    return Results.Json(report, statusCode: httpStatus);
+});
+
 app.MapGet("/api/me", (HttpContext context) => Results.Ok(AuthorizationCatalog.CurrentUser(context)));
 
-app.MapGet("/api/authz", () => Results.Ok(new
+app.MapGet("/api/authz", (TaxNetPlatformOptions options) => Results.Ok(new
 {
-    mode = "Development header auth. Production target: Cognito User Pools for users, OAuth client credentials for services.",
+    mode = options.Auth.Mode,
+    productionTarget = "Cognito User Pools for users, OAuth client credentials for services.",
     headerRole = "X-Demo-Role",
     headerUser = "X-Demo-User",
+    jwt = new
+    {
+        options.Auth.Authority,
+        options.Auth.Audience,
+        options.Auth.RoleClaim,
+        options.Auth.ScopeClaim,
+        configured = options.Auth.RequireJwt && !string.IsNullOrWhiteSpace(options.Auth.Authority) && !string.IsNullOrWhiteSpace(options.Auth.Audience)
+    },
     roles = AuthorizationCatalog.Roles,
     internalServiceScopes = new[]
     {
@@ -396,28 +480,38 @@ app.MapGet("/api/system/notifications", (TaxNetState state) => Results.Ok(new
     sent = state.Notifications.Count(x => x.Status == "Sent")
 }));
 
-app.MapGet("/api/system/infra", (TaxNetState state) => Results.Ok(new
+app.MapGet("/api/system/infra", (TaxNetState state, TaxNetPlatformOptions options) => Results.Ok(new
 {
-    mode = "Hackathon modular monolith with production service boundaries",
+    mode = options.Storage.OperationalStore.Equals("PostgreSql", StringComparison.OrdinalIgnoreCase)
+        ? "Production modular monolith with deployable service boundaries"
+        : "Hackathon modular monolith with production service boundaries",
     stores = new[]
     {
-        new { name = "PostgreSQL", mvp = "In-memory normalized collections", status = "SimulatedReady", replacement = "RDS PostgreSQL" },
-        new { name = "Graph DB", mvp = "In-memory graph neighborhood builder", status = "SimulatedReady", replacement = "Neo4j/Memgraph/Neptune" },
-        new { name = "Vector DB", mvp = $"Lexical RAG index with {state.RagChunks.Count} chunks", status = "SimulatedReady", replacement = "Qdrant or pgvector" },
-        new { name = "S3", mvp = $"{state.ObjectStore.Count} object metadata records", status = "SimulatedReady", replacement = "S3 buckets" },
-        new { name = "SQS", mvp = $"{state.Workers.Count} queue-backed worker contracts", status = "SimulatedReady", replacement = "SQS queues + DLQs" },
-        new { name = "Secrets Manager", mvp = $"{state.Providers.Count} provider secret names configured", status = "ConfigReady", replacement = "AWS Secrets Manager" },
-        new { name = "CloudWatch", mvp = $"{state.AuditEvents.Count} structured audit events", status = "LogReady", replacement = "CloudWatch Logs/Metrics/Alarms" }
+        new { name = "Operational DB", configured = options.Storage.OperationalStore, current = $"{state.People.Count} people / {state.Cases.Count} cases", productionTarget = "RDS PostgreSQL" },
+        new { name = "Graph DB", configured = options.Storage.GraphStore, current = "In-memory graph neighborhood builder", productionTarget = "Neo4j/Memgraph/Neptune" },
+        new { name = "Vector DB", configured = options.Storage.VectorStore, current = $"Lexical RAG index with {state.RagChunks.Count} chunks", productionTarget = "Qdrant or pgvector" },
+        new { name = "Object Store", configured = options.Storage.ObjectStore, current = $"{state.ObjectStore.Count} object metadata records", productionTarget = "S3 buckets" },
+        new { name = "Queue Bus", configured = Environment.GetEnvironmentVariable("TAXNET_QUEUE_MODE") ?? "File", current = $"{state.Workers.Count} queue-backed worker contracts", productionTarget = "SQS queues + DLQs" },
+        new { name = "Secrets Manager", configured = Environment.GetEnvironmentVariable("TAXNET_SECRET_PROVIDER") ?? "LocalStack", current = $"{state.Providers.Count} provider secret names configured", productionTarget = "AWS Secrets Manager" },
+        new { name = "Observability", configured = options.Observability.ServiceName, current = $"{state.AuditEvents.Count} structured audit events", productionTarget = "CloudWatch + OpenTelemetry" }
     },
     environment = new
     {
-        taxnetEnv = Environment.GetEnvironmentVariable("TAXNET_ENV") ?? "dev",
+        taxnetEnv = options.Environment,
         awsRegion = Environment.GetEnvironmentVariable("AWS_REGION") ?? "ap-south-1",
         rawBucket = Environment.GetEnvironmentVariable("S3_BUCKET_RAW") ?? "taxnet-dev-raw-source-snapshots",
         reportBucket = Environment.GetEnvironmentVariable("S3_BUCKET_REPORTS") ?? "taxnet-dev-audit-reports",
-        modelDefault = Environment.GetEnvironmentVariable("MODEL_GATEWAY_DEFAULT_PROVIDER") ?? "deterministic-template"
+        modelDefault = Environment.GetEnvironmentVariable("MODEL_GATEWAY_DEFAULT_PROVIDER") ?? "deterministic-template",
+        authMode = options.Auth.Mode
     }
 }));
+
+app.MapGet("/api/system/readiness", async (TaxNetState state, ModelGatewayClient modelGatewayClient, TaxNetPlatformOptions options, CancellationToken cancellationToken) =>
+{
+    var config = await modelGatewayClient.GetConfigAsync(cancellationToken);
+    var diagnostics = await modelGatewayClient.GetSecretDiagnosticsAsync(cancellationToken);
+    return Results.Ok(ProductionReadiness.Build(state, options, config, diagnostics));
+});
 
 app.MapGet("/api/system/storage/schema", (TaxNetState state) => Results.Ok(state.GetStorageSchema()));
 
@@ -471,16 +565,15 @@ app.MapPost("/api/system/rag/documents", (TaxNetState state, RagFeedRequest requ
     });
 });
 
-app.MapGet("/api/system/model-gateway", () =>
+app.MapGet("/api/system/model-gateway", async (ModelGatewayClient client, CancellationToken cancellationToken) =>
 {
-    var client = new ModelGatewayClient();
-    var config = client.GetConfig();
+    var config = await client.GetConfigAsync(cancellationToken);
     return Results.Ok(new
     {
         service = "TaxNet.AI.ModelGateway",
         defaultProvider = config.DefaultProvider,
         providerStatus = config.Providers,
-        secretDiagnostics = client.GetSecretDiagnosticsAsync().GetAwaiter().GetResult(),
+        secretDiagnostics = await client.GetSecretDiagnosticsAsync(cancellationToken),
         routing = new[]
         {
             new { task = "AuditExplanation", route = "OpenAI/Claude/Gemini/DeepSeek when allowed and key exists; deterministic fallback otherwise", reason = "quality and reasoning" },

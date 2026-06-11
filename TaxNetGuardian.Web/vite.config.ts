@@ -9,8 +9,8 @@ export default defineConfig({
   },
   server: {
     proxy: {
-      "/api": "http://localhost:5187",
-      "/sandbox": "http://localhost:5187"
+      "/api": "http://localhost:5191",
+      "/sandbox": "http://localhost:5191"
     }
   }
 });

@@ -31,6 +31,12 @@ var api = builder
     .WithEnvironment("TAXNET_QUEUE_MODE", "LocalStack")
     .WithEnvironment("TAXNET_OBJECT_STORE_MODE", "LocalStack")
     .WithEnvironment("TAXNET_SECRET_PROVIDER", "LocalStack")
+    .WithEnvironment("TaxNet__Environment", "local-aspire")
+    .WithEnvironment("TaxNet__Auth__Mode", "DevelopmentHeaders")
+    .WithEnvironment("TaxNet__Storage__OperationalStore", "JsonSnapshot")
+    .WithEnvironment("TaxNet__Storage__GraphStore", "InMemoryGraph")
+    .WithEnvironment("TaxNet__Storage__VectorStore", "LexicalRagIndex")
+    .WithEnvironment("TaxNet__Storage__ObjectStore", "LocalStack")
     .WithEnvironment("TAXNET_WORKER_DATA_ROOT", workerDataRoot)
     .WithEnvironment("TAXNET_API_BASE_URL", apiBaseUrl)
     .WithEnvironment("LOCALSTACK_ENDPOINT", localStackEndpoint)
@@ -40,6 +46,19 @@ var api = builder
     .WithEnvironment("GEMINI_API_KEY", Environment.GetEnvironmentVariable("GEMINI_API_KEY") ?? "")
     .WithEnvironment("CLAUDE_API_KEY", Environment.GetEnvironmentVariable("CLAUDE_API_KEY") ?? "")
     .WaitForCompletion(terraformApply);
+
+var web = builder
+    .AddExecutable(
+        "taxnet-web",
+        "cmd",
+        Path.GetFullPath(Path.Combine(builder.AppHostDirectory, "..", "TaxNetGuardian.Web")),
+        "/c",
+        "npm",
+        "run",
+        "dev:aspire")
+    .WithHttpEndpoint(port: 5173, targetPort: 5174, name: "http")
+    .WithEnvironment("BROWSER", "none")
+    .WaitFor(api);
 
 AddWorker<Projects.TaxNetGuardian_Workers_Ingestion>("ingestion-worker", "Ingestion.Worker", "taxnet-dev-ingestion-jobs");
 AddWorker<Projects.TaxNetGuardian_Workers_IdentityResolution>("identity-resolution-worker", "IdentityResolution.Worker", "taxnet-dev-identity-resolution-jobs");

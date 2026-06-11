@@ -1,3 +1,5 @@
+using System.Security.Claims;
+
 namespace TaxNetGuardian.Api;
 
 public static class AuthorizationCatalog
@@ -46,20 +48,57 @@ public static class AuthorizationCatalog
 
     public static bool HasRole(HttpContext context, params string[] allowedRoles)
     {
-        var role = GetCurrentRole(context);
-        return allowedRoles.Contains(role, StringComparer.OrdinalIgnoreCase) ||
-               role.Equals("taxnet-admin", StringComparison.OrdinalIgnoreCase);
+        var roles = GetCurrentRoles(context);
+        return roles.Any(role =>
+            allowedRoles.Contains(role, StringComparer.OrdinalIgnoreCase) ||
+            role.Equals("taxnet-admin", StringComparison.OrdinalIgnoreCase));
     }
 
     public static string GetCurrentRole(HttpContext context)
-        => context.Request.Headers.TryGetValue("X-Demo-Role", out var role) && !string.IsNullOrWhiteSpace(role)
-            ? role.ToString()
-            : "taxnet-admin";
+    {
+        var roles = GetCurrentRoles(context);
+        return roles.FirstOrDefault() ?? "taxnet-anonymous";
+    }
+
+    public static IReadOnlyList<string> GetCurrentRoles(HttpContext context)
+    {
+        if (context.User.Identity?.IsAuthenticated == true)
+        {
+            var roles = context.User.Claims
+                .Where(IsRoleClaim)
+                .SelectMany(SplitClaimValue)
+                .Where(x => x.StartsWith("taxnet-", StringComparison.OrdinalIgnoreCase))
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .ToArray();
+
+            if (roles.Length > 0)
+            {
+                return roles;
+            }
+        }
+
+        if (context.Request.Headers.TryGetValue("X-Demo-Role", out var role) && !string.IsNullOrWhiteSpace(role))
+        {
+            return SplitHeaderRoles(role.ToString());
+        }
+
+        return ["taxnet-admin"];
+    }
 
     public static string GetCurrentActor(HttpContext context)
-        => context.Request.Headers.TryGetValue("X-Demo-User", out var user) && !string.IsNullOrWhiteSpace(user)
+    {
+        if (context.User.Identity?.IsAuthenticated == true)
+        {
+            return context.User.FindFirstValue("sub")
+                ?? context.User.FindFirstValue(ClaimTypes.NameIdentifier)
+                ?? context.User.Identity.Name
+                ?? GetCurrentRole(context);
+        }
+
+        return context.Request.Headers.TryGetValue("X-Demo-User", out var user) && !string.IsNullOrWhiteSpace(user)
             ? user.ToString()
             : GetCurrentRole(context);
+    }
 
     public static object CurrentUser(HttpContext context)
     {
@@ -69,8 +108,9 @@ public static class AuthorizationCatalog
         {
             userId = user,
             role,
-            mode = "Development header auth; production target is Cognito JWT + OAuth scopes.",
-            scopes = Roles.FirstOrDefault(x => x.Role.Equals(role, StringComparison.OrdinalIgnoreCase))?.Scopes ?? []
+            roles = GetCurrentRoles(context),
+            mode = context.User.Identity?.IsAuthenticated == true ? "JWT claims" : "Development header auth",
+            scopes = GetCurrentScopes(context)
         };
     }
 
@@ -88,10 +128,36 @@ public static class AuthorizationCatalog
             return false;
         }
 
-        var role = GetCurrentRole(context);
-        var allowed = policy.AllowedRoles.Contains(role, StringComparer.OrdinalIgnoreCase) ||
-                      role.Equals("taxnet-admin", StringComparison.OrdinalIgnoreCase);
+        var roles = GetCurrentRoles(context);
+        var role = roles.FirstOrDefault() ?? "taxnet-anonymous";
+        var allowed = roles.Any(current =>
+            policy.AllowedRoles.Contains(current, StringComparer.OrdinalIgnoreCase) ||
+            current.Equals("taxnet-admin", StringComparison.OrdinalIgnoreCase));
         decision = new AccessDecision(allowed, role, policy.AllowedRoles, path);
         return true;
     }
+
+    public static IReadOnlyList<string> GetCurrentScopes(HttpContext context)
+    {
+        if (context.User.Identity?.IsAuthenticated == true)
+        {
+            return context.User.Claims
+                .Where(x => x.Type is "scope" or "scp" or "client_scope")
+                .SelectMany(SplitClaimValue)
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .ToArray();
+        }
+
+        var role = GetCurrentRole(context);
+        return Roles.FirstOrDefault(x => x.Role.Equals(role, StringComparison.OrdinalIgnoreCase))?.Scopes ?? [];
+    }
+
+    private static bool IsRoleClaim(Claim claim)
+        => claim.Type is ClaimTypes.Role or "role" or "roles" or "cognito:groups" or "groups";
+
+    private static IReadOnlyList<string> SplitHeaderRoles(string value)
+        => value.Split([',', ' ', ';'], StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+
+    private static IEnumerable<string> SplitClaimValue(Claim claim)
+        => claim.Value.Split([',', ' ', ';'], StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
 }

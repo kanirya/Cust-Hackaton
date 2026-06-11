@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "savedAtUtc": "2026-06-11T17:21:05.2973378+00:00",
+  "savedAtUtc": "2026-06-11T18:11:00.8949476+00:00",
   "people": [
     {
       "id": "P001",
@@ -13290,7 +13290,7 @@
       "id": "case-P001",
       "entityId": "entity-P001",
       "personId": "P001",
-      "status": "FlaggedForReview",
+      "status": "CitizenResponded",
       "assignedTo": "Unassigned",
       "city": "Lahore",
       "province": "Punjab",
@@ -13426,7 +13426,7 @@
         }
       ],
       "createdAtUtc": "2026-06-08T15:40:17.8283248+00:00",
-      "updatedAtUtc": "2026-06-11T12:40:17.8283313+00:00"
+      "updatedAtUtc": "2026-06-11T18:08:08.9519246+00:00"
     },
     {
       "id": "case-P003",
@@ -19218,7 +19218,7 @@
       "processedToday": 9,
       "failedToday": 0,
       "status": "Healthy",
-      "lastRunAtUtc": "2026-06-11T12:35:19.0651646+00:00"
+      "lastRunAtUtc": "2026-06-11T18:05:00.8275428+00:00"
     },
     {
       "name": "IdentityResolution.Worker",
@@ -19227,7 +19227,7 @@
       "processedToday": 148,
       "failedToday": 1,
       "status": "Healthy",
-      "lastRunAtUtc": "2026-06-11T12:36:19.0651662+00:00"
+      "lastRunAtUtc": "2026-06-11T18:06:00.8275439+00:00"
     },
     {
       "name": "GraphIntelligence.Worker",
@@ -19236,7 +19236,7 @@
       "processedToday": 148,
       "failedToday": 0,
       "status": "Healthy",
-      "lastRunAtUtc": "2026-06-11T12:37:19.0651668+00:00"
+      "lastRunAtUtc": "2026-06-11T18:07:00.8275444+00:00"
     },
     {
       "name": "RiskScoring.Worker",
@@ -19245,34 +19245,34 @@
       "processedToday": 148,
       "failedToday": 0,
       "status": "Healthy",
-      "lastRunAtUtc": "2026-06-11T12:38:19.065167+00:00"
+      "lastRunAtUtc": "2026-06-11T18:08:00.8275445+00:00"
     },
     {
       "name": "RagPolicy.Worker",
       "queueName": "taxnet-dev-rag-index-jobs",
       "queueDepth": 0,
-      "processedToday": 6,
+      "processedToday": 8,
       "failedToday": 0,
       "status": "Healthy",
-      "lastRunAtUtc": "2026-06-11T12:39:19.0651673+00:00"
+      "lastRunAtUtc": "2026-06-11T18:09:00.8275448+00:00"
     },
     {
       "name": "Report.Worker",
       "queueName": "taxnet-dev-report-jobs",
-      "queueDepth": 0,
-      "processedToday": 4,
+      "queueDepth": 1,
+      "processedToday": 5,
       "failedToday": 0,
-      "status": "Idle",
-      "lastRunAtUtc": "2026-06-11T12:21:19.0651684+00:00"
+      "status": "Healthy",
+      "lastRunAtUtc": "2026-06-11T17:51:00.8275459+00:00"
     },
     {
       "name": "AuditLog.Worker",
       "queueName": "taxnet-dev-audit-log-jobs",
       "queueDepth": 0,
-      "processedToday": 526,
+      "processedToday": 529,
       "failedToday": 0,
       "status": "Healthy",
-      "lastRunAtUtc": "2026-06-11T12:40:19.0651687+00:00"
+      "lastRunAtUtc": "2026-06-11T18:10:00.8275461+00:00"
     }
   ],
   "providers": [
@@ -19348,6 +19348,32 @@
     }
   ],
   "ragDocuments": [
+    {
+      "id": "rag-008",
+      "title": "Live test policy",
+      "sourceType": "AuditSop",
+      "url": "sandbox://live-test",
+      "summary": "Live test policy says every high-risk tax anomaly requires human review, source verification, citizen correction rights, and citation backed report language.",
+      "capturedAtUtc": "2026-06-11T18:11:00.8261304+00:00",
+      "tags": [
+        "live-test",
+        "human-review",
+        "citizen"
+      ]
+    },
+    {
+      "id": "rag-007",
+      "title": "Punjab property valuation bulletin",
+      "sourceType": "PolicyPDF",
+      "url": "https://example.gov.pk/property-valuation",
+      "summary": "Official valuation tables indicate that undeclared high-value plots and commercial units should be correlated with filer status, declared income, and utility consumption before enforcement.",
+      "capturedAtUtc": "2026-06-11T18:08:56.4929837+00:00",
+      "tags": [
+        "property",
+        "valuation",
+        "tax-risk"
+      ]
+    },
     {
       "id": "rag-006",
       "title": "API seeded worker policy",
@@ -19664,10 +19690,119 @@
       },
       "qualityScore": 0.82,
       "indexedAtUtc": "2026-06-11T12:41:19.0640019+00:00"
+    },
+    {
+      "id": "chunk-rag-007-001",
+      "documentId": "rag-007",
+      "title": "Punjab property valuation bulletin",
+      "text": "Official valuation tables indicate that undeclared high-value plots and commercial units should be correlated with filer status, declared income, and utility consumption before enforcement.",
+      "keywords": [
+        "punjab",
+        "property",
+        "valuation",
+        "bulletin",
+        "policypdf",
+        "official",
+        "tables",
+        "indicate",
+        "undeclared",
+        "high",
+        "value",
+        "plots",
+        "commercial",
+        "units",
+        "correlated",
+        "filer",
+        "status",
+        "declared",
+        "income",
+        "utility",
+        "consumption",
+        "before",
+        "enforcement",
+        "tax"
+      ],
+      "citation": {
+        "title": "Punjab property valuation bulletin",
+        "url": "https://example.gov.pk/property-valuation",
+        "sourceType": "PolicyPDF",
+        "chunkId": "chunk-rag-007-001",
+        "capturedAtUtc": "2026-06-11T18:08:56.4929837+00:00"
+      },
+      "qualityScore": 0.89,
+      "indexedAtUtc": "2026-06-11T18:08:56.4971759+00:00"
+    },
+    {
+      "id": "chunk-rag-008-001",
+      "documentId": "rag-008",
+      "title": "Live test policy",
+      "text": "Live test policy says every high-risk tax anomaly requires human review, source verification, citizen correction rights, and citation backed report language.",
+      "keywords": [
+        "live",
+        "test",
+        "auditsop",
+        "says",
+        "every",
+        "high",
+        "risk",
+        "tax",
+        "anomaly",
+        "requires",
+        "human",
+        "review",
+        "source",
+        "verification",
+        "citizen",
+        "correction",
+        "rights",
+        "citation",
+        "backed",
+        "report",
+        "language"
+      ],
+      "citation": {
+        "title": "Live test policy",
+        "url": "sandbox://live-test",
+        "sourceType": "AuditSop",
+        "chunkId": "chunk-rag-008-001",
+        "capturedAtUtc": "2026-06-11T18:11:00.8261304+00:00"
+      },
+      "qualityScore": 0.87,
+      "indexedAtUtc": "2026-06-11T18:11:00.8262596+00:00"
     }
   ],
   "datasetBatches": [],
   "importJobs": [
+    {
+      "id": "job-rag-20260611181100",
+      "type": "RagIndex",
+      "status": "Succeeded",
+      "source": "Live test policy",
+      "recordsProcessed": 1,
+      "recordsCreated": 1,
+      "recordsFailed": 0,
+      "startedAtUtc": "2026-06-11T18:10:58.8275176+00:00",
+      "finishedAtUtc": "2026-06-11T18:11:00.8275193+00:00",
+      "messages": [
+        "Indexed policy document \u0027Live test policy\u0027.",
+        "Generated lexical embeddings, chunk metadata, and citation records."
+      ]
+    },
+    {
+      "id": "job-rag-20260611180856",
+      "type": "RagIndex",
+      "status": "Succeeded",
+      "source": "Punjab property valuation bulletin",
+      "recordsProcessed": 1,
+      "recordsCreated": 1,
+      "recordsFailed": 0,
+      "startedAtUtc": "2026-06-11T18:08:54.4996125+00:00",
+      "finishedAtUtc": "2026-06-11T18:08:56.4996188+00:00",
+      "messages": [
+        "Indexed policy document \u0027Punjab property valuation bulletin\u0027.",
+        "Generated lexical embeddings, chunk metadata, and citation records."
+      ]
+    },
     {
       "id": "job-rag-20260611124119",
       "type": "RagIndex",
@@ -19700,6 +19835,22 @@
     }
   ],
   "timelineEvents": [
+    {
+      "id": "evt-20260611180808951-049",
+      "caseId": "case-P001",
+      "eventType": "CaseStatusChanged",
+      "actor": "Citizen Portal",
+      "summary": "Citizen submitted AssetOwnershipDispute correction.",
+      "timestampUtc": "2026-06-11T18:08:08.951939+00:00"
+    },
+    {
+      "id": "evt-20260611180757254-048",
+      "caseId": "case-P001",
+      "eventType": "CaseStatusChanged",
+      "actor": "Citizen Portal",
+      "summary": "Citizen submitted AssetOwnershipDispute correction.",
+      "timestampUtc": "2026-06-11T18:07:57.2550341+00:00"
+    },
     {
       "id": "evt-20260611124129942-047",
       "caseId": "case-P001",
@@ -20090,6 +20241,116 @@
   ],
   "modelInvocations": [
     {
+      "invocationId": "model-20260611181100894-003",
+      "taskType": "PolicyQuestion",
+      "selectedProvider": "Deterministic template fallback",
+      "route": "offline-template: no provider keys configured",
+      "output": "Muhammad Ali Khan was flagged for human review because the declared tax profile is inconsistent with observed asset, consumption, and business signals. The current score is 98/100 (Critical) with 98% confidence. RAG confidence 98%. Key grounded reasons: AssetIncomeMismatch: Observed assets total PKR 73,000,000 against declared annual income PKR 0. UtilityIncomeMismatch: Average monthly utility bill is PKR 310,000. VehicleLuxurySignal: Largest linked vehicle engine capacity is 2700cc. Provider fallback: No external provider selected or configured.",
+      "guardrailsApplied": [
+        "PII redaction",
+        "evidence ID validation",
+        "citation validation",
+        "no fraud-proven language",
+        "human review warning"
+      ],
+      "citations": [
+        {
+          "title": "Vehicle and asset signal guidance",
+          "url": "sandbox://policy/vehicle-asset-signal",
+          "sourceType": "ExciseSchedule",
+          "chunkId": "chunk-rag-002-001",
+          "capturedAtUtc": "2026-06-08T12:40:17.8027177+00:00"
+        },
+        {
+          "title": "Demo bootstrap audit safeguards",
+          "url": "sandbox://demo/bootstrap-audit-safeguards",
+          "sourceType": "AuditSop",
+          "chunkId": "chunk-rag-005-001",
+          "capturedAtUtc": "2026-06-11T12:40:17.9054227+00:00"
+        },
+        {
+          "title": "Tax compliance review SOP",
+          "url": "sandbox://policy/tax-compliance-review-sop",
+          "sourceType": "AuditSop",
+          "chunkId": "chunk-rag-001-001",
+          "capturedAtUtc": "2026-06-09T12:40:17.8027071+00:00"
+        },
+        {
+          "title": "Punjab property valuation bulletin",
+          "url": "https://example.gov.pk/property-valuation",
+          "sourceType": "PolicyPDF",
+          "chunkId": "chunk-rag-007-001",
+          "capturedAtUtc": "2026-06-11T18:08:56.4929837+00:00"
+        },
+        {
+          "title": "Business ownership income review note",
+          "url": "sandbox://policy/business-ownership-income",
+          "sourceType": "TaxNotice",
+          "chunkId": "chunk-rag-004-001",
+          "capturedAtUtc": "2026-06-06T12:40:17.8027183+00:00"
+        }
+      ],
+      "promptTokens": 15,
+      "completionTokens": 138,
+      "estimatedCostUsd": 0,
+      "invokedAtUtc": "2026-06-11T18:11:00.8948203+00:00"
+    },
+    {
+      "invocationId": "model-20260611181025419-002",
+      "taskType": "PolicyQuestion",
+      "selectedProvider": "Deterministic template fallback",
+      "route": "offline-template: external provider disabled",
+      "output": "Muhammad Ali Khan was flagged for human review because the declared tax profile is inconsistent with observed asset, consumption, and business signals. The current score is 98/100 (Critical) with 98% confidence. RAG confidence 98%. Key grounded reasons: AssetIncomeMismatch: Observed assets total PKR 73,000,000 against declared annual income PKR 0. UtilityIncomeMismatch: Average monthly utility bill is PKR 310,000. VehicleLuxurySignal: Largest linked vehicle engine capacity is 2700cc. Provider fallback: No external provider selected or configured.",
+      "guardrailsApplied": [
+        "PII redaction",
+        "evidence ID validation",
+        "citation validation",
+        "no fraud-proven language",
+        "human review warning"
+      ],
+      "citations": [
+        {
+          "title": "Vehicle and asset signal guidance",
+          "url": "sandbox://policy/vehicle-asset-signal",
+          "sourceType": "ExciseSchedule",
+          "chunkId": "chunk-rag-002-001",
+          "capturedAtUtc": "2026-06-08T12:40:17.8027177+00:00"
+        },
+        {
+          "title": "Demo bootstrap audit safeguards",
+          "url": "sandbox://demo/bootstrap-audit-safeguards",
+          "sourceType": "AuditSop",
+          "chunkId": "chunk-rag-005-001",
+          "capturedAtUtc": "2026-06-11T12:40:17.9054227+00:00"
+        },
+        {
+          "title": "Tax compliance review SOP",
+          "url": "sandbox://policy/tax-compliance-review-sop",
+          "sourceType": "AuditSop",
+          "chunkId": "chunk-rag-001-001",
+          "capturedAtUtc": "2026-06-09T12:40:17.8027071+00:00"
+        },
+        {
+          "title": "Punjab property valuation bulletin",
+          "url": "https://example.gov.pk/property-valuation",
+          "sourceType": "PolicyPDF",
+          "chunkId": "chunk-rag-007-001",
+          "capturedAtUtc": "2026-06-11T18:08:56.4929837+00:00"
+        },
+        {
+          "title": "Business ownership income review note",
+          "url": "sandbox://policy/business-ownership-income",
+          "sourceType": "TaxNotice",
+          "chunkId": "chunk-rag-004-001",
+          "capturedAtUtc": "2026-06-06T12:40:17.8027183+00:00"
+        }
+      ],
+      "promptTokens": 15,
+      "completionTokens": 138,
+      "estimatedCostUsd": 0,
+      "invokedAtUtc": "2026-06-11T18:10:25.4195834+00:00"
+    },
+    {
       "invocationId": "model-20260611172105296-001",
       "taskType": "PolicyQuestion",
       "selectedProvider": "Deterministic template fallback",
@@ -20146,6 +20407,187 @@
     }
   ],
   "auditEvents": [
+    {
+      "id": "audit-20260611181100894-019",
+      "actor": "TaxNet.AI.ModelGateway",
+      "actorRole": "taxnet-model-admin",
+      "action": "ModelInvoked",
+      "resource": "PolicyQuestion",
+      "outcome": "Succeeded",
+      "correlationId": "corr-20260611181100894",
+      "timestampUtc": "2026-06-11T18:11:00.8948341+00:00",
+      "metadata": {
+        "provider": "Deterministic template fallback",
+        "route": "offline-template: no provider keys configured",
+        "model": "taxnet-template-v1",
+        "external": false,
+        "caseId": "case-P001",
+        "promptTokens": 15,
+        "completionTokens": 138
+      }
+    },
+    {
+      "id": "audit-20260611181100849-018",
+      "actor": "RagPolicy.Api",
+      "actorRole": "taxnet-policy-analyst",
+      "action": "RagQuery",
+      "resource": "PolicyQuestion",
+      "outcome": "Succeeded",
+      "correlationId": "corr-20260611181100849",
+      "timestampUtc": "2026-06-11T18:11:00.8498603+00:00",
+      "metadata": {
+        "query": "AssetIncomeMismatch: Observed assets total PKR 73,000,000 against declared annual income PKR 0. UtilityIncomeMismatch: Average monthly utility bill is PKR 310,000. VehicleLuxurySignal: Largest linked vehicle engine capacity is 2700cc. PropertyOwnershipMismatch: Linked property value is PKR 45,000,000.",
+        "chunks": 5,
+        "confidence": 0.98
+      }
+    },
+    {
+      "id": "audit-20260611181100827-017",
+      "actor": "RagPolicy.Worker",
+      "actorRole": "taxnet-policy-analyst",
+      "action": "RagDocumentIndexed",
+      "resource": "rag-008",
+      "outcome": "Succeeded",
+      "correlationId": "corr-20260611181100827",
+      "timestampUtc": "2026-06-11T18:11:00.8275406+00:00",
+      "metadata": {
+        "title": "Live test policy",
+        "chunks": 1
+      }
+    },
+    {
+      "id": "audit-20260611181100542-016",
+      "actor": "RagPolicy.Api",
+      "actorRole": "taxnet-policy-analyst",
+      "action": "RagQuery",
+      "resource": "PolicyQuestion",
+      "outcome": "Succeeded",
+      "correlationId": "corr-20260611181100542",
+      "timestampUtc": "2026-06-11T18:11:00.5422788+00:00",
+      "metadata": {
+        "query": "citizen correction human review asset mismatch",
+        "chunks": 3,
+        "confidence": 0.94
+      }
+    },
+    {
+      "id": "audit-20260611181025419-015",
+      "actor": "TaxNet.AI.ModelGateway",
+      "actorRole": "taxnet-model-admin",
+      "action": "ModelInvoked",
+      "resource": "PolicyQuestion",
+      "outcome": "Succeeded",
+      "correlationId": "corr-20260611181025419",
+      "timestampUtc": "2026-06-11T18:10:25.4196575+00:00",
+      "metadata": {
+        "provider": "Deterministic template fallback",
+        "route": "offline-template: external provider disabled",
+        "model": "taxnet-template-v1",
+        "external": false,
+        "caseId": "case-P001",
+        "promptTokens": 15,
+        "completionTokens": 138
+      }
+    },
+    {
+      "id": "audit-20260611181025398-013",
+      "actor": "RagPolicy.Api",
+      "actorRole": "taxnet-policy-analyst",
+      "action": "RagQuery",
+      "resource": "PolicyQuestion",
+      "outcome": "Succeeded",
+      "correlationId": "corr-20260611181025398",
+      "timestampUtc": "2026-06-11T18:10:25.3984247+00:00",
+      "metadata": {
+        "query": "AssetIncomeMismatch: Observed assets total PKR 73,000,000 against declared annual income PKR 0. UtilityIncomeMismatch: Average monthly utility bill is PKR 310,000. VehicleLuxurySignal: Largest linked vehicle engine capacity is 2700cc. PropertyOwnershipMismatch: Linked property value is PKR 45,000,000.",
+        "chunks": 5,
+        "confidence": 0.98
+      }
+    },
+    {
+      "id": "audit-20260611180856499-012",
+      "actor": "RagPolicy.Worker",
+      "actorRole": "taxnet-policy-analyst",
+      "action": "RagDocumentIndexed",
+      "resource": "rag-007",
+      "outcome": "Succeeded",
+      "correlationId": "corr-20260611180856499",
+      "timestampUtc": "2026-06-11T18:08:56.4997077+00:00",
+      "metadata": {
+        "title": "Punjab property valuation bulletin",
+        "chunks": 1
+      }
+    },
+    {
+      "id": "audit-20260611180856499-012",
+      "actor": "RagPolicy.Worker",
+      "actorRole": "taxnet-policy-analyst",
+      "action": "RagDocumentIndexed",
+      "resource": "rag-007",
+      "outcome": "Succeeded",
+      "correlationId": "corr-20260611180856499",
+      "timestampUtc": "2026-06-11T18:08:56.4997077+00:00",
+      "metadata": {
+        "title": "Punjab property valuation bulletin",
+        "chunks": 1
+      }
+    },
+    {
+      "id": "audit-20260611180808951-011",
+      "actor": "Citizen Portal",
+      "actorRole": "taxnet-citizen",
+      "action": "CitizenCorrectionSubmitted",
+      "resource": "case-P001",
+      "outcome": "Succeeded",
+      "correlationId": "corr-20260611180808951",
+      "timestampUtc": "2026-06-11T18:08:08.9519489+00:00",
+      "metadata": {
+        "correctionId": "corr-20260611180808-002",
+        "correctionType": "AssetOwnershipDispute"
+      }
+    },
+    {
+      "id": "audit-20260611180808951-010",
+      "actor": "Citizen Portal",
+      "actorRole": "taxnet-auditor",
+      "action": "CaseStatusChanged",
+      "resource": "case-P001",
+      "outcome": "Succeeded",
+      "correlationId": "corr-20260611180808951",
+      "timestampUtc": "2026-06-11T18:08:08.9519425+00:00",
+      "metadata": {
+        "status": "CitizenResponded",
+        "summary": "Citizen submitted AssetOwnershipDispute correction."
+      }
+    },
+    {
+      "id": "audit-20260611180757255-009",
+      "actor": "Citizen Portal",
+      "actorRole": "taxnet-citizen",
+      "action": "CitizenCorrectionSubmitted",
+      "resource": "case-P001",
+      "outcome": "Succeeded",
+      "correlationId": "corr-20260611180757255",
+      "timestampUtc": "2026-06-11T18:07:57.2558353+00:00",
+      "metadata": {
+        "correctionId": "corr-20260611180757-001",
+        "correctionType": "AssetOwnershipDispute"
+      }
+    },
+    {
+      "id": "audit-20260611180757255-008",
+      "actor": "Citizen Portal",
+      "actorRole": "taxnet-auditor",
+      "action": "CaseStatusChanged",
+      "resource": "case-P001",
+      "outcome": "Succeeded",
+      "correlationId": "corr-20260611180757255",
+      "timestampUtc": "2026-06-11T18:07:57.2556015+00:00",
+      "metadata": {
+        "status": "CitizenResponded",
+        "summary": "Citizen submitted AssetOwnershipDispute correction."
+      }
+    },
     {
       "id": "audit-20260611172105297-007",
       "actor": "TaxNet.AI.ModelGateway",
@@ -20209,14 +20651,14 @@
       }
     },
     {
-      "id": "audit-20260611124109325-003",
-      "actor": "RiskScoring.Worker",
+      "id": "audit-20260611124044991-002",
+      "actor": "Ingestion.Worker",
       "actorRole": "taxnet-admin",
       "action": "WorkerCycleExecuted",
       "resource": "system-workers",
       "outcome": "Succeeded",
-      "correlationId": "corr-20260611124109325",
-      "timestampUtc": "2026-06-11T12:41:09.3259574+00:00",
+      "correlationId": "corr-20260611124044991",
+      "timestampUtc": "2026-06-11T12:40:44.9913003+00:00",
       "metadata": {
         "notificationsSent": 0,
         "ragChunks": 5,
@@ -20238,23 +20680,45 @@
         "reports": 0
       }
     },
+    null
+  ],
+  "notifications": [
     {
-      "id": "audit-20260611124017907-001",
-      "actor": "RagPolicy.Worker",
-      "actorRole": "taxnet-policy-analyst",
-      "action": "RagDocumentIndexed",
-      "resource": "rag-005",
-      "outcome": "Succeeded",
-      "correlationId": "corr-20260611124017907",
-      "timestampUtc": "2026-06-11T12:40:17.9071971+00:00",
-      "metadata": {
-        "title": "Demo bootstrap audit safeguards",
-        "chunks": 1
-      }
+      "id": "notif-20260611180808951-002",
+      "recipient": "Regional Queue",
+      "channel": "InApp",
+      "subject": "Citizen correction submitted for case-P001",
+      "body": "Please review linked ownership records and verify current asset ownership dates.",
+      "status": "Queued",
+      "createdAtUtc": "2026-06-11T18:08:08.9519459+00:00"
+    },
+    {
+      "id": "notif-20260611180757255-001",
+      "recipient": "Regional Queue",
+      "channel": "InApp",
+      "subject": "Citizen correction submitted for case-P001",
+      "body": "Please review linked ownership records and verify current asset ownership dates.",
+      "status": "Queued",
+      "createdAtUtc": "2026-06-11T18:07:57.2556128+00:00"
     }
   ],
-  "notifications": [],
   "objectStore": [
+    {
+      "uri": "s3://taxnet-dev-raw-source-snapshots/rag-source/rag-008.txt",
+      "bucket": "taxnet-dev-raw-source-snapshots",
+      "key": "rag-source/rag-008.txt",
+      "contentType": "text/plain",
+      "sizeBytes": 157,
+      "storedAtUtc": "2026-06-11T18:11:00.8274913+00:00"
+    },
+    {
+      "uri": "s3://taxnet-dev-raw-source-snapshots/rag-source/rag-007.txt",
+      "bucket": "taxnet-dev-raw-source-snapshots",
+      "key": "rag-source/rag-007.txt",
+      "contentType": "text/plain",
+      "sizeBytes": 189,
+      "storedAtUtc": "2026-06-11T18:08:56.4992824+00:00"
+    },
     {
       "uri": "s3://taxnet-dev-audit-reports/audit-reports/case-P001/rpt-case-P001-20260611124129.json",
       "bucket": "taxnet-dev-audit-reports",
@@ -20312,6 +20776,31 @@
       "storedAtUtc": "2026-06-11T12:40:17.8056517+00:00"
     }
   ],
-  "corrections": [],
+  "corrections": [
+    {
+      "id": "corr-20260611180808-002",
+      "caseId": "case-P001",
+      "correctionType": "AssetOwnershipDispute",
+      "message": "Please review linked ownership records and verify current asset ownership dates.",
+      "evidenceFileIds": [
+        "demo-upload-placeholder"
+      ],
+      "status": "Submitted",
+      "submittedAtUtc": "2026-06-11T18:08:08.951921+00:00",
+      "updatedAtUtc": "2026-06-11T18:08:08.951921+00:00"
+    },
+    {
+      "id": "corr-20260611180757-001",
+      "caseId": "case-P001",
+      "correctionType": "AssetOwnershipDispute",
+      "message": "Please review linked ownership records and verify current asset ownership dates.",
+      "evidenceFileIds": [
+        "demo-upload-placeholder"
+      ],
+      "status": "Submitted",
+      "submittedAtUtc": "2026-06-11T18:07:57.2530754+00:00",
+      "updatedAtUtc": "2026-06-11T18:07:57.2530759+00:00"
+    }
+  ],
   "providerConfigs": {}
 }
