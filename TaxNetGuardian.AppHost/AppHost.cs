@@ -38,7 +38,7 @@ void AddWorker<TProject>(string resourceName, string workerName, string queueNam
     where TProject : class, IProjectMetadata, new()
 {
     builder
-        .AddProject<TProject>(resourceName, "--watch")
+        .AddProject<TProject>(resourceName)
         .WithEnvironment("TAXNET_WORKER_NAME", workerName)
         .WithEnvironment("TAXNET_QUEUE_NAME", queueName)
         .WithEnvironment("TAXNET_QUEUE_MODE", "File")
@@ -46,6 +46,5 @@ void AddWorker<TProject>(string resourceName, string workerName, string queueNam
         .WithEnvironment("TAXNET_WORKER_DATA_ROOT", workerDataRoot)
         .WithEnvironment("TAXNET_API_BASE_URL", apiBaseUrl)
         .WithEnvironment("TAXNET_DEMO_ROLE", "taxnet-admin")
-        .WithEnvironment("LOCALSTACK_ENDPOINT", localStackEndpoint)
-        .WaitFor(api);
+        .WithEnvironment("LOCALSTACK_ENDPOINT", localStackEndpoint);
 }
