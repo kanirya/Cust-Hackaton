@@ -1,4 +1,5 @@
 using TaxNetGuardian.Api;
+using TaxNetGuardian.Worker.Shared;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -19,6 +20,23 @@ var app = builder.Build();
 app.UseCors();
 app.UseDefaultFiles();
 app.UseStaticFiles();
+app.Use(async (context, next) =>
+{
+    if (AuthorizationCatalog.TryGetAccessDecision(context, out var decision) && !decision.Allowed)
+    {
+        context.Response.StatusCode = StatusCodes.Status403Forbidden;
+        await context.Response.WriteAsJsonAsync(new
+        {
+            message = "Forbidden by TaxNet development authorization policy.",
+            role = decision.Role,
+            requiredRoles = decision.RequiredRoles,
+            path = context.Request.Path.Value
+        });
+        return;
+    }
+
+    await next();
+});
 
 app.MapGet("/", (IWebHostEnvironment env) =>
     Results.File(Path.Combine(env.WebRootPath, "index.html"), "text/html"));
@@ -307,6 +325,45 @@ app.MapGet("/api/system/workers", (TaxNetState state) => Results.Ok(new
 app.MapPost("/api/system/workers/run", (TaxNetState state, HttpContext context) =>
     Results.Ok(state.RunWorkerCycle(AuthorizationCatalog.GetCurrentActor(context))));
 
+app.MapPost("/api/system/workers/enqueue", async (IConfiguration configuration, WorkerEnqueueRequest request, CancellationToken cancellationToken) =>
+{
+    var options = BuildWorkerOptions(configuration);
+    using var http = new HttpClient();
+    var queue = BuildQueueClient(options, http);
+    var payload = string.IsNullOrWhiteSpace(request.PayloadJson) ? "{}" : request.PayloadJson;
+    var envelope = NewQueueEnvelope(request.Type, request.CorrelationId, payload);
+    await queue.SendAsync(request.QueueName, envelope, cancellationToken);
+    return Results.Ok(new
+    {
+        message = "Worker message enqueued.",
+        request.QueueName,
+        envelope.Id,
+        envelope.Type,
+        envelope.CorrelationId,
+        options.QueueMode
+    });
+});
+
+app.MapPost("/api/system/workers/enqueue-demo", async (IConfiguration configuration, CancellationToken cancellationToken) =>
+{
+    var options = BuildWorkerOptions(configuration);
+    using var http = new HttpClient();
+    var queue = BuildQueueClient(options, http);
+    var messages = DemoWorkerMessages();
+    foreach (var message in messages)
+    {
+        await queue.SendAsync(message.QueueName, message.Envelope, cancellationToken);
+    }
+
+    return Results.Ok(new
+    {
+        message = "Demo worker messages enqueued.",
+        options.QueueMode,
+        options.ObjectStoreMode,
+        messages = messages.Select(x => new { x.QueueName, x.Envelope.Id, x.Envelope.Type, x.Envelope.CorrelationId })
+    });
+});
+
 app.MapGet("/api/system/audit", (TaxNetState state, string? action, string? resource) =>
 {
     var query = state.AuditEvents.AsEnumerable();
@@ -465,6 +522,14 @@ app.MapGet("/api/system/architecture", () => Results.Ok(new
 {
     product = "TaxNet Guardian",
     deployableMvp = new[] { "TaxNet.Main.Api", "TaxNet.GovDataSandbox.Api", "TaxNet.Worker", "Auditor Dashboard", "Sandbox Admin UI", "Citizen Portal" },
+    workerRuntime = new
+    {
+        sharedProject = "TaxNetGuardian.Worker.Shared",
+        queueModes = new[] { "File", "LocalStack" },
+        objectStoreModes = new[] { "File", "LocalStack" },
+        enqueueEndpoints = new[] { "POST /api/system/workers/enqueue", "POST /api/system/workers/enqueue-demo" },
+        localStackEndpoint = "http://localhost:4566"
+    },
     productionServices = new[]
     {
         "ApiGateway/BFF",
@@ -482,6 +547,16 @@ app.MapGet("/api/system/architecture", () => Results.Ok(new
         "Notification",
         "GovDataSandbox",
         "GovernmentConnector"
+    },
+    workerProjects = new[]
+    {
+        new { project = "TaxNetGuardian.Workers.Ingestion", queue = "taxnet-dev-ingestion-jobs", purpose = "Import connector/sandbox records and persist raw snapshots" },
+        new { project = "TaxNetGuardian.Workers.IdentityResolution", queue = "taxnet-dev-identity-resolution-jobs", purpose = "Evaluate entity resolution and write artifacts" },
+        new { project = "TaxNetGuardian.Workers.GraphIntelligence", queue = "taxnet-dev-graph-build-jobs", purpose = "Build graph features for scoring and investigation" },
+        new { project = "TaxNetGuardian.Workers.RiskScoring", queue = "taxnet-dev-risk-score-jobs", purpose = "Refresh deterministic risk scoring" },
+        new { project = "TaxNetGuardian.Workers.RagPolicy", queue = "taxnet-dev-rag-index-jobs", purpose = "Capture policy docs, snapshot source, index RAG chunks" },
+        new { project = "TaxNetGuardian.Workers.Report", queue = "taxnet-dev-report-jobs", purpose = "Generate audit reports and store report artifacts" },
+        new { project = "TaxNetGuardian.Workers.AuditLog", queue = "taxnet-dev-audit-log-jobs", purpose = "Persist immutable audit event artifacts" }
     },
     auth = new
     {
@@ -592,6 +667,54 @@ app.MapPost("/api/sandbox/admin/generate", (TaxNetState state, HttpContext conte
     });
 });
 
+app.MapPost("/sandbox/admin/seed", (TaxNetState state, HttpContext context, SandboxGenerateRequest? request) =>
+{
+    if (!AuthorizationCatalog.HasRole(context, "taxnet-sandbox-admin", "taxnet-data-engineer"))
+    {
+        return Results.Json(new { message = "Forbidden. Requires sandbox admin or data engineer role." }, statusCode: StatusCodes.Status403Forbidden);
+    }
+
+    var seed = request ?? new SandboxGenerateRequest(120, 24, 18);
+    state.GenerateSyntheticData(seed.Count, seed.SuspiciousPercent, seed.NoisePercent);
+    return Results.Ok(new { message = "Sandbox seeded.", profiles = state.People.Count, cases = state.Cases.Count });
+});
+
+app.MapPost("/sandbox/admin/reset", (TaxNetState state, HttpContext context) =>
+{
+    if (!AuthorizationCatalog.HasRole(context, "taxnet-sandbox-admin", "taxnet-data-engineer"))
+    {
+        return Results.Json(new { message = "Forbidden. Requires sandbox admin or data engineer role." }, statusCode: StatusCodes.Status403Forbidden);
+    }
+
+    state.GenerateSyntheticData(120, 24, 18);
+    return Results.Ok(new { message = "Sandbox reset to deterministic seed.", profiles = state.People.Count, cases = state.Cases.Count });
+});
+
+app.MapPost("/sandbox/admin/generate-citizens", (TaxNetState state, HttpContext context, SandboxGenerateRequest request) =>
+{
+    if (!AuthorizationCatalog.HasRole(context, "taxnet-sandbox-admin", "taxnet-data-engineer"))
+    {
+        return Results.Json(new { message = "Forbidden. Requires sandbox admin or data engineer role." }, statusCode: StatusCodes.Status403Forbidden);
+    }
+
+    state.GenerateSyntheticData(request.Count, request.SuspiciousPercent, request.NoisePercent);
+    return Results.Ok(new { message = "Synthetic citizens generated.", profiles = state.People.Count, cases = state.Cases.Count });
+});
+
+app.MapGet("/sandbox/admin/providers", (TaxNetState state) => Results.Ok(state.Providers));
+
+app.MapPatch("/sandbox/admin/providers/{providerCode}", (TaxNetState state, string providerCode, ProviderConfigUpdateRequest request) =>
+    Results.Ok(state.UpdateProvider(providerCode, request)));
+
+app.MapGet("/sandbox/admin/profiles", (TaxNetState state, int? limit) =>
+    Results.Ok(new { items = state.People.Take(Math.Clamp(limit ?? 100, 1, 500)).Select(person => BuildSandboxProfile(state, person)), total = state.People.Count }));
+
+app.MapGet("/sandbox/admin/profiles/{syntheticPersonId}", (TaxNetState state, string syntheticPersonId) =>
+{
+    var person = state.People.FirstOrDefault(x => x.Id.Equals(syntheticPersonId, StringComparison.OrdinalIgnoreCase));
+    return person is null ? Results.NotFound(new { message = $"Synthetic profile {syntheticPersonId} was not found." }) : Results.Ok(BuildSandboxProfile(state, person));
+});
+
 app.MapGet("/sandbox/nadra/identity/{identityToken}", (TaxNetState state, string identityToken) =>
 {
     var person = FindByIdentityToken(state, identityToken);
@@ -599,6 +722,41 @@ app.MapGet("/sandbox/nadra/identity/{identityToken}", (TaxNetState state, string
     {
         provider = "NADRA Sandbox",
         profile = new { person.FullName, person.UrduName, person.FatherName, person.CnicMasked, person.City, person.Province, person.IdentityToken }
+    });
+});
+
+app.MapGet("/sandbox/nadra/family-links/{identityToken}", (TaxNetState state, string identityToken) =>
+{
+    var person = FindByIdentityToken(state, identityToken);
+    if (person is null) return Results.NotFound();
+    var related = state.People
+        .Where(x => x.City == person.City && x.Id != person.Id)
+        .OrderBy(x => x.Id)
+        .Take(3)
+        .Select((x, index) => new
+        {
+            relationType = index == 0 ? "Household" : "PossibleRelative",
+            confidence = index == 0 ? 0.82m : 0.68m,
+            identityToken = x.IdentityToken,
+            x.FullName,
+            x.CnicMasked
+        });
+    return Results.Ok(new { provider = "NADRA Sandbox", identityToken, items = related });
+});
+
+app.MapGet("/sandbox/nadra/address-history/{identityToken}", (TaxNetState state, string identityToken) =>
+{
+    var person = FindByIdentityToken(state, identityToken);
+    if (person is null) return Results.NotFound();
+    return Results.Ok(new
+    {
+        provider = "NADRA Sandbox",
+        identityToken,
+        items = new[]
+        {
+            new { city = person.City, province = person.Province, addressMasked = $"{person.City} sector ***", fromYear = 2021, toYear = 2026 },
+            new { city = person.Province == "Punjab" ? "Lahore" : "Karachi", province = person.Province, addressMasked = "prior residence ***", fromYear = 2017, toYear = 2021 }
+        }
     });
 });
 
@@ -614,17 +772,73 @@ app.MapGet("/sandbox/fbr/atl-status/{ntn}", (TaxNetState state, string ntn) =>
     return tax is null ? Results.NotFound() : Results.Ok(new { provider = "FBR Sandbox", tax.Ntn, tax.FilerStatus, isActive = tax.FilerStatus == "Active Filer" });
 });
 
+app.MapGet("/sandbox/fbr/returns/{identityToken}", (TaxNetState state, string identityToken) =>
+{
+    var tax = state.TaxProfiles.FirstOrDefault(x => x.IdentityToken.Value.Equals(identityToken, StringComparison.OrdinalIgnoreCase));
+    if (tax is null) return Results.NotFound();
+    var years = Enumerable.Range(Math.Max(2021, tax.TaxYear - 3), 4).Select(year => new
+    {
+        taxYear = year,
+        filingStatus = year == tax.TaxYear ? tax.FilerStatus : tax.FilerStatus == "Non-Filer" ? "No Return" : "Filed",
+        declaredAnnualIncome = year == tax.TaxYear ? tax.DeclaredAnnualIncome : decimal.Round(tax.DeclaredAnnualIncome * (0.82m + ((year % 4) * 0.05m)), 0),
+        taxPaid = year == tax.TaxYear ? tax.TaxPaid : decimal.Round(tax.TaxPaid * (0.80m + ((year % 4) * 0.04m)), 0)
+    });
+    return Results.Ok(new { provider = "FBR Sandbox", identityToken, tax.Ntn, items = years });
+});
+
+app.MapGet("/sandbox/fbr/withholding/{identityToken}", (TaxNetState state, string identityToken) =>
+{
+    var tax = state.TaxProfiles.FirstOrDefault(x => x.IdentityToken.Value.Equals(identityToken, StringComparison.OrdinalIgnoreCase));
+    if (tax is null) return Results.NotFound();
+    var withholding = new[]
+    {
+        new { category = "SalaryOrBusiness", amount = decimal.Round(tax.TaxPaid * 0.45m, 0), taxYear = tax.TaxYear },
+        new { category = "Banking", amount = decimal.Round(tax.TaxPaid * 0.18m, 0), taxYear = tax.TaxYear },
+        new { category = "PropertyVehicle", amount = decimal.Round(tax.TaxPaid * 0.12m, 0), taxYear = tax.TaxYear }
+    };
+    return Results.Ok(new { provider = "FBR Sandbox", identityToken, tax.Ntn, items = withholding });
+});
+
 app.MapGet("/sandbox/excise/vehicles", (TaxNetState state, string identityToken) =>
     Results.Ok(new { provider = "Excise Sandbox", items = state.Vehicles.Where(x => x.OwnerIdentityToken.Value.Equals(identityToken, StringComparison.OrdinalIgnoreCase)) }));
+
+app.MapGet("/sandbox/excise/vehicle/{registrationNumber}", (TaxNetState state, string registrationNumber) =>
+{
+    var vehicle = state.Vehicles.FirstOrDefault(x => x.RegistrationNumberMasked.Equals(registrationNumber, StringComparison.OrdinalIgnoreCase) || x.ProviderRecordId.Equals(registrationNumber, StringComparison.OrdinalIgnoreCase));
+    return vehicle is null ? Results.NotFound() : Results.Ok(new { provider = "Excise Sandbox", vehicle });
+});
 
 app.MapGet("/sandbox/secp/companies", (TaxNetState state, string identityToken) =>
     Results.Ok(new { provider = "SECP Sandbox", items = state.Businesses.Where(x => x.RelatedIdentityToken.Value.Equals(identityToken, StringComparison.OrdinalIgnoreCase)) }));
 
+app.MapGet("/sandbox/secp/company/{companyRegistrationNumber}", (TaxNetState state, string companyRegistrationNumber) =>
+{
+    var company = state.Businesses.FirstOrDefault(x => x.CompanyRegistrationNumber.Equals(companyRegistrationNumber, StringComparison.OrdinalIgnoreCase) || x.ProviderRecordId.Equals(companyRegistrationNumber, StringComparison.OrdinalIgnoreCase));
+    return company is null ? Results.NotFound() : Results.Ok(new { provider = "SECP Sandbox", company });
+});
+
 app.MapGet("/sandbox/property/ownership", (TaxNetState state, string identityToken) =>
     Results.Ok(new { provider = "Property Sandbox", items = state.Properties.Where(x => x.OwnerIdentityToken.Value.Equals(identityToken, StringComparison.OrdinalIgnoreCase)) }));
 
+app.MapGet("/sandbox/property/transactions", (TaxNetState state, string identityToken) =>
+{
+    var properties = state.Properties.Where(x => x.OwnerIdentityToken.Value.Equals(identityToken, StringComparison.OrdinalIgnoreCase)).ToArray();
+    var transactions = properties.SelectMany((property, index) => new[]
+    {
+        new { property.PropertyToken, transactionType = "Acquisition", declaredValue = decimal.Round(property.EstimatedValue * 0.82m, 0), transactionYear = 2020 + (index % 5), city = property.City },
+        new { property.PropertyToken, transactionType = "ValuationUpdate", declaredValue = property.EstimatedValue, transactionYear = 2025, city = property.City }
+    });
+    return Results.Ok(new { provider = "Property Sandbox", identityToken, items = transactions });
+});
+
 app.MapGet("/sandbox/utilities/bills", (TaxNetState state, string identityToken) =>
     Results.Ok(new { provider = "Utility Sandbox", items = state.UtilityBills.Where(x => x.OwnerIdentityToken.Value.Equals(identityToken, StringComparison.OrdinalIgnoreCase)) }));
+
+app.MapGet("/sandbox/utilities/meters/{meterNumber}", (TaxNetState state, string meterNumber) =>
+{
+    var meter = state.UtilityBills.FirstOrDefault(x => x.MeterToken.Equals(meterNumber, StringComparison.OrdinalIgnoreCase) || x.ProviderRecordId.Equals(meterNumber, StringComparison.OrdinalIgnoreCase));
+    return meter is null ? Results.NotFound() : Results.Ok(new { provider = "Utility Sandbox", meter });
+});
 
 app.MapGet("/sandbox/travel/history", (TaxNetState state, string identityToken) =>
     Results.Ok(new { provider = "Travel Sandbox", items = state.Travel.Where(x => x.TravelerIdentityToken.Value.Equals(identityToken, StringComparison.OrdinalIgnoreCase)) }));
@@ -659,6 +873,56 @@ app.MapFallback((IWebHostEnvironment env) =>
     Results.File(Path.Combine(env.WebRootPath, "index.html"), "text/html"));
 
 app.Run();
+
+static WorkerOptions BuildWorkerOptions(IConfiguration configuration)
+{
+    var dataRoot = Environment.GetEnvironmentVariable("TAXNET_WORKER_DATA_ROOT")
+        ?? configuration["Workers:DataRoot"]
+        ?? Path.Combine(Directory.GetCurrentDirectory(), ".appdata", "workers");
+
+    return new WorkerOptions
+    {
+        WorkerName = "TaxNetGuardian.Api",
+        QueueMode = Environment.GetEnvironmentVariable("TAXNET_QUEUE_MODE") ?? configuration["Workers:QueueMode"] ?? "File",
+        ObjectStoreMode = Environment.GetEnvironmentVariable("TAXNET_OBJECT_STORE_MODE") ?? configuration["Workers:ObjectStoreMode"] ?? "File",
+        LocalStackEndpoint = Environment.GetEnvironmentVariable("LOCALSTACK_ENDPOINT") ?? configuration["Workers:LocalStackEndpoint"] ?? "http://localhost:4566",
+        DataRoot = dataRoot,
+        ApiBaseUrl = Environment.GetEnvironmentVariable("TAXNET_API_BASE_URL") ?? configuration["Workers:ApiBaseUrl"] ?? "http://localhost:5191",
+        DemoRole = "taxnet-admin"
+    };
+}
+
+static IQueueClient BuildQueueClient(WorkerOptions options, HttpClient http)
+    => options.QueueMode.Equals("LocalStack", StringComparison.OrdinalIgnoreCase)
+        ? new LocalStackSqsQueueClient(options, http)
+        : new FileBackedQueueClient(options);
+
+static QueueEnvelope NewQueueEnvelope(string type, string? correlationId, string payloadJson)
+    => new($"msg-{DateTimeOffset.UtcNow:yyyyMMddHHmmssfff}-{Guid.NewGuid():N}", type, string.IsNullOrWhiteSpace(correlationId) ? $"corr-{Guid.NewGuid():N}" : correlationId, payloadJson, 0, DateTimeOffset.UtcNow);
+
+static IReadOnlyList<QueuedWorkerMessage> DemoWorkerMessages()
+{
+    QueueEnvelope Envelope(string type, object payload)
+        => NewQueueEnvelope(type, null, System.Text.Json.JsonSerializer.Serialize(payload));
+
+    return
+    [
+        new("taxnet-dev-ingestion-jobs", Envelope("RunIngestionPipeline", new { requestedBy = "api-control-plane" })),
+        new("taxnet-dev-identity-resolution-jobs", Envelope("IdentityResolutionRequested", new { batchId = "api-demo" })),
+        new("taxnet-dev-graph-build-jobs", Envelope("GraphFeaturesRequested", new { entityId = "entity-P001" })),
+        new("taxnet-dev-risk-score-jobs", Envelope("RiskScoringRequested", new { batchId = "api-demo" })),
+        new("taxnet-dev-rag-index-jobs", Envelope("RagDocumentCaptured", new
+        {
+            title = "API seeded worker policy",
+            sourceType = "AuditSop",
+            url = "sandbox://api-worker-seed/policy",
+            content = "API seeded worker policy confirms human review, evidence validation, and citizen correction windows before escalation.",
+            tags = new[] { "api", "worker", "human-review" }
+        })),
+        new("taxnet-dev-report-jobs", Envelope("ReportRequested", new { caseId = "case-P001" })),
+        new("taxnet-dev-audit-log-jobs", Envelope("AuditEventCaptured", new { action = "ApiWorkerDemoEnqueued", resource = "worker-control-plane", outcome = "Succeeded" }))
+    ];
+}
 
 static SyntheticPerson? FindByIdentityToken(TaxNetState state, string identityToken)
     => state.People.FirstOrDefault(x => x.IdentityToken.Value.Equals(identityToken, StringComparison.OrdinalIgnoreCase));

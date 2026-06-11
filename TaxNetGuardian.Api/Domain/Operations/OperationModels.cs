@@ -69,6 +69,10 @@ public sealed record DashboardSummary(
 
 public sealed record AuthzRole(string Role, string Description, IReadOnlyList<string> Scopes, IReadOnlyList<string> UiRoutes);
 
+public sealed record PathAccessPolicy(string PathPrefix, IReadOnlyList<string> AllowedRoles);
+
+public sealed record AccessDecision(bool Allowed, string Role, IReadOnlyList<string> RequiredRoles, string Path);
+
 public sealed record SandboxGenerateRequest(int Count, int SuspiciousPercent, int NoisePercent);
 
 public sealed record DatasetFeedRequest(
@@ -105,4 +109,12 @@ public sealed record DatasetTemplate(
     string Description,
     IReadOnlyList<string> Columns,
     string CsvExample);
+
+public sealed record WorkerEnqueueRequest(
+    string QueueName,
+    string Type,
+    string PayloadJson,
+    string? CorrelationId);
+
+public sealed record QueuedWorkerMessage(string QueueName, TaxNetGuardian.Worker.Shared.QueueEnvelope Envelope);
 

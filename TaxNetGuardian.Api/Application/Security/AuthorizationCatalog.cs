@@ -2,6 +2,32 @@ namespace TaxNetGuardian.Api;
 
 public static class AuthorizationCatalog
 {
+    private static readonly IReadOnlyList<PathAccessPolicy> PathPolicies =
+    [
+        new("/api/citizen", ["taxnet-citizen", "taxnet-support"]),
+        new("/api/system/audit", ["taxnet-security-admin", "taxnet-admin"]),
+        new("/api/system/object-store", ["taxnet-security-admin", "taxnet-admin"]),
+        new("/api/system/model-gateway", ["taxnet-model-admin", "taxnet-policy-analyst", "taxnet-admin"]),
+        new("/api/system/rag", ["taxnet-policy-analyst", "taxnet-model-admin", "taxnet-admin"]),
+        new("/api/system", ["taxnet-admin", "taxnet-security-admin", "taxnet-model-admin", "taxnet-policy-analyst"]),
+        new("/api/connectors", ["taxnet-admin", "taxnet-sandbox-admin", "taxnet-data-engineer"]),
+        new("/api/sandbox", ["taxnet-admin", "taxnet-sandbox-admin", "taxnet-data-engineer"]),
+        new("/sandbox/admin", ["taxnet-admin", "taxnet-sandbox-admin", "taxnet-data-engineer"]),
+        new("/sandbox/nadra", ["taxnet-admin", "taxnet-sandbox-admin", "taxnet-data-engineer"]),
+        new("/sandbox/fbr", ["taxnet-admin", "taxnet-sandbox-admin", "taxnet-data-engineer"]),
+        new("/sandbox/excise", ["taxnet-admin", "taxnet-sandbox-admin", "taxnet-data-engineer"]),
+        new("/sandbox/secp", ["taxnet-admin", "taxnet-sandbox-admin", "taxnet-data-engineer"]),
+        new("/sandbox/property", ["taxnet-admin", "taxnet-sandbox-admin", "taxnet-data-engineer"]),
+        new("/sandbox/utilities", ["taxnet-admin", "taxnet-sandbox-admin", "taxnet-data-engineer"]),
+        new("/sandbox/travel", ["taxnet-admin", "taxnet-sandbox-admin", "taxnet-data-engineer"]),
+        new("/api/cases", ["taxnet-admin", "taxnet-auditor", "taxnet-senior-auditor", "taxnet-supervisor"]),
+        new("/api/graph", ["taxnet-admin", "taxnet-auditor", "taxnet-senior-auditor"]),
+        new("/api/assistant", ["taxnet-admin", "taxnet-auditor", "taxnet-senior-auditor", "taxnet-policy-analyst"]),
+        new("/api/reports", ["taxnet-admin", "taxnet-auditor", "taxnet-senior-auditor"]),
+        new("/api/ingestion", ["taxnet-admin", "taxnet-data-engineer", "taxnet-sandbox-admin"]),
+        new("/api/identity", ["taxnet-admin", "taxnet-security-admin", "taxnet-data-engineer"])
+    ];
+
     public static IReadOnlyList<AuthzRole> Roles { get; } =
     [
         new("taxnet-admin", "Full platform administration with provider, case, and dashboard access.", ["taxnet/dashboard.read", "taxnet/cases.read", "taxnet/cases.write", "taxnet/sandbox.admin", "taxnet/models.manage", "taxnet/audit.read"], ["/dashboard", "/cases", "/sandbox", "/models", "/audit"]),
@@ -46,5 +72,26 @@ public static class AuthorizationCatalog
             mode = "Development header auth; production target is Cognito JWT + OAuth scopes.",
             scopes = Roles.FirstOrDefault(x => x.Role.Equals(role, StringComparison.OrdinalIgnoreCase))?.Scopes ?? []
         };
+    }
+
+    public static bool TryGetAccessDecision(HttpContext context, out AccessDecision decision)
+    {
+        var path = context.Request.Path.Value ?? "";
+        var policy = PathPolicies
+            .Where(x => path.StartsWith(x.PathPrefix, StringComparison.OrdinalIgnoreCase))
+            .OrderByDescending(x => x.PathPrefix.Length)
+            .FirstOrDefault();
+
+        if (policy is null)
+        {
+            decision = new AccessDecision(true, GetCurrentRole(context), [], path);
+            return false;
+        }
+
+        var role = GetCurrentRole(context);
+        var allowed = policy.AllowedRoles.Contains(role, StringComparer.OrdinalIgnoreCase) ||
+                      role.Equals("taxnet-admin", StringComparison.OrdinalIgnoreCase);
+        decision = new AccessDecision(allowed, role, policy.AllowedRoles, path);
+        return true;
     }
 }

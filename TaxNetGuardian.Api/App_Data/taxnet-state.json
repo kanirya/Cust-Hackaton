@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "savedAtUtc": "2026-06-10T20:17:53.6768359+00:00",
+  "savedAtUtc": "2026-06-11T12:33:37.5927192+00:00",
   "people": [
     {
       "id": "P001",
@@ -11554,8 +11554,8 @@
           "sourceUpdatedAtUtc": "2026-04-19T19:44:01.8545317+00:00"
         }
       ],
-      "createdAtUtc": "2026-06-10T14:17:43.803726+00:00",
-      "updatedAtUtc": "2026-06-10T20:17:43.8037276+00:00"
+      "createdAtUtc": "2026-06-10T21:30:04.8758708+00:00",
+      "updatedAtUtc": "2026-06-11T12:30:04.8758756+00:00"
     },
     {
       "id": "case-P003",
@@ -11696,8 +11696,8 @@
           "sourceUpdatedAtUtc": "2025-10-08T19:44:01.8571973+00:00"
         }
       ],
-      "createdAtUtc": "2026-06-08T16:17:43.8040121+00:00",
-      "updatedAtUtc": "2026-06-10T20:17:43.8040126+00:00"
+      "createdAtUtc": "2026-06-11T08:30:04.8763471+00:00",
+      "updatedAtUtc": "2026-06-11T12:30:04.8763488+00:00"
     },
     {
       "id": "case-P004",
@@ -11838,8 +11838,8 @@
           "sourceUpdatedAtUtc": "2026-05-28T19:44:01.8572369+00:00"
         }
       ],
-      "createdAtUtc": "2026-06-10T14:17:43.804159+00:00",
-      "updatedAtUtc": "2026-06-10T20:17:43.8041594+00:00"
+      "createdAtUtc": "2026-06-10T13:30:04.8765699+00:00",
+      "updatedAtUtc": "2026-06-11T12:30:04.8765708+00:00"
     },
     {
       "id": "case-P005",
@@ -11946,8 +11946,8 @@
           "sourceUpdatedAtUtc": "2026-05-17T19:44:01.8572405+00:00"
         }
       ],
-      "createdAtUtc": "2026-06-09T10:17:43.8042826+00:00",
-      "updatedAtUtc": "2026-06-10T20:17:43.8042829+00:00"
+      "createdAtUtc": "2026-06-09T18:30:04.8767626+00:00",
+      "updatedAtUtc": "2026-06-11T12:30:04.8767634+00:00"
     },
     {
       "id": "case-P006",
@@ -12076,8 +12076,8 @@
           "sourceUpdatedAtUtc": "2025-10-19T19:44:01.8574329+00:00"
         }
       ],
-      "createdAtUtc": "2026-06-10T18:17:43.8044418+00:00",
-      "updatedAtUtc": "2026-06-10T20:17:43.8044419+00:00"
+      "createdAtUtc": "2026-06-09T01:30:04.8769741+00:00",
+      "updatedAtUtc": "2026-06-11T12:30:04.8769748+00:00"
     },
     {
       "id": "case-P008",
@@ -12206,8 +12206,8 @@
           "sourceUpdatedAtUtc": "2026-06-06T19:44:01.8576877+00:00"
         }
       ],
-      "createdAtUtc": "2026-06-08T11:17:43.8046852+00:00",
-      "updatedAtUtc": "2026-06-10T20:17:43.8046853+00:00"
+      "createdAtUtc": "2026-06-11T10:30:04.8774132+00:00",
+      "updatedAtUtc": "2026-06-11T12:30:04.8774156+00:00"
     },
     {
       "id": "case-G001",
@@ -12325,8 +12325,8 @@
           "sourceUpdatedAtUtc": "2025-12-07T19:44:01.8590799+00:00"
         }
       ],
-      "createdAtUtc": "2026-06-09T12:17:43.8048121+00:00",
-      "updatedAtUtc": "2026-06-10T20:17:43.8048124+00:00"
+      "createdAtUtc": "2026-06-09T21:30:04.8776412+00:00",
+      "updatedAtUtc": "2026-06-11T12:30:04.8776425+00:00"
     },
     {
       "id": "case-G002",
@@ -12431,8 +12431,8 @@
           "sourceUpdatedAtUtc": "2026-03-02T19:44:01.8592902+00:00"
         }
       ],
-      "createdAtUtc": "2026-06-09T07:17:43.8049267+00:00",
-      "updatedAtUtc": "2026-06-10T20:17:43.8049268+00:00"
+      "createdAtUtc": "2026-06-09T02:30:04.8778377+00:00",
+      "updatedAtUtc": "2026-06-11T12:30:04.8778388+00:00"
     },
     {
       "id": "case-G004",
@@ -12562,8 +12562,8 @@
           "sourceUpdatedAtUtc": "2025-12-02T19:44:01.8592979+00:00"
         }
       ],
-      "createdAtUtc": "2026-06-09T08:17:43.805194+00:00",
-      "updatedAtUtc": "2026-06-10T20:17:43.8051942+00:00"
+      "createdAtUtc": "2026-06-09T06:30:04.878226+00:00",
+      "updatedAtUtc": "2026-06-11T12:30:04.8782272+00:00"
     },
     {
       "id": "case-G005",
@@ -12692,8 +12692,8 @@
           "sourceUpdatedAtUtc": "2025-08-25T19:44:01.8593932+00:00"
         }
       ],
-      "createdAtUtc": "2026-06-10T18:17:43.8053358+00:00",
-      "updatedAtUtc": "2026-06-10T20:17:43.805336+00:00"
+      "createdAtUtc": "2026-06-10T08:30:04.8784544+00:00",
+      "updatedAtUtc": "2026-06-11T12:30:04.8784552+00:00"
     },
     {
       "id": "case-G006",
@@ -12811,8 +12811,8 @@
           "sourceUpdatedAtUtc": "2025-12-07T19:44:01.8594187+00:00"
         }
       ],
-      "createdAtUtc": "2026-06-08T08:17:43.8054701+00:00",
-      "updatedAtUtc": "2026-06-10T20:17:43.8054703+00:00"
+      "createdAtUtc": "2026-06-11T00:30:04.8786531+00:00",
+      "updatedAtUtc": "2026-06-11T12:30:04.878654+00:00"
     },
     {
       "id": "case-G007",
@@ -12941,8 +12941,8 @@
           "sourceUpdatedAtUtc": "2026-01-21T19:44:01.859422+00:00"
         }
       ],
-      "createdAtUtc": "2026-06-10T18:17:43.8056185+00:00",
-      "updatedAtUtc": "2026-06-10T20:17:43.8056188+00:00"
+      "createdAtUtc": "2026-06-11T09:30:04.8789065+00:00",
+      "updatedAtUtc": "2026-06-11T12:30:04.8789076+00:00"
     },
     {
       "id": "case-G008",
@@ -13083,8 +13083,8 @@
           "sourceUpdatedAtUtc": "2025-09-19T19:44:01.8594348+00:00"
         }
       ],
-      "createdAtUtc": "2026-06-10T18:17:43.8057908+00:00",
-      "updatedAtUtc": "2026-06-10T20:17:43.805791+00:00"
+      "createdAtUtc": "2026-06-11T07:30:04.8791818+00:00",
+      "updatedAtUtc": "2026-06-11T12:30:04.8791834+00:00"
     },
     {
       "id": "case-G010",
@@ -13213,8 +13213,8 @@
           "sourceUpdatedAtUtc": "2025-11-23T19:44:01.8594434+00:00"
         }
       ],
-      "createdAtUtc": "2026-06-10T14:17:43.8062126+00:00",
-      "updatedAtUtc": "2026-06-10T20:17:43.8062131+00:00"
+      "createdAtUtc": "2026-06-09T04:30:04.8796292+00:00",
+      "updatedAtUtc": "2026-06-11T12:30:04.8796304+00:00"
     },
     {
       "id": "case-G011",
@@ -13355,8 +13355,8 @@
           "sourceUpdatedAtUtc": "2025-10-16T19:44:01.8594485+00:00"
         }
       ],
-      "createdAtUtc": "2026-06-08T21:17:43.8064757+00:00",
-      "updatedAtUtc": "2026-06-10T20:17:43.8064759+00:00"
+      "createdAtUtc": "2026-06-09T15:30:04.8798822+00:00",
+      "updatedAtUtc": "2026-06-11T12:30:04.8798828+00:00"
     },
     {
       "id": "case-G012",
@@ -13486,8 +13486,8 @@
           "sourceUpdatedAtUtc": "2026-04-22T19:44:01.8594524+00:00"
         }
       ],
-      "createdAtUtc": "2026-06-10T16:17:43.8066969+00:00",
-      "updatedAtUtc": "2026-06-10T20:17:43.8066971+00:00"
+      "createdAtUtc": "2026-06-11T02:30:04.8801143+00:00",
+      "updatedAtUtc": "2026-06-11T12:30:04.8801152+00:00"
     },
     {
       "id": "case-G013",
@@ -13617,8 +13617,8 @@
           "sourceUpdatedAtUtc": "2026-05-22T19:44:01.8594549+00:00"
         }
       ],
-      "createdAtUtc": "2026-06-08T03:17:43.8069517+00:00",
-      "updatedAtUtc": "2026-06-10T20:17:43.8069519+00:00"
+      "createdAtUtc": "2026-06-10T17:30:04.8803561+00:00",
+      "updatedAtUtc": "2026-06-11T12:30:04.8803568+00:00"
     },
     {
       "id": "case-G014",
@@ -13759,8 +13759,8 @@
           "sourceUpdatedAtUtc": "2025-11-27T19:44:01.8594595+00:00"
         }
       ],
-      "createdAtUtc": "2026-06-08T01:17:43.807263+00:00",
-      "updatedAtUtc": "2026-06-10T20:17:43.8072638+00:00"
+      "createdAtUtc": "2026-06-09T04:30:04.8806016+00:00",
+      "updatedAtUtc": "2026-06-11T12:30:04.8806021+00:00"
     },
     {
       "id": "case-G015",
@@ -13890,8 +13890,8 @@
           "sourceUpdatedAtUtc": "2025-10-11T19:44:01.8594626+00:00"
         }
       ],
-      "createdAtUtc": "2026-06-09T10:17:43.8075358+00:00",
-      "updatedAtUtc": "2026-06-10T20:17:43.8075361+00:00"
+      "createdAtUtc": "2026-06-10T14:30:04.8808365+00:00",
+      "updatedAtUtc": "2026-06-11T12:30:04.8808375+00:00"
     },
     {
       "id": "case-G016",
@@ -14020,8 +14020,8 @@
           "sourceUpdatedAtUtc": "2025-12-26T19:44:01.8594653+00:00"
         }
       ],
-      "createdAtUtc": "2026-06-09T16:17:43.8077095+00:00",
-      "updatedAtUtc": "2026-06-10T20:17:43.8077097+00:00"
+      "createdAtUtc": "2026-06-09T13:30:04.8810761+00:00",
+      "updatedAtUtc": "2026-06-11T12:30:04.8810769+00:00"
     },
     {
       "id": "case-G017",
@@ -14151,8 +14151,8 @@
           "sourceUpdatedAtUtc": "2025-08-25T19:44:01.859469+00:00"
         }
       ],
-      "createdAtUtc": "2026-06-08T23:17:43.8078646+00:00",
-      "updatedAtUtc": "2026-06-10T20:17:43.8078647+00:00"
+      "createdAtUtc": "2026-06-11T00:30:04.8813321+00:00",
+      "updatedAtUtc": "2026-06-11T12:30:04.8813329+00:00"
     },
     {
       "id": "case-G018",
@@ -14270,8 +14270,8 @@
           "sourceUpdatedAtUtc": "2026-03-17T19:44:01.8594716+00:00"
         }
       ],
-      "createdAtUtc": "2026-06-10T15:17:43.8079588+00:00",
-      "updatedAtUtc": "2026-06-10T20:17:43.807959+00:00"
+      "createdAtUtc": "2026-06-11T07:30:04.8815619+00:00",
+      "updatedAtUtc": "2026-06-11T12:30:04.8815623+00:00"
     },
     {
       "id": "case-G019",
@@ -14389,8 +14389,8 @@
           "sourceUpdatedAtUtc": "2026-05-08T19:44:01.8594773+00:00"
         }
       ],
-      "createdAtUtc": "2026-06-09T16:17:43.8080592+00:00",
-      "updatedAtUtc": "2026-06-10T20:17:43.8080594+00:00"
+      "createdAtUtc": "2026-06-09T16:30:04.8817875+00:00",
+      "updatedAtUtc": "2026-06-11T12:30:04.881788+00:00"
     },
     {
       "id": "case-G020",
@@ -14531,8 +14531,8 @@
           "sourceUpdatedAtUtc": "2025-11-24T19:44:01.8594805+00:00"
         }
       ],
-      "createdAtUtc": "2026-06-10T09:17:43.8081591+00:00",
-      "updatedAtUtc": "2026-06-10T20:17:43.8081593+00:00"
+      "createdAtUtc": "2026-06-09T22:30:04.8820254+00:00",
+      "updatedAtUtc": "2026-06-11T12:30:04.8820259+00:00"
     },
     {
       "id": "case-G021",
@@ -14650,8 +14650,8 @@
           "sourceUpdatedAtUtc": "2025-09-25T19:44:01.8594867+00:00"
         }
       ],
-      "createdAtUtc": "2026-06-09T12:17:43.8082857+00:00",
-      "updatedAtUtc": "2026-06-10T20:17:43.808286+00:00"
+      "createdAtUtc": "2026-06-11T07:30:04.8822746+00:00",
+      "updatedAtUtc": "2026-06-11T12:30:04.8822752+00:00"
     },
     {
       "id": "case-G022",
@@ -14792,8 +14792,8 @@
           "sourceUpdatedAtUtc": "2026-05-30T19:44:01.8594889+00:00"
         }
       ],
-      "createdAtUtc": "2026-06-08T11:17:43.8084702+00:00",
-      "updatedAtUtc": "2026-06-10T20:17:43.8084705+00:00"
+      "createdAtUtc": "2026-06-10T05:30:04.8825291+00:00",
+      "updatedAtUtc": "2026-06-11T12:30:04.8825295+00:00"
     },
     {
       "id": "case-G023",
@@ -14922,8 +14922,8 @@
           "sourceUpdatedAtUtc": "2025-11-05T19:44:01.8594921+00:00"
         }
       ],
-      "createdAtUtc": "2026-06-09T05:17:43.8086411+00:00",
-      "updatedAtUtc": "2026-06-10T20:17:43.8086414+00:00"
+      "createdAtUtc": "2026-06-09T09:30:04.8827673+00:00",
+      "updatedAtUtc": "2026-06-11T12:30:04.8827678+00:00"
     },
     {
       "id": "case-G024",
@@ -15053,8 +15053,8 @@
           "sourceUpdatedAtUtc": "2026-01-23T19:44:01.8594962+00:00"
         }
       ],
-      "createdAtUtc": "2026-06-09T14:17:43.8087495+00:00",
-      "updatedAtUtc": "2026-06-10T20:17:43.8087496+00:00"
+      "createdAtUtc": "2026-06-09T15:30:04.8830081+00:00",
+      "updatedAtUtc": "2026-06-11T12:30:04.8830087+00:00"
     },
     {
       "id": "case-G025",
@@ -15184,8 +15184,8 @@
           "sourceUpdatedAtUtc": "2026-04-09T19:44:01.8594989+00:00"
         }
       ],
-      "createdAtUtc": "2026-06-09T22:17:43.8088479+00:00",
-      "updatedAtUtc": "2026-06-10T20:17:43.808848+00:00"
+      "createdAtUtc": "2026-06-10T19:30:04.8832759+00:00",
+      "updatedAtUtc": "2026-06-11T12:30:04.8832766+00:00"
     },
     {
       "id": "case-G026",
@@ -15303,8 +15303,8 @@
           "sourceUpdatedAtUtc": "2025-12-31T19:44:01.859503+00:00"
         }
       ],
-      "createdAtUtc": "2026-06-08T03:17:43.8089497+00:00",
-      "updatedAtUtc": "2026-06-10T20:17:43.8089536+00:00"
+      "createdAtUtc": "2026-06-11T10:30:04.8835194+00:00",
+      "updatedAtUtc": "2026-06-11T12:30:04.8835254+00:00"
     },
     {
       "id": "case-G027",
@@ -15422,8 +15422,8 @@
           "sourceUpdatedAtUtc": "2025-08-28T19:44:01.8595054+00:00"
         }
       ],
-      "createdAtUtc": "2026-06-09T01:17:43.8091178+00:00",
-      "updatedAtUtc": "2026-06-10T20:17:43.8091185+00:00"
+      "createdAtUtc": "2026-06-10T09:30:04.8837842+00:00",
+      "updatedAtUtc": "2026-06-11T12:30:04.8837847+00:00"
     },
     {
       "id": "case-G028",
@@ -15528,8 +15528,8 @@
           "sourceUpdatedAtUtc": "2026-01-14T19:44:01.859509+00:00"
         }
       ],
-      "createdAtUtc": "2026-06-08T15:17:43.8092563+00:00",
-      "updatedAtUtc": "2026-06-10T20:17:43.8092565+00:00"
+      "createdAtUtc": "2026-06-10T16:30:04.8840058+00:00",
+      "updatedAtUtc": "2026-06-11T12:30:04.8840065+00:00"
     }
   ],
   "workers": [
@@ -15540,61 +15540,61 @@
       "processedToday": 9,
       "failedToday": 0,
       "status": "Healthy",
-      "lastRunAtUtc": "2026-06-10T19:42:20.8567451+00:00"
+      "lastRunAtUtc": "2026-06-11T12:27:33.1436089+00:00"
     },
     {
       "name": "IdentityResolution.Worker",
       "queueName": "taxnet-dev-identity-resolution-jobs",
       "queueDepth": 0,
-      "processedToday": 128,
+      "processedToday": 129,
       "failedToday": 1,
       "status": "Healthy",
-      "lastRunAtUtc": "2026-06-10T19:43:20.8567977+00:00"
+      "lastRunAtUtc": "2026-06-11T12:28:33.1436105+00:00"
     },
     {
       "name": "GraphIntelligence.Worker",
       "queueName": "taxnet-dev-graph-build-jobs",
       "queueDepth": 0,
-      "processedToday": 128,
+      "processedToday": 129,
       "failedToday": 0,
       "status": "Healthy",
-      "lastRunAtUtc": "2026-06-10T19:44:20.8567982+00:00"
+      "lastRunAtUtc": "2026-06-11T12:29:33.1436111+00:00"
     },
     {
       "name": "RiskScoring.Worker",
       "queueName": "taxnet-dev-risk-score-jobs",
       "queueDepth": 0,
-      "processedToday": 128,
+      "processedToday": 129,
       "failedToday": 0,
       "status": "Healthy",
-      "lastRunAtUtc": "2026-06-10T19:45:20.8567983+00:00"
+      "lastRunAtUtc": "2026-06-11T12:30:33.1436114+00:00"
     },
     {
       "name": "RagPolicy.Worker",
       "queueName": "taxnet-dev-rag-index-jobs",
       "queueDepth": 0,
-      "processedToday": 5,
+      "processedToday": 7,
       "failedToday": 0,
       "status": "Healthy",
-      "lastRunAtUtc": "2026-06-10T19:46:20.8567984+00:00"
+      "lastRunAtUtc": "2026-06-11T12:31:33.1436119+00:00"
     },
     {
       "name": "Report.Worker",
       "queueName": "taxnet-dev-report-jobs",
       "queueDepth": 1,
-      "processedToday": 5,
+      "processedToday": 6,
       "failedToday": 0,
       "status": "Healthy",
-      "lastRunAtUtc": "2026-06-10T19:28:20.8567992+00:00"
+      "lastRunAtUtc": "2026-06-11T12:13:33.1436135+00:00"
     },
     {
       "name": "AuditLog.Worker",
       "queueName": "taxnet-dev-audit-log-jobs",
       "queueDepth": 0,
-      "processedToday": 513,
+      "processedToday": 674,
       "failedToday": 0,
       "status": "Healthy",
-      "lastRunAtUtc": "2026-06-10T19:47:20.8567994+00:00"
+      "lastRunAtUtc": "2026-06-11T12:32:33.143614+00:00"
     }
   ],
   "providers": [
@@ -15670,6 +15670,32 @@
     }
   ],
   "ragDocuments": [
+    {
+      "id": "rag-007",
+      "title": "API seeded worker policy",
+      "sourceType": "AuditSop",
+      "url": "sandbox://api-worker-seed/policy",
+      "summary": "API seeded worker policy confirms human review, evidence validation, and citizen correction windows before escalation.",
+      "capturedAtUtc": "2026-06-11T12:33:33.1367839+00:00",
+      "tags": [
+        "api",
+        "worker",
+        "human-review"
+      ]
+    },
+    {
+      "id": "rag-006",
+      "title": "Worker seeded audit SOP",
+      "sourceType": "AuditSop",
+      "url": "sandbox://worker-seeded/audit-sop",
+      "summary": "Worker-ingested policy text requires human review, evidence validation, and citizen correction before escalation.",
+      "capturedAtUtc": "2026-06-11T12:30:14.754524+00:00",
+      "tags": [
+        "worker",
+        "audit",
+        "human-review"
+      ]
+    },
     {
       "id": "rag-005",
       "title": "Persistent verification circular",
@@ -15934,6 +15960,70 @@
       },
       "qualityScore": 0.84,
       "indexedAtUtc": "2026-06-10T19:44:13.7865969+00:00"
+    },
+    {
+      "id": "chunk-rag-006-001",
+      "documentId": "rag-006",
+      "title": "Worker seeded audit SOP",
+      "text": "Worker-ingested policy text requires human review, evidence validation, and citizen correction before escalation.",
+      "keywords": [
+        "worker",
+        "seeded",
+        "audit",
+        "sop",
+        "auditsop",
+        "ingested",
+        "text",
+        "requires",
+        "human",
+        "review",
+        "evidence",
+        "validation",
+        "citizen",
+        "correction",
+        "before",
+        "escalation"
+      ],
+      "citation": {
+        "title": "Worker seeded audit SOP",
+        "url": "sandbox://worker-seeded/audit-sop",
+        "sourceType": "AuditSop",
+        "chunkId": "chunk-rag-006-001",
+        "capturedAtUtc": "2026-06-11T12:30:14.754524+00:00"
+      },
+      "qualityScore": 0.83,
+      "indexedAtUtc": "2026-06-11T12:30:14.7559051+00:00"
+    },
+    {
+      "id": "chunk-rag-007-001",
+      "documentId": "rag-007",
+      "title": "API seeded worker policy",
+      "text": "API seeded worker policy confirms human review, evidence validation, and citizen correction windows before escalation.",
+      "keywords": [
+        "api",
+        "seeded",
+        "worker",
+        "auditsop",
+        "confirms",
+        "human",
+        "review",
+        "evidence",
+        "validation",
+        "citizen",
+        "correction",
+        "windows",
+        "before",
+        "escalation"
+      ],
+      "citation": {
+        "title": "API seeded worker policy",
+        "url": "sandbox://api-worker-seed/policy",
+        "sourceType": "AuditSop",
+        "chunkId": "chunk-rag-007-001",
+        "capturedAtUtc": "2026-06-11T12:33:33.1367839+00:00"
+      },
+      "qualityScore": 0.82,
+      "indexedAtUtc": "2026-06-11T12:33:33.1411179+00:00"
     }
   ],
   "datasetBatches": [
@@ -15969,6 +16059,36 @@
     }
   ],
   "importJobs": [
+    {
+      "id": "job-rag-20260611123333",
+      "type": "RagIndex",
+      "status": "Succeeded",
+      "source": "API seeded worker policy",
+      "recordsProcessed": 1,
+      "recordsCreated": 1,
+      "recordsFailed": 0,
+      "startedAtUtc": "2026-06-11T12:33:31.1434069+00:00",
+      "finishedAtUtc": "2026-06-11T12:33:33.1434166+00:00",
+      "messages": [
+        "Indexed policy document \u0027API seeded worker policy\u0027.",
+        "Generated lexical embeddings, chunk metadata, and citation records."
+      ]
+    },
+    {
+      "id": "job-rag-20260611123014",
+      "type": "RagIndex",
+      "status": "Succeeded",
+      "source": "Worker seeded audit SOP",
+      "recordsProcessed": 1,
+      "recordsCreated": 1,
+      "recordsFailed": 0,
+      "startedAtUtc": "2026-06-11T12:30:12.7582666+00:00",
+      "finishedAtUtc": "2026-06-11T12:30:14.7582802+00:00",
+      "messages": [
+        "Indexed policy document \u0027Worker seeded audit SOP\u0027.",
+        "Generated lexical embeddings, chunk metadata, and citation records."
+      ]
+    },
     {
       "id": "job-20260610201743-004",
       "type": "Dataset:identity",
@@ -16028,6 +16148,534 @@
     }
   ],
   "timelineEvents": [
+    {
+      "id": "evt-20260611123337592-195",
+      "caseId": "case-P001",
+      "eventType": "ReportGenerated",
+      "actor": "demo-auditor",
+      "summary": "Audit report rpt-case-P001-20260611123337 generated and stored at s3://taxnet-dev-audit-reports/audit-reports/case-P001/rpt-case-P001-20260611123337.json.",
+      "timestampUtc": "2026-06-11T12:33:37.5926162+00:00"
+    },
+    {
+      "id": "evt-20260611123026660-194",
+      "caseId": "case-P001",
+      "eventType": "ReportGenerated",
+      "actor": "demo-auditor",
+      "summary": "Audit report rpt-case-P001-20260611123026 generated and stored at s3://taxnet-dev-audit-reports/audit-reports/case-P001/rpt-case-P001-20260611123026.json.",
+      "timestampUtc": "2026-06-11T12:30:26.6603667+00:00"
+    },
+    {
+      "id": "evt-20260611123004884-193",
+      "caseId": "case-G028",
+      "eventType": "CaseCreated",
+      "actor": "RiskScoring.Worker",
+      "summary": "Medium case created with score 32/100.",
+      "timestampUtc": "2026-06-11T12:30:04.8840101+00:00"
+    },
+    {
+      "id": "evt-20260611123004883-192",
+      "caseId": "case-G027",
+      "eventType": "CaseCreated",
+      "actor": "RiskScoring.Worker",
+      "summary": "Medium case created with score 32/100.",
+      "timestampUtc": "2026-06-11T12:30:04.8837889+00:00"
+    },
+    {
+      "id": "evt-20260611123004883-191",
+      "caseId": "case-G026",
+      "eventType": "CaseCreated",
+      "actor": "RiskScoring.Worker",
+      "summary": "Medium case created with score 36/100.",
+      "timestampUtc": "2026-06-11T12:30:04.8835433+00:00"
+    },
+    {
+      "id": "evt-20260611123004883-190",
+      "caseId": "case-G025",
+      "eventType": "CaseCreated",
+      "actor": "RiskScoring.Worker",
+      "summary": "High case created with score 74/100.",
+      "timestampUtc": "2026-06-11T12:30:04.8832808+00:00"
+    },
+    {
+      "id": "evt-20260611123004883-189",
+      "caseId": "case-G024",
+      "eventType": "CaseCreated",
+      "actor": "RiskScoring.Worker",
+      "summary": "High case created with score 76/100.",
+      "timestampUtc": "2026-06-11T12:30:04.8830125+00:00"
+    },
+    {
+      "id": "evt-20260611123004882-188",
+      "caseId": "case-G023",
+      "eventType": "CaseCreated",
+      "actor": "RiskScoring.Worker",
+      "summary": "Medium case created with score 41/100.",
+      "timestampUtc": "2026-06-11T12:30:04.8827712+00:00"
+    },
+    {
+      "id": "evt-20260611123004882-187",
+      "caseId": "case-G022",
+      "eventType": "CaseCreated",
+      "actor": "RiskScoring.Worker",
+      "summary": "Critical case created with score 85/100.",
+      "timestampUtc": "2026-06-11T12:30:04.8825333+00:00"
+    },
+    {
+      "id": "evt-20260611123004882-186",
+      "caseId": "case-G021",
+      "eventType": "CaseCreated",
+      "actor": "RiskScoring.Worker",
+      "summary": "High case created with score 67/100.",
+      "timestampUtc": "2026-06-11T12:30:04.8822796+00:00"
+    },
+    {
+      "id": "evt-20260611123004882-185",
+      "caseId": "case-G020",
+      "eventType": "CaseCreated",
+      "actor": "RiskScoring.Worker",
+      "summary": "Critical case created with score 85/100.",
+      "timestampUtc": "2026-06-11T12:30:04.8820291+00:00"
+    },
+    {
+      "id": "evt-20260611123004881-184",
+      "caseId": "case-G019",
+      "eventType": "CaseCreated",
+      "actor": "RiskScoring.Worker",
+      "summary": "Medium case created with score 46/100.",
+      "timestampUtc": "2026-06-11T12:30:04.8817912+00:00"
+    },
+    {
+      "id": "evt-20260611123004881-183",
+      "caseId": "case-G018",
+      "eventType": "CaseCreated",
+      "actor": "RiskScoring.Worker",
+      "summary": "Medium case created with score 53/100.",
+      "timestampUtc": "2026-06-11T12:30:04.8815715+00:00"
+    },
+    {
+      "id": "evt-20260611123004881-182",
+      "caseId": "case-G017",
+      "eventType": "CaseCreated",
+      "actor": "RiskScoring.Worker",
+      "summary": "High case created with score 72/100.",
+      "timestampUtc": "2026-06-11T12:30:04.881337+00:00"
+    },
+    {
+      "id": "evt-20260611123004881-181",
+      "caseId": "case-G016",
+      "eventType": "CaseCreated",
+      "actor": "RiskScoring.Worker",
+      "summary": "High case created with score 66/100.",
+      "timestampUtc": "2026-06-11T12:30:04.8810812+00:00"
+    },
+    {
+      "id": "evt-20260611123004880-180",
+      "caseId": "case-G015",
+      "eventType": "CaseCreated",
+      "actor": "RiskScoring.Worker",
+      "summary": "Critical case created with score 81/100.",
+      "timestampUtc": "2026-06-11T12:30:04.8808415+00:00"
+    },
+    {
+      "id": "evt-20260611123004880-179",
+      "caseId": "case-G014",
+      "eventType": "CaseCreated",
+      "actor": "RiskScoring.Worker",
+      "summary": "Critical case created with score 83/100.",
+      "timestampUtc": "2026-06-11T12:30:04.880606+00:00"
+    },
+    {
+      "id": "evt-20260611123004880-178",
+      "caseId": "case-G013",
+      "eventType": "CaseCreated",
+      "actor": "RiskScoring.Worker",
+      "summary": "High case created with score 75/100.",
+      "timestampUtc": "2026-06-11T12:30:04.8803658+00:00"
+    },
+    {
+      "id": "evt-20260611123004880-177",
+      "caseId": "case-G012",
+      "eventType": "CaseCreated",
+      "actor": "RiskScoring.Worker",
+      "summary": "High case created with score 67/100.",
+      "timestampUtc": "2026-06-11T12:30:04.88012+00:00"
+    },
+    {
+      "id": "evt-20260611123004879-176",
+      "caseId": "case-G011",
+      "eventType": "CaseCreated",
+      "actor": "RiskScoring.Worker",
+      "summary": "Critical case created with score 95/100.",
+      "timestampUtc": "2026-06-11T12:30:04.8798923+00:00"
+    },
+    {
+      "id": "evt-20260611123004879-175",
+      "caseId": "case-G010",
+      "eventType": "CaseCreated",
+      "actor": "RiskScoring.Worker",
+      "summary": "Medium case created with score 54/100.",
+      "timestampUtc": "2026-06-11T12:30:04.8796373+00:00"
+    },
+    {
+      "id": "evt-20260611123004879-174",
+      "caseId": "case-G008",
+      "eventType": "CaseCreated",
+      "actor": "RiskScoring.Worker",
+      "summary": "Critical case created with score 85/100.",
+      "timestampUtc": "2026-06-11T12:30:04.8791896+00:00"
+    },
+    {
+      "id": "evt-20260611123004878-173",
+      "caseId": "case-G007",
+      "eventType": "CaseCreated",
+      "actor": "RiskScoring.Worker",
+      "summary": "High case created with score 63/100.",
+      "timestampUtc": "2026-06-11T12:30:04.878913+00:00"
+    },
+    {
+      "id": "evt-20260611123004878-172",
+      "caseId": "case-G006",
+      "eventType": "CaseCreated",
+      "actor": "RiskScoring.Worker",
+      "summary": "Medium case created with score 51/100.",
+      "timestampUtc": "2026-06-11T12:30:04.8786595+00:00"
+    },
+    {
+      "id": "evt-20260611123004878-171",
+      "caseId": "case-G005",
+      "eventType": "CaseCreated",
+      "actor": "RiskScoring.Worker",
+      "summary": "Critical case created with score 83/100.",
+      "timestampUtc": "2026-06-11T12:30:04.8784603+00:00"
+    },
+    {
+      "id": "evt-20260611123004878-170",
+      "caseId": "case-G004",
+      "eventType": "CaseCreated",
+      "actor": "RiskScoring.Worker",
+      "summary": "Critical case created with score 87/100.",
+      "timestampUtc": "2026-06-11T12:30:04.8782331+00:00"
+    },
+    {
+      "id": "evt-20260611123004877-169",
+      "caseId": "case-G002",
+      "eventType": "CaseCreated",
+      "actor": "RiskScoring.Worker",
+      "summary": "Medium case created with score 31/100.",
+      "timestampUtc": "2026-06-11T12:30:04.8778458+00:00"
+    },
+    {
+      "id": "evt-20260611123004877-168",
+      "caseId": "case-G001",
+      "eventType": "CaseCreated",
+      "actor": "RiskScoring.Worker",
+      "summary": "High case created with score 64/100.",
+      "timestampUtc": "2026-06-11T12:30:04.8776482+00:00"
+    },
+    {
+      "id": "evt-20260611123004877-167",
+      "caseId": "case-P008",
+      "eventType": "CaseCreated",
+      "actor": "RiskScoring.Worker",
+      "summary": "Medium case created with score 45/100.",
+      "timestampUtc": "2026-06-11T12:30:04.8774252+00:00"
+    },
+    {
+      "id": "evt-20260611123004876-166",
+      "caseId": "case-P006",
+      "eventType": "CaseCreated",
+      "actor": "RiskScoring.Worker",
+      "summary": "Critical case created with score 81/100.",
+      "timestampUtc": "2026-06-11T12:30:04.8769833+00:00"
+    },
+    {
+      "id": "evt-20260611123004876-165",
+      "caseId": "case-P005",
+      "eventType": "CaseCreated",
+      "actor": "RiskScoring.Worker",
+      "summary": "Medium case created with score 31/100.",
+      "timestampUtc": "2026-06-11T12:30:04.8767683+00:00"
+    },
+    {
+      "id": "evt-20260611123004876-164",
+      "caseId": "case-P004",
+      "eventType": "CaseCreated",
+      "actor": "RiskScoring.Worker",
+      "summary": "Critical case created with score 94/100.",
+      "timestampUtc": "2026-06-11T12:30:04.8765745+00:00"
+    },
+    {
+      "id": "evt-20260611123004876-163",
+      "caseId": "case-P003",
+      "eventType": "CaseCreated",
+      "actor": "RiskScoring.Worker",
+      "summary": "Critical case created with score 86/100.",
+      "timestampUtc": "2026-06-11T12:30:04.8763552+00:00"
+    },
+    {
+      "id": "evt-20260611123004875-162",
+      "caseId": "case-P001",
+      "eventType": "CaseCreated",
+      "actor": "RiskScoring.Worker",
+      "summary": "Critical case created with score 98/100.",
+      "timestampUtc": "2026-06-11T12:30:04.875917+00:00"
+    },
+    {
+      "id": "evt-20260611122933353-161",
+      "caseId": "case-G028",
+      "eventType": "CaseCreated",
+      "actor": "RiskScoring.Worker",
+      "summary": "Medium case created with score 32/100.",
+      "timestampUtc": "2026-06-11T12:29:33.353587+00:00"
+    },
+    {
+      "id": "evt-20260611122933353-160",
+      "caseId": "case-G027",
+      "eventType": "CaseCreated",
+      "actor": "RiskScoring.Worker",
+      "summary": "Medium case created with score 32/100.",
+      "timestampUtc": "2026-06-11T12:29:33.3531219+00:00"
+    },
+    {
+      "id": "evt-20260611122933352-159",
+      "caseId": "case-G026",
+      "eventType": "CaseCreated",
+      "actor": "RiskScoring.Worker",
+      "summary": "Medium case created with score 36/100.",
+      "timestampUtc": "2026-06-11T12:29:33.3528602+00:00"
+    },
+    {
+      "id": "evt-20260611122933352-158",
+      "caseId": "case-G025",
+      "eventType": "CaseCreated",
+      "actor": "RiskScoring.Worker",
+      "summary": "High case created with score 74/100.",
+      "timestampUtc": "2026-06-11T12:29:33.3525862+00:00"
+    },
+    {
+      "id": "evt-20260611122933352-157",
+      "caseId": "case-G024",
+      "eventType": "CaseCreated",
+      "actor": "RiskScoring.Worker",
+      "summary": "High case created with score 76/100.",
+      "timestampUtc": "2026-06-11T12:29:33.352283+00:00"
+    },
+    {
+      "id": "evt-20260611122933352-156",
+      "caseId": "case-G023",
+      "eventType": "CaseCreated",
+      "actor": "RiskScoring.Worker",
+      "summary": "Medium case created with score 41/100.",
+      "timestampUtc": "2026-06-11T12:29:33.3520108+00:00"
+    },
+    {
+      "id": "evt-20260611122933351-155",
+      "caseId": "case-G022",
+      "eventType": "CaseCreated",
+      "actor": "RiskScoring.Worker",
+      "summary": "Critical case created with score 85/100.",
+      "timestampUtc": "2026-06-11T12:29:33.3517568+00:00"
+    },
+    {
+      "id": "evt-20260611122933351-154",
+      "caseId": "case-G021",
+      "eventType": "CaseCreated",
+      "actor": "RiskScoring.Worker",
+      "summary": "High case created with score 67/100.",
+      "timestampUtc": "2026-06-11T12:29:33.3514759+00:00"
+    },
+    {
+      "id": "evt-20260611122933351-153",
+      "caseId": "case-G020",
+      "eventType": "CaseCreated",
+      "actor": "RiskScoring.Worker",
+      "summary": "Critical case created with score 85/100.",
+      "timestampUtc": "2026-06-11T12:29:33.3512229+00:00"
+    },
+    {
+      "id": "evt-20260611122933350-152",
+      "caseId": "case-G019",
+      "eventType": "CaseCreated",
+      "actor": "RiskScoring.Worker",
+      "summary": "Medium case created with score 46/100.",
+      "timestampUtc": "2026-06-11T12:29:33.3509528+00:00"
+    },
+    {
+      "id": "evt-20260611122933350-151",
+      "caseId": "case-G018",
+      "eventType": "CaseCreated",
+      "actor": "RiskScoring.Worker",
+      "summary": "Medium case created with score 53/100.",
+      "timestampUtc": "2026-06-11T12:29:33.3506978+00:00"
+    },
+    {
+      "id": "evt-20260611122933350-150",
+      "caseId": "case-G017",
+      "eventType": "CaseCreated",
+      "actor": "RiskScoring.Worker",
+      "summary": "High case created with score 72/100.",
+      "timestampUtc": "2026-06-11T12:29:33.3504504+00:00"
+    },
+    {
+      "id": "evt-20260611122933350-149",
+      "caseId": "case-G016",
+      "eventType": "CaseCreated",
+      "actor": "RiskScoring.Worker",
+      "summary": "High case created with score 66/100.",
+      "timestampUtc": "2026-06-11T12:29:33.3501617+00:00"
+    },
+    {
+      "id": "evt-20260611122933349-148",
+      "caseId": "case-G015",
+      "eventType": "CaseCreated",
+      "actor": "RiskScoring.Worker",
+      "summary": "Critical case created with score 81/100.",
+      "timestampUtc": "2026-06-11T12:29:33.3499059+00:00"
+    },
+    {
+      "id": "evt-20260611122933349-147",
+      "caseId": "case-G014",
+      "eventType": "CaseCreated",
+      "actor": "RiskScoring.Worker",
+      "summary": "Critical case created with score 83/100.",
+      "timestampUtc": "2026-06-11T12:29:33.3496388+00:00"
+    },
+    {
+      "id": "evt-20260611122933349-146",
+      "caseId": "case-G013",
+      "eventType": "CaseCreated",
+      "actor": "RiskScoring.Worker",
+      "summary": "High case created with score 75/100.",
+      "timestampUtc": "2026-06-11T12:29:33.3493721+00:00"
+    },
+    {
+      "id": "evt-20260611122933349-145",
+      "caseId": "case-G012",
+      "eventType": "CaseCreated",
+      "actor": "RiskScoring.Worker",
+      "summary": "High case created with score 67/100.",
+      "timestampUtc": "2026-06-11T12:29:33.3491021+00:00"
+    },
+    {
+      "id": "evt-20260611122933348-144",
+      "caseId": "case-G011",
+      "eventType": "CaseCreated",
+      "actor": "RiskScoring.Worker",
+      "summary": "Critical case created with score 95/100.",
+      "timestampUtc": "2026-06-11T12:29:33.3488519+00:00"
+    },
+    {
+      "id": "evt-20260611122933348-143",
+      "caseId": "case-G010",
+      "eventType": "CaseCreated",
+      "actor": "RiskScoring.Worker",
+      "summary": "Medium case created with score 54/100.",
+      "timestampUtc": "2026-06-11T12:29:33.3486304+00:00"
+    },
+    {
+      "id": "evt-20260611122933348-142",
+      "caseId": "case-G008",
+      "eventType": "CaseCreated",
+      "actor": "RiskScoring.Worker",
+      "summary": "Critical case created with score 85/100.",
+      "timestampUtc": "2026-06-11T12:29:33.3481542+00:00"
+    },
+    {
+      "id": "evt-20260611122933347-141",
+      "caseId": "case-G007",
+      "eventType": "CaseCreated",
+      "actor": "RiskScoring.Worker",
+      "summary": "High case created with score 63/100.",
+      "timestampUtc": "2026-06-11T12:29:33.3478884+00:00"
+    },
+    {
+      "id": "evt-20260611122933347-140",
+      "caseId": "case-G006",
+      "eventType": "CaseCreated",
+      "actor": "RiskScoring.Worker",
+      "summary": "Medium case created with score 51/100.",
+      "timestampUtc": "2026-06-11T12:29:33.3476267+00:00"
+    },
+    {
+      "id": "evt-20260611122933347-139",
+      "caseId": "case-G005",
+      "eventType": "CaseCreated",
+      "actor": "RiskScoring.Worker",
+      "summary": "Critical case created with score 83/100.",
+      "timestampUtc": "2026-06-11T12:29:33.3473849+00:00"
+    },
+    {
+      "id": "evt-20260611122933347-138",
+      "caseId": "case-G004",
+      "eventType": "CaseCreated",
+      "actor": "RiskScoring.Worker",
+      "summary": "Critical case created with score 87/100.",
+      "timestampUtc": "2026-06-11T12:29:33.3471325+00:00"
+    },
+    {
+      "id": "evt-20260611122933346-137",
+      "caseId": "case-G002",
+      "eventType": "CaseCreated",
+      "actor": "RiskScoring.Worker",
+      "summary": "Medium case created with score 31/100.",
+      "timestampUtc": "2026-06-11T12:29:33.3466688+00:00"
+    },
+    {
+      "id": "evt-20260611122933346-136",
+      "caseId": "case-G001",
+      "eventType": "CaseCreated",
+      "actor": "RiskScoring.Worker",
+      "summary": "High case created with score 64/100.",
+      "timestampUtc": "2026-06-11T12:29:33.346441+00:00"
+    },
+    {
+      "id": "evt-20260611122933346-135",
+      "caseId": "case-P008",
+      "eventType": "CaseCreated",
+      "actor": "RiskScoring.Worker",
+      "summary": "Medium case created with score 45/100.",
+      "timestampUtc": "2026-06-11T12:29:33.3461907+00:00"
+    },
+    {
+      "id": "evt-20260611122933345-134",
+      "caseId": "case-P006",
+      "eventType": "CaseCreated",
+      "actor": "RiskScoring.Worker",
+      "summary": "Critical case created with score 81/100.",
+      "timestampUtc": "2026-06-11T12:29:33.3457144+00:00"
+    },
+    {
+      "id": "evt-20260611122933345-133",
+      "caseId": "case-P005",
+      "eventType": "CaseCreated",
+      "actor": "RiskScoring.Worker",
+      "summary": "Medium case created with score 31/100.",
+      "timestampUtc": "2026-06-11T12:29:33.3454294+00:00"
+    },
+    {
+      "id": "evt-20260611122933345-132",
+      "caseId": "case-P004",
+      "eventType": "CaseCreated",
+      "actor": "RiskScoring.Worker",
+      "summary": "Critical case created with score 94/100.",
+      "timestampUtc": "2026-06-11T12:29:33.3451539+00:00"
+    },
+    {
+      "id": "evt-20260611122933344-131",
+      "caseId": "case-P003",
+      "eventType": "CaseCreated",
+      "actor": "RiskScoring.Worker",
+      "summary": "Critical case created with score 86/100.",
+      "timestampUtc": "2026-06-11T12:29:33.3448565+00:00"
+    },
+    {
+      "id": "evt-20260611122933344-130",
+      "caseId": "case-P001",
+      "eventType": "CaseCreated",
+      "actor": "RiskScoring.Worker",
+      "summary": "Critical case created with score 98/100.",
+      "timestampUtc": "2026-06-11T12:29:33.3440548+00:00"
+    },
     {
       "id": "evt-20260610201743809-129",
       "caseId": "case-G028",
@@ -17063,6 +17711,24 @@
   ],
   "reports": [
     {
+      "id": "rpt-case-P001-20260611123337",
+      "caseId": "case-P001",
+      "storageUri": "s3://taxnet-dev-audit-reports/audit-reports/case-P001/rpt-case-P001-20260611123337.json",
+      "generatedBy": "demo-auditor",
+      "generatedAtUtc": "2026-06-11T12:33:37.5897205+00:00",
+      "watermark": "TaxNet Guardian | case-P001 | Generated 2026-06-11T12:33:37.5897112\u002B00:00",
+      "summary": "Muhammad Ali Khan was flagged for human review because the declared tax profile is inconsistent with observed asset, consumption, and business signals. The current score is 98/100 (Critical) with 98% confidence."
+    },
+    {
+      "id": "rpt-case-P001-20260611123026",
+      "caseId": "case-P001",
+      "storageUri": "s3://taxnet-dev-audit-reports/audit-reports/case-P001/rpt-case-P001-20260611123026.json",
+      "generatedBy": "demo-auditor",
+      "generatedAtUtc": "2026-06-11T12:30:26.658107+00:00",
+      "watermark": "TaxNet Guardian | case-P001 | Generated 2026-06-11T12:30:26.6581016\u002B00:00",
+      "summary": "Muhammad Ali Khan was flagged for human review because the declared tax profile is inconsistent with observed asset, consumption, and business signals. The current score is 98/100 (Critical) with 98% confidence."
+    },
+    {
       "id": "rpt-case-P001-20260610194413",
       "caseId": "case-P001",
       "storageUri": "s3://taxnet-dev-audit-reports/audit-reports/case-P001/rpt-case-P001-20260610194413.json",
@@ -17074,6 +17740,107 @@
   ],
   "modelInvocations": [],
   "auditEvents": [
+    {
+      "id": "audit-20260611123337592-013",
+      "actor": "demo-auditor",
+      "actorRole": "taxnet-auditor",
+      "action": "ReportGenerated",
+      "resource": "case-P001",
+      "outcome": "Succeeded",
+      "correlationId": "corr-20260611123337592",
+      "timestampUtc": "2026-06-11T12:33:37.5926351+00:00",
+      "metadata": {
+        "reportId": "rpt-case-P001-20260611123337",
+        "storageUri": "s3://taxnet-dev-audit-reports/audit-reports/case-P001/rpt-case-P001-20260611123337.json"
+      }
+    },
+    {
+      "id": "audit-20260611123333143-012",
+      "actor": "RagPolicy.Worker",
+      "actorRole": "taxnet-policy-analyst",
+      "action": "RagDocumentIndexed",
+      "resource": "rag-007",
+      "outcome": "Succeeded",
+      "correlationId": "corr-20260611123333143",
+      "timestampUtc": "2026-06-11T12:33:33.1436042+00:00",
+      "metadata": {
+        "title": "API seeded worker policy",
+        "chunks": 1
+      }
+    },
+    {
+      "id": "audit-20260611123328848-011",
+      "actor": "RiskScoring.Worker",
+      "actorRole": "taxnet-admin",
+      "action": "WorkerCycleExecuted",
+      "resource": "system-workers",
+      "outcome": "Succeeded",
+      "correlationId": "corr-20260611123328848",
+      "timestampUtc": "2026-06-11T12:33:28.8487831+00:00",
+      "metadata": {
+        "notificationsSent": 0,
+        "ragChunks": 6,
+        "reports": 2
+      }
+    },
+    {
+      "id": "audit-20260611123313998-010",
+      "actor": "Ingestion.Worker",
+      "actorRole": "taxnet-admin",
+      "action": "WorkerCycleExecuted",
+      "resource": "system-workers",
+      "outcome": "Succeeded",
+      "correlationId": "corr-20260611123313998",
+      "timestampUtc": "2026-06-11T12:33:13.998426+00:00",
+      "metadata": {
+        "notificationsSent": 0,
+        "ragChunks": 6,
+        "reports": 2
+      }
+    },
+    {
+      "id": "audit-20260611123026660-009",
+      "actor": "demo-auditor",
+      "actorRole": "taxnet-auditor",
+      "action": "ReportGenerated",
+      "resource": "case-P001",
+      "outcome": "Succeeded",
+      "correlationId": "corr-20260611123026660",
+      "timestampUtc": "2026-06-11T12:30:26.6603737+00:00",
+      "metadata": {
+        "reportId": "rpt-case-P001-20260611123026",
+        "storageUri": "s3://taxnet-dev-audit-reports/audit-reports/case-P001/rpt-case-P001-20260611123026.json"
+      }
+    },
+    {
+      "id": "audit-20260611123014758-008",
+      "actor": "RagPolicy.Worker",
+      "actorRole": "taxnet-policy-analyst",
+      "action": "RagDocumentIndexed",
+      "resource": "rag-006",
+      "outcome": "Succeeded",
+      "correlationId": "corr-20260611123014758",
+      "timestampUtc": "2026-06-11T12:30:14.7583857+00:00",
+      "metadata": {
+        "title": "Worker seeded audit SOP",
+        "chunks": 1
+      }
+    },
+    {
+      "id": "audit-20260611121846874-007",
+      "actor": "RagPolicy.Api",
+      "actorRole": "taxnet-policy-analyst",
+      "action": "RagQuery",
+      "resource": "AuditExplanation",
+      "outcome": "Succeeded",
+      "correlationId": "corr-20260611121846883",
+      "timestampUtc": "2026-06-11T12:18:46.8831696+00:00",
+      "metadata": {
+        "query": "What policy supports human review before escalation?",
+        "chunks": 3,
+        "confidence": 0.76
+      }
+    },
     {
       "id": "audit-20260610201753676-006",
       "actor": "GovernmentConnector.Api",
@@ -17165,6 +17932,38 @@
   ],
   "notifications": [],
   "objectStore": [
+    {
+      "uri": "s3://taxnet-dev-audit-reports/audit-reports/case-P001/rpt-case-P001-20260611123337.json",
+      "bucket": "taxnet-dev-audit-reports",
+      "key": "audit-reports/case-P001/rpt-case-P001-20260611123337.json",
+      "contentType": "application/json",
+      "sizeBytes": 560,
+      "storedAtUtc": "2026-06-11T12:33:37.592187+00:00"
+    },
+    {
+      "uri": "s3://taxnet-dev-raw-source-snapshots/rag-source/rag-007.txt",
+      "bucket": "taxnet-dev-raw-source-snapshots",
+      "key": "rag-source/rag-007.txt",
+      "contentType": "text/plain",
+      "sizeBytes": 118,
+      "storedAtUtc": "2026-06-11T12:33:33.1428025+00:00"
+    },
+    {
+      "uri": "s3://taxnet-dev-audit-reports/audit-reports/case-P001/rpt-case-P001-20260611123026.json",
+      "bucket": "taxnet-dev-audit-reports",
+      "key": "audit-reports/case-P001/rpt-case-P001-20260611123026.json",
+      "contentType": "application/json",
+      "sizeBytes": 559,
+      "storedAtUtc": "2026-06-11T12:30:26.6603498+00:00"
+    },
+    {
+      "uri": "s3://taxnet-dev-raw-source-snapshots/rag-source/rag-006.txt",
+      "bucket": "taxnet-dev-raw-source-snapshots",
+      "key": "rag-source/rag-006.txt",
+      "contentType": "text/plain",
+      "sizeBytes": 113,
+      "storedAtUtc": "2026-06-11T12:30:14.7577832+00:00"
+    },
     {
       "uri": "s3://taxnet-dev-audit-reports/audit-reports/case-P001/rpt-case-P001-20260610194413.json",
       "bucket": "taxnet-dev-audit-reports",

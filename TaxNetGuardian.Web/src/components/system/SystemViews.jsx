@@ -1,6 +1,5 @@
 import React, { useState } from "react";
 import {
-  Command,
   Database,
   FileText,
   KeyRound,
@@ -11,6 +10,7 @@ import {
   Sparkles,
   Workflow
 } from "lucide-react";
+import { EmptyState, Panel } from "../common/Primitives.jsx";
 
 function pct(value) {
   return `${Math.round(Number(value || 0) * 100)}%`;
@@ -396,20 +396,6 @@ function ModelInvokeCenter({ invokeModel, modelResult, selectedCaseId }) {
     </div>
   );
 }
-function Panel({ title, subtitle, icon: Icon, children }) {
-  return (
-    <section className="panel">
-      <header>
-        <div>
-          <h3>{Icon && <Icon size={17} />} {title}</h3>
-          {subtitle && <p>{subtitle}</p>}
-        </div>
-      </header>
-      <div className="panel-body">{children}</div>
-    </section>
-  );
-}
-
 function WorkerCard({ worker }) {
   return (
     <article className="small-card">
@@ -418,10 +404,6 @@ function WorkerCard({ worker }) {
       <small>{worker.status} - depth {worker.queueDepth} - {worker.processedToday} processed</small>
     </article>
   );
-}
-
-function EmptyState({ title }) {
-  return <div className="empty-state"><Command size={24} /><strong>{title}</strong></div>;
 }
 
 export { BackendSystems, RagWorkspace, System };

@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Filter } from "lucide-react";
+import { BriefcaseBusiness, Filter } from "lucide-react";
 import { Panel } from "../components/common/Primitives.jsx";
 
 function riskClass(value) {

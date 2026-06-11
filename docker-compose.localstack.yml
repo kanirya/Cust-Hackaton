@@ -1,0 +1,13 @@
+services:
+  localstack:
+    image: localstack/localstack:3
+    container_name: taxnet-localstack
+    ports:
+      - "4566:4566"
+    environment:
+      - SERVICES=sqs,s3,secretsmanager
+      - DEBUG=0
+      - AWS_DEFAULT_REGION=us-east-1
+    volumes:
+      - "./.appdata/localstack:/var/lib/localstack"
+      - "/var/run/docker.sock:/var/run/docker.sock"

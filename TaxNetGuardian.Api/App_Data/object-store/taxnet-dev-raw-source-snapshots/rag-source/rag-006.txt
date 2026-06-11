@@ -1,0 +1,1 @@
+Worker-ingested policy text requires human review, evidence validation, and citizen correction before escalation.
