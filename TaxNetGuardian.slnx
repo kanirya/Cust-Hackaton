@@ -9,4 +9,5 @@
   <Project Path="TaxNetGuardian.Workers.RagPolicy/TaxNetGuardian.Workers.RagPolicy.csproj" />
   <Project Path="TaxNetGuardian.Workers.Report/TaxNetGuardian.Workers.Report.csproj" />
   <Project Path="TaxNetGuardian.Workers.AuditLog/TaxNetGuardian.Workers.AuditLog.csproj" />
+  <Project Path="TaxNetGuardian.AppHost/TaxNetGuardian.AppHost.csproj" />
 </Solution>

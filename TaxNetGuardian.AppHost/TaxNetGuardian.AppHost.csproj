@@ -1,0 +1,22 @@
+<Project Sdk="Aspire.AppHost.Sdk/13.3.0">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <UserSecretsId>fb1ac203-9c31-4fc6-b549-ee6b9f79a04c</UserSecretsId>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\TaxNetGuardian.Api\TaxNetGuardian.Api.csproj" />
+    <ProjectReference Include="..\TaxNetGuardian.Workers.Ingestion\TaxNetGuardian.Workers.Ingestion.csproj" />
+    <ProjectReference Include="..\TaxNetGuardian.Workers.IdentityResolution\TaxNetGuardian.Workers.IdentityResolution.csproj" />
+    <ProjectReference Include="..\TaxNetGuardian.Workers.GraphIntelligence\TaxNetGuardian.Workers.GraphIntelligence.csproj" />
+    <ProjectReference Include="..\TaxNetGuardian.Workers.RiskScoring\TaxNetGuardian.Workers.RiskScoring.csproj" />
+    <ProjectReference Include="..\TaxNetGuardian.Workers.RagPolicy\TaxNetGuardian.Workers.RagPolicy.csproj" />
+    <ProjectReference Include="..\TaxNetGuardian.Workers.Report\TaxNetGuardian.Workers.Report.csproj" />
+    <ProjectReference Include="..\TaxNetGuardian.Workers.AuditLog\TaxNetGuardian.Workers.AuditLog.csproj" />
+  </ItemGroup>
+
+</Project>
