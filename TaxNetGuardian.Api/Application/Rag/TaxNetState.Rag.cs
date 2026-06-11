@@ -55,20 +55,23 @@ public sealed partial class TaxNetState
         var tokens = Tokenize($"{query} {taskType} {jurisdiction} {string.Join(' ', requestedTags)}");
         var topK = Math.Clamp(request.TopK <= 0 ? 5 : request.TopK, 1, 10);
 
-        var scored = RagChunks
+        var scoredWithMetrics = RagChunks
             .Select(chunk =>
             {
                 var overlap = chunk.Keywords.Count(keyword => tokens.Contains(keyword, StringComparer.OrdinalIgnoreCase));
                 var tagBoost = requestedTags.Count == 0 ? 0 : chunk.Keywords.Count(keyword => requestedTags.Contains(keyword, StringComparer.OrdinalIgnoreCase));
                 var sourceBoost = chunk.Citation.SourceType.Contains("Sop", StringComparison.OrdinalIgnoreCase) ? 1 : 0;
-                return new { Chunk = chunk, Score = overlap + tagBoost + sourceBoost + chunk.QualityScore };
+                var phraseBoost = tokens.Count(token => chunk.Text.Contains(token, StringComparison.OrdinalIgnoreCase)) / 3m;
+                var recencyBoost = chunk.IndexedAtUtc >= DateTimeOffset.UtcNow.AddDays(-30) ? 0.25m : 0m;
+                var score = overlap + tagBoost + sourceBoost + phraseBoost + recencyBoost + chunk.QualityScore;
+                return new { Chunk = chunk, Score = decimal.Round(score, 3), Overlap = overlap, TagBoost = tagBoost, PhraseBoost = phraseBoost };
             })
             .Where(x => x.Score > 0)
             .OrderByDescending(x => x.Score)
             .ThenByDescending(x => x.Chunk.IndexedAtUtc)
-            .Take(topK)
-            .Select(x => x.Chunk)
             .ToArray();
+
+        var scored = scoredWithMetrics.Take(topK).Select(x => x.Chunk).ToArray();
 
         if (scored.Length == 0)
         {
@@ -80,10 +83,12 @@ public sealed partial class TaxNetState
             "Query rewritten with task type, jurisdiction, and requested tags.",
             "Retrieved chunks include citation metadata and source timestamps.",
             "Context pack excludes raw PII and private citizen records.",
+            $"Hybrid score considered token overlap, phrase match, source type, recency, and chunk quality across {RagChunks.Count} chunks.",
+            scoredWithMetrics.Length > 0 ? $"Top score {scoredWithMetrics[0].Score}; keyword overlap {scoredWithMetrics[0].Overlap}; tag boost {scoredWithMetrics[0].TagBoost}." : "No lexical score available.",
             scored.Length > 0 ? "At least one policy context chunk was retrieved." : "No policy context chunks were available."
         };
 
-        var confidence = scored.Length == 0 ? 0m : decimal.Round(Math.Min(0.98m, 0.55m + (scored.Length * 0.07m)), 2);
+        var confidence = scored.Length == 0 ? 0m : decimal.Round(Math.Min(0.98m, 0.52m + (scored.Length * 0.06m) + (scoredWithMetrics.FirstOrDefault()?.Score ?? 0m) * 0.025m), 2);
         AddAuditEvent("RagPolicy.Api", "taxnet-policy-analyst", "RagQuery", taskType, "Succeeded", new Dictionary<string, object>
         {
             ["query"] = query,
@@ -104,10 +109,11 @@ public sealed partial class TaxNetState
     public ModelInvocationResponse InvokeModelGateway(ModelInvocationRequest request)
     {
         var taskType = string.IsNullOrWhiteSpace(request.TaskType) ? "PolicyQuestion" : request.TaskType.Trim();
-        var route = SelectModelRoute(taskType, request.PreferredProvider, request.AllowExternalProvider);
         var safePrompt = RedactSensitivePrompt(request.Prompt);
         var citations = Array.Empty<PolicyCitation>();
+        var contextChunks = Array.Empty<RagChunk>();
         string output;
+        string deterministicOutput;
 
         if (!string.IsNullOrWhiteSpace(request.CaseId) && Cases.Any(x => x.Id.Equals(request.CaseId, StringComparison.OrdinalIgnoreCase)))
         {
@@ -120,7 +126,8 @@ public sealed partial class TaxNetState
                 ["audit", "human-review", "citizen", "asset"]));
 
             citations = rag.Citations.ToArray();
-            output = taskType switch
+            contextChunks = rag.Chunks.ToArray();
+            deterministicOutput = taskType switch
             {
                 "CitizenExplanation" => "Citizen-safe draft: records linked to this profile may need review. The citizen should verify ownership dates, filing status, and any outdated business or utility links through the correction workflow.",
                 "ReportDraft" => BuildReportDraft(request.CaseId, explanation, rag),
@@ -131,22 +138,31 @@ public sealed partial class TaxNetState
         {
             var rag = QueryRag(new RagQueryRequest(safePrompt, taskType, "Pakistan", 5, []));
             citations = rag.Citations.ToArray();
-            output = $"Model gateway deterministic response for {taskType}: {safePrompt}. Retrieved {rag.Chunks.Count} policy context chunk(s) with {rag.RetrievalConfidence:P0} confidence.";
+            contextChunks = rag.Chunks.ToArray();
+            deterministicOutput = $"Model gateway deterministic response for {taskType}: {safePrompt}. Retrieved {rag.Chunks.Count} policy context chunk(s) with {rag.RetrievalConfidence:P0} confidence.";
         }
+
+        var providerResult = new ModelGatewayClient()
+            .InvokeAsync(request.PreferredProvider, request.AllowExternalProvider, taskType, safePrompt, contextChunks)
+            .GetAwaiter()
+            .GetResult();
+        output = providerResult.UsedExternalProvider && !string.IsNullOrWhiteSpace(providerResult.Output)
+            ? providerResult.Output
+            : deterministicOutput + (string.IsNullOrWhiteSpace(providerResult.Error) ? "" : $" Provider fallback: {providerResult.Error}");
 
         var promptTokens = EstimateTokens(safePrompt);
         var completionTokens = EstimateTokens(output);
         var response = new ModelInvocationResponse(
             $"model-{DateTimeOffset.UtcNow:yyyyMMddHHmmssfff}-{ModelInvocations.Count + 1:000}",
             taskType,
-            route.Provider,
-            route.Route,
+            providerResult.Provider,
+            providerResult.Route,
             output,
             ["PII redaction", "evidence ID validation", "citation validation", "no fraud-proven language", "human review warning"],
             citations,
             promptTokens,
             completionTokens,
-            route.Provider.Contains("Local", StringComparison.OrdinalIgnoreCase) ? 0m : decimal.Round((promptTokens + completionTokens) * 0.000002m, 6),
+            providerResult.UsedExternalProvider ? decimal.Round((promptTokens + completionTokens) * 0.000002m, 6) : 0m,
             DateTimeOffset.UtcNow);
 
         ModelInvocations.Insert(0, response);
@@ -154,6 +170,8 @@ public sealed partial class TaxNetState
         {
             ["provider"] = response.SelectedProvider,
             ["route"] = response.Route,
+            ["model"] = providerResult.Model,
+            ["external"] = providerResult.UsedExternalProvider,
             ["caseId"] = request.CaseId ?? "",
             ["promptTokens"] = response.PromptTokens,
             ["completionTokens"] = response.CompletionTokens

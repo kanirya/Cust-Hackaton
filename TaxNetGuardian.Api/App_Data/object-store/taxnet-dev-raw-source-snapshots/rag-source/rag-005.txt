@@ -1,1 +1,1 @@
-Persistent RAG document used to verify that indexed chunks and object-store source snapshots survive backend restarts.
+Audit escalation requires human review, source verification, evidence identifiers, citizen correction windows, and citation-backed report language. AI scores prioritize review but never prove fraud.

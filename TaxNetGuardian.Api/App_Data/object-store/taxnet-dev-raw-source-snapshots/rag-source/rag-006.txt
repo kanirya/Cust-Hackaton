@@ -1,1 +1,1 @@
-Worker-ingested policy text requires human review, evidence validation, and citizen correction before escalation.
+API seeded worker policy confirms human review, evidence validation, and citizen correction windows before escalation.

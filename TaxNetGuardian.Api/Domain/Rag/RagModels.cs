@@ -61,6 +61,25 @@ public sealed record ModelInvocationResponse(
     decimal EstimatedCostUsd,
     DateTimeOffset InvokedAtUtc);
 
+public sealed record ModelProviderStatus(
+    string Provider,
+    bool HasApiKey,
+    string Route,
+    string Model,
+    bool Enabled);
+
+public sealed record ModelGatewayConfig(
+    string DefaultProvider,
+    IReadOnlyList<ModelProviderStatus> Providers);
+
+public sealed record ModelGatewayProviderResult(
+    string Provider,
+    string Route,
+    string Model,
+    string Output,
+    bool UsedExternalProvider,
+    string? Error);
+
 public sealed record RagFeedRequest(
     string Title,
     string SourceType,

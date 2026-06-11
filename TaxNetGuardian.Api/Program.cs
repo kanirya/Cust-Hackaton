@@ -471,19 +471,32 @@ app.MapPost("/api/system/rag/documents", (TaxNetState state, RagFeedRequest requ
     });
 });
 
-app.MapGet("/api/system/model-gateway", () => Results.Ok(new
+app.MapGet("/api/system/model-gateway", () =>
 {
-    service = "TaxNet.AI.ModelGateway",
-    routing = new[]
+    var config = new ModelGatewayClient().GetConfig();
+    return Results.Ok(new
     {
-        new { task = "AuditExplanation", route = "external-frontier-llm or redacted local model", reason = "quality and reasoning" },
-        new { task = "CitizenExplanation", route = "local model or external with redaction", reason = "privacy-safe plain language" },
-        new { task = "ReportDraft", route = "local model first", reason = "repeatable formatting" },
-        new { task = "PolicyQuestion", route = "RAG + selected LLM", reason = "grounded citations" }
-    },
-    guardrails = new[] { "PII redaction", "evidence ID validation", "citation validation", "no fraud-proven language", "human review warning" },
-    providers = new[] { "OpenAI", "Claude", "Gemini", "Local Ollama/vLLM", "Deterministic template fallback" }
-}));
+        service = "TaxNet.AI.ModelGateway",
+        defaultProvider = config.DefaultProvider,
+        providerStatus = config.Providers,
+        routing = new[]
+        {
+            new { task = "AuditExplanation", route = "OpenAI/Claude/Gemini/DeepSeek when allowed and key exists; deterministic fallback otherwise", reason = "quality and reasoning" },
+            new { task = "CitizenExplanation", route = "local deterministic or redacted external provider", reason = "privacy-safe plain language" },
+            new { task = "ReportDraft", route = "local template or external provider", reason = "repeatable formatting" },
+            new { task = "PolicyQuestion", route = "RAG + selected provider", reason = "grounded citations" }
+        },
+        guardrails = new[] { "PII redaction", "evidence ID validation", "citation validation", "no fraud-proven language", "human review warning", "RAG citation context" },
+        providerEnv = new
+        {
+            openAi = new[] { "OPENAI_API_KEY", "OPENAI_MODEL", "OPENAI_API_BASE_URL" },
+            deepSeek = new[] { "DEEPSEEK_API_KEY", "DEEPSEEK_MODEL", "DEEPSEEK_API_BASE_URL" },
+            gemini = new[] { "GEMINI_API_KEY", "GEMINI_MODEL", "GEMINI_API_BASE_URL" },
+            claude = new[] { "CLAUDE_API_KEY", "CLAUDE_MODEL", "CLAUDE_API_BASE_URL", "CLAUDE_API_VERSION" },
+            routing = new[] { "MODEL_GATEWAY_DEFAULT_PROVIDER" }
+        }
+    });
+});
 
 app.MapPost("/api/system/model-gateway/invoke", (TaxNetState state, ModelInvocationRequest request) =>
     Results.Ok(state.InvokeModelGateway(request)));
@@ -699,6 +712,75 @@ app.MapPost("/sandbox/admin/generate-citizens", (TaxNetState state, HttpContext 
 
     state.GenerateSyntheticData(request.Count, request.SuspiciousPercent, request.NoisePercent);
     return Results.Ok(new { message = "Synthetic citizens generated.", profiles = state.People.Count, cases = state.Cases.Count });
+});
+
+app.MapGet("/sandbox/admin/seed-presets", () => Results.Ok(new
+{
+    presets = new[]
+    {
+        new { name = "balanced-demo", count = 120, suspiciousPercent = 24, noisePercent = 18, purpose = "General judging demo with mixed risk bands." },
+        new { name = "high-risk-demo", count = 180, suspiciousPercent = 45, noisePercent = 20, purpose = "Stress case queue, reports, and graph investigation." },
+        new { name = "clean-baseline", count = 80, suspiciousPercent = 8, noisePercent = 10, purpose = "False-positive and precision story." },
+        new { name = "noisy-connectors", count = 160, suspiciousPercent = 28, noisePercent = 55, purpose = "Identity resolution ambiguity and correction workflow." }
+    }
+}));
+
+app.MapPost("/sandbox/admin/seed-preset/{presetName}", (TaxNetState state, HttpContext context, string presetName) =>
+{
+    if (!AuthorizationCatalog.HasRole(context, "taxnet-sandbox-admin", "taxnet-data-engineer"))
+    {
+        return Results.Json(new { message = "Forbidden. Requires sandbox admin or data engineer role." }, statusCode: StatusCodes.Status403Forbidden);
+    }
+
+    var preset = presetName.ToLowerInvariant() switch
+    {
+        "high-risk-demo" => new SandboxGenerateRequest(180, 45, 20),
+        "clean-baseline" => new SandboxGenerateRequest(80, 8, 10),
+        "noisy-connectors" => new SandboxGenerateRequest(160, 28, 55),
+        _ => new SandboxGenerateRequest(120, 24, 18)
+    };
+
+    state.GenerateSyntheticData(preset.Count, preset.SuspiciousPercent, preset.NoisePercent);
+    return Results.Ok(new
+    {
+        message = $"Seed preset '{presetName}' applied.",
+        preset.Count,
+        preset.SuspiciousPercent,
+        preset.NoisePercent,
+        profiles = state.People.Count,
+        cases = state.Cases.Count
+    });
+});
+
+app.MapPost("/api/demo/bootstrap", async (TaxNetState state, IConfiguration configuration, CancellationToken cancellationToken) =>
+{
+    state.GenerateSyntheticData(140, 32, 22);
+    state.FeedRagDocument(new RagFeedRequest(
+        "Demo bootstrap audit safeguards",
+        "AuditSop",
+        "sandbox://demo/bootstrap-audit-safeguards",
+        "Audit escalation requires human review, source verification, evidence identifiers, citizen correction windows, and citation-backed report language. AI scores prioritize review but never prove fraud.",
+        ["demo", "audit", "human-review", "citizen"]));
+
+    var options = BuildWorkerOptions(configuration);
+    using var http = new HttpClient();
+    var queue = BuildQueueClient(options, http);
+    foreach (var message in DemoWorkerMessages())
+    {
+        await queue.SendAsync(message.QueueName, message.Envelope, cancellationToken);
+    }
+
+    var modelConfig = new ModelGatewayClient().GetConfig();
+    return Results.Ok(new
+    {
+        message = "Demo bootstrap completed: sandbox seeded, RAG policy indexed, worker messages enqueued.",
+        profiles = state.People.Count,
+        cases = state.Cases.Count,
+        ragDocuments = state.RagDocuments.Count,
+        workers = state.Workers,
+        workerQueueMode = options.QueueMode,
+        modelProviders = modelConfig.Providers
+    });
 });
 
 app.MapGet("/sandbox/admin/providers", (TaxNetState state) => Results.Ok(state.Providers));
