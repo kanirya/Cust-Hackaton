@@ -4,6 +4,7 @@ param(
   [string] $Provider,
 
   [Parameter(Mandatory = $true)]
+  [AllowEmptyString()]
   [string] $ApiKey
 )
 
