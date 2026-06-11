@@ -13,9 +13,13 @@ builder.Services.ConfigureHttpJsonOptions(options =>
     options.SerializerOptions.WriteIndented = true;
 });
 builder.Services.AddSingleton(platformOptions);
-builder.Services.AddSingleton(sp => new TaxNetState(sp.GetRequiredService<IWebHostEnvironment>()));
-builder.Services.AddSingleton<ISecretProvider, LocalStackSecretsManagerSecretProvider>();
+builder.Services.AddSingleton(sp => new TaxNetState(
+    sp.GetRequiredService<IWebHostEnvironment>(),
+    sp.GetRequiredService<IConfiguration>(),
+    sp.GetRequiredService<TaxNetPlatformOptions>()));
+builder.Services.AddSingleton<ISecretProvider>(_ => SecretProviderFactory.Create(platformOptions));
 builder.Services.AddSingleton<ModelGatewayClient>();
+builder.Services.AddSingleton<CognitoIdentityProviderStatus>();
 builder.Services.AddCors(options =>
 {
     options.AddDefaultPolicy(policy =>
@@ -176,6 +180,9 @@ app.MapGet("/api/authz", (TaxNetPlatformOptions options) => Results.Ok(new
         "taxnet/internal.audit.write"
     }
 }));
+
+app.MapGet("/api/auth/cognito/status", async (CognitoIdentityProviderStatus cognito, CancellationToken cancellationToken) =>
+    Results.Ok(await cognito.GetStatusAsync(cancellationToken)));
 
 app.MapGet("/api/dashboard/summary", (TaxNetState state) => Results.Ok(state.GetDashboardSummary()));
 

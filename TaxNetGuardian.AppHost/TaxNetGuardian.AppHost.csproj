@@ -9,6 +9,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Aspire.Hosting.PostgreSQL" Version="13.3.0" />
     <ProjectReference Include="..\TaxNetGuardian.Api\TaxNetGuardian.Api.csproj" />
     <ProjectReference Include="..\TaxNetGuardian.Workers.Ingestion\TaxNetGuardian.Workers.Ingestion.csproj" />
     <ProjectReference Include="..\TaxNetGuardian.Workers.IdentityResolution\TaxNetGuardian.Workers.IdentityResolution.csproj" />

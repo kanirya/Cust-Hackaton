@@ -1,5 +1,13 @@
 var builder = DistributedApplication.CreateBuilder(args);
 
+var postgresPort = int.TryParse(Environment.GetEnvironmentVariable("POSTGRES_PORT"), out var configuredPostgresPort)
+    ? configuredPostgresPort
+    : 55432;
+var postgres = builder
+    .AddPostgres("postgres", port: postgresPort)
+    .WithDataVolume();
+var taxnetDatabase = postgres.AddDatabase("taxnet", "taxnet");
+
 var localstack = builder
     .AddContainer("localstack", "localstack/localstack", "3")
     .WithHttpEndpoint(port: 4566, targetPort: 4566, name: "edge")
@@ -10,6 +18,7 @@ var localstack = builder
 var workerDataRoot = Path.GetFullPath(Path.Combine(builder.AppHostDirectory, "..", ".appdata", "aspire-workers"));
 var apiBaseUrl = "http://localhost:5191";
 var localStackEndpoint = "http://localhost:4566";
+var useCognito = Environment.GetEnvironmentVariable("TAXNET_USE_COGNITO") ?? "false";
 var terraformApply = builder
     .AddExecutable(
         "localstack-terraform",
@@ -22,18 +31,25 @@ var terraformApply = builder
         "scripts/localstack-terraform-apply.ps1")
     .WithEnvironment("LOCALSTACK_ENDPOINT", localStackEndpoint)
     .WithEnvironment("LOCALSTACK_CONTAINER_ENDPOINT", "http://host.docker.internal:4566")
+    .WithEnvironment("LOCALSTACK_ENABLE_COGNITO", Environment.GetEnvironmentVariable("LOCALSTACK_ENABLE_COGNITO") ?? "true")
     .WithEnvironment("TERRAFORM_IMAGE", "hashicorp/terraform:1.9.8")
     .WaitFor(localstack);
 
 var api = builder
     .AddProject<Projects.TaxNetGuardian_Api>("taxnet-api")
     .WithHttpEndpoint(port: 5191, name: "http")
+    .WithReference(taxnetDatabase)
     .WithEnvironment("TAXNET_QUEUE_MODE", "LocalStack")
     .WithEnvironment("TAXNET_OBJECT_STORE_MODE", "LocalStack")
-    .WithEnvironment("TAXNET_SECRET_PROVIDER", "LocalStack")
+    .WithEnvironment("TAXNET_SECRET_PROVIDER", "Auto")
     .WithEnvironment("TaxNet__Environment", "local-aspire")
-    .WithEnvironment("TaxNet__Auth__Mode", "DevelopmentHeaders")
-    .WithEnvironment("TaxNet__Storage__OperationalStore", "JsonSnapshot")
+    .WithEnvironment("TaxNet__Auth__Mode", useCognito.Equals("true", StringComparison.OrdinalIgnoreCase) ? "CognitoJwt" : "DevelopmentHeaders")
+    .WithEnvironment("TaxNet__Auth__Authority", Environment.GetEnvironmentVariable("COGNITO_AUTHORITY") ?? "")
+    .WithEnvironment("TaxNet__Auth__Audience", Environment.GetEnvironmentVariable("COGNITO_AUDIENCE") ?? "")
+    .WithEnvironment("TaxNet__Aws__UseLocalStack", "true")
+    .WithEnvironment("TaxNet__Aws__LocalStackEndpoint", localStackEndpoint)
+    .WithEnvironment("TaxNet__Aws__Region", "us-east-1")
+    .WithEnvironment("TaxNet__Storage__OperationalStore", "PostgreSql")
     .WithEnvironment("TaxNet__Storage__GraphStore", "InMemoryGraph")
     .WithEnvironment("TaxNet__Storage__VectorStore", "LexicalRagIndex")
     .WithEnvironment("TaxNet__Storage__ObjectStore", "LocalStack")
@@ -45,6 +61,7 @@ var api = builder
     .WithEnvironment("DEEPSEEK_API_KEY", Environment.GetEnvironmentVariable("DEEPSEEK_API_KEY") ?? "")
     .WithEnvironment("GEMINI_API_KEY", Environment.GetEnvironmentVariable("GEMINI_API_KEY") ?? "")
     .WithEnvironment("CLAUDE_API_KEY", Environment.GetEnvironmentVariable("CLAUDE_API_KEY") ?? "")
+    .WaitFor(taxnetDatabase)
     .WaitForCompletion(terraformApply);
 
 var web = builder

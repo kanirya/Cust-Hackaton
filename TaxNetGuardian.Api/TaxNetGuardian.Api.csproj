@@ -10,4 +10,10 @@
     <ProjectReference Include="..\TaxNetGuardian.Worker.Shared\TaxNetGuardian.Worker.Shared.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <PackageReference Include="AWSSDK.CognitoIdentityProvider" Version="4.0.9.4" />
+    <PackageReference Include="AWSSDK.SecretsManager" Version="4.0.5.3" />
+    <PackageReference Include="Npgsql" Version="10.0.3" />
+  </ItemGroup>
+
 </Project>

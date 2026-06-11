@@ -45,9 +45,12 @@ public sealed class ModelGatewayClient
         foreach (var (provider, environmentVariable, secretName) in secrets)
         {
             var environmentValue = Environment.GetEnvironmentVariable(environmentVariable);
-            var secretRead = _secretProvider is LocalStackSecretsManagerSecretProvider localStackSecrets
-                ? await localStackSecrets.GetSecretAsync(secretName, cancellationToken)
-                : new SecretReadResult(secretName, false, await _secretProvider.GetSecretStringAsync(secretName, cancellationToken), "", null, null);
+            var secretRead = _secretProvider switch
+            {
+                LocalStackSecretsManagerSecretProvider localStackSecrets => await localStackSecrets.GetSecretAsync(secretName, cancellationToken),
+                AwsSecretsManagerSecretProvider awsSecrets => await awsSecrets.GetSecretAsync(secretName, cancellationToken),
+                _ => new SecretReadResult(secretName, false, await _secretProvider.GetSecretStringAsync(secretName, cancellationToken), "", null, null)
+            };
             var secretString = secretRead.SecretString;
             diagnostics.Add(new ModelSecretDiagnostic(
                 provider,

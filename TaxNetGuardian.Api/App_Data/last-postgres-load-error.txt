@@ -1,0 +1,15 @@
+Npgsql.NpgsqlException (0x80004005): Failed to connect to 127.0.0.1:55432
+ ---> System.Net.Sockets.SocketException (10061): No connection could be made because the target machine actively refused it.
+   at System.Net.Sockets.Socket.AwaitableSocketAsyncEventArgs.ThrowException(SocketError error, CancellationToken cancellationToken)
+   at System.Net.Sockets.Socket.AwaitableSocketAsyncEventArgs.System.Threading.Tasks.Sources.IValueTaskSource.GetResult(Int16 token)
+   at Npgsql.Internal.NpgsqlConnector.ConnectAsync(NpgsqlTimeout timeout, CancellationToken cancellationToken)
+   at Npgsql.Internal.NpgsqlConnector.ConnectAsync(NpgsqlTimeout timeout, CancellationToken cancellationToken)
+   at Npgsql.Internal.NpgsqlConnector.RawOpen(NpgsqlTimeout timeout, Boolean async, CancellationToken cancellationToken)
+   at Npgsql.Internal.NpgsqlConnector.<Open>g__OpenCore|209_0(NpgsqlConnector conn, String username, SslMode sslMode, GssEncryptionMode gssEncMode, NpgsqlTimeout timeout, Boolean async, CancellationToken cancellationToken)
+   at Npgsql.Internal.NpgsqlConnector.Open(NpgsqlTimeout timeout, Boolean async, CancellationToken cancellationToken)
+   at Npgsql.PoolingDataSource.OpenNewConnector(NpgsqlConnection conn, NpgsqlTimeout timeout, Boolean async, CancellationToken cancellationToken)
+   at Npgsql.PoolingDataSource.<Get>g__RentAsync|33_0(NpgsqlConnection conn, NpgsqlTimeout timeout, Boolean async, CancellationToken cancellationToken)
+   at Npgsql.NpgsqlConnection.<Open>g__OpenAsync|42_0(Boolean async, CancellationToken cancellationToken)
+   at TaxNetGuardian.Api.PostgresSnapshotStore.LoadLatestAsync(JsonSerializerOptions jsonOptions, CancellationToken cancellationToken) in C:\Users\hp\Documents\New project\TaxNetGuardian.Api\Infrastructure\Persistence\PostgresSnapshotStore.cs:line 25
+   at TaxNetGuardian.Api.PostgresSnapshotStore.LoadLatestAsync(JsonSerializerOptions jsonOptions, CancellationToken cancellationToken) in C:\Users\hp\Documents\New project\TaxNetGuardian.Api\Infrastructure\Persistence\PostgresSnapshotStore.cs:line 32
+   at TaxNetGuardian.Api.TaxNetState.LoadSnapshot() in C:\Users\hp\Documents\New project\TaxNetGuardian.Api\Infrastructure\Persistence\TaxNetState.Persistence.cs:line 34

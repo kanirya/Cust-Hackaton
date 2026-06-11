@@ -11,6 +11,16 @@ if ([string]::IsNullOrWhiteSpace($endpoint)) {
 
 New-Item -ItemType Directory -Force -Path $stateDir, $pluginCache | Out-Null
 
+$preserveState = $env:LOCALSTACK_PRESERVE_TERRAFORM_STATE
+if (-not $preserveState -or $preserveState -ne "true") {
+  Remove-Item -Force -ErrorAction SilentlyContinue `
+    (Join-Path $stateDir "terraform.tfstate"), `
+    (Join-Path $stateDir "terraform.tfstate.backup"), `
+    (Join-Path $stateDir ".terraform.tfstate.lock.info"), `
+    (Join-Path $stateDir "outputs.json")
+  Write-Host "Reset LocalStack Terraform state for this ephemeral local run."
+}
+
 Write-Host "Waiting for LocalStack at $endpoint ..."
 for ($i = 0; $i -lt 90; $i++) {
   try {
@@ -39,6 +49,11 @@ if ([string]::IsNullOrWhiteSpace($containerEndpoint)) {
   $containerEndpoint = "http://host.docker.internal:4566"
 }
 
+$enableCognito = $env:LOCALSTACK_ENABLE_COGNITO
+if ([string]::IsNullOrWhiteSpace($enableCognito)) {
+  $enableCognito = "true"
+}
+
 function Invoke-Terraform {
   param([string[]] $TerraformArgs)
 
@@ -55,7 +70,7 @@ function Invoke-Terraform {
     "-e", "TF_DATA_DIR=/state/.terraform",
     "-e", "TF_VAR_localstack_endpoint=$containerEndpoint",
     "-e", "TF_VAR_aws_region=us-east-1",
-    "-e", "TF_VAR_enable_cognito=false",
+    "-e", "TF_VAR_enable_cognito=$enableCognito",
     $terraformImage
   ) + $TerraformArgs
 
@@ -67,6 +82,19 @@ function Invoke-Terraform {
 }
 
 Invoke-Terraform @("init", "-input=false")
-Invoke-Terraform @("apply", "-auto-approve", "-input=false", "-state=/state/terraform.tfstate")
+try {
+  Invoke-Terraform @("apply", "-auto-approve", "-input=false", "-state=/state/terraform.tfstate")
+}
+catch {
+  if ($enableCognito -eq "true" -and $env:LOCALSTACK_STRICT_COGNITO -ne "true") {
+    Write-Warning "LocalStack Cognito provisioning failed. Retrying without Cognito because this LocalStack image may not support cognito-idp."
+    $enableCognito = "false"
+    Invoke-Terraform @("apply", "-auto-approve", "-input=false", "-state=/state/terraform.tfstate")
+  }
+  else {
+    throw
+  }
+}
+Invoke-Terraform @("output", "-json", "-state=/state/terraform.tfstate") | Out-File -FilePath (Join-Path $stateDir "outputs.json") -Encoding utf8
 
 Write-Host "LocalStack Terraform provisioning completed."

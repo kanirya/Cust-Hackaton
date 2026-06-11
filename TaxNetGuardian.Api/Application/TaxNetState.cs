@@ -11,17 +11,21 @@ public sealed partial class TaxNetState
     private readonly string _dataRoot;
     private readonly string _statePath;
     private readonly string _objectRoot;
+    private readonly TaxNetPlatformOptions _platformOptions;
+    private readonly PostgresSnapshotStore _postgresSnapshots;
     private readonly JsonSerializerOptions _jsonOptions = new()
     {
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
         WriteIndented = true
     };
 
-    public TaxNetState(IWebHostEnvironment environment)
+    public TaxNetState(IWebHostEnvironment environment, IConfiguration configuration, TaxNetPlatformOptions? platformOptions = null)
     {
+        _platformOptions = platformOptions ?? new TaxNetPlatformOptions();
         _dataRoot = Path.Combine(environment.ContentRootPath, "App_Data");
         _statePath = Path.Combine(_dataRoot, "taxnet-state.json");
         _objectRoot = Path.Combine(_dataRoot, "object-store");
+        _postgresSnapshots = new PostgresSnapshotStore(ResolvePostgresConnectionString(configuration));
 
         Directory.CreateDirectory(_dataRoot);
         Directory.CreateDirectory(_objectRoot);
@@ -280,5 +284,18 @@ public sealed partial class TaxNetState
         => new(document.Title, document.Url, document.SourceType, chunkId, document.CapturedAtUtc);
 
     private static int ClampScore(int value, int max) => Math.Clamp(value, 0, max);
+
+    private string ResolvePostgresConnectionString(IConfiguration configuration)
+    {
+        var candidates = new[]
+        {
+            Environment.GetEnvironmentVariable("POSTGRES_CONNECTION_STRING"),
+            _platformOptions.Storage.PostgresConnectionString,
+            configuration.GetConnectionString("taxnet"),
+            configuration.GetConnectionString("postgres")
+        };
+
+        return candidates.FirstOrDefault(candidate => !string.IsNullOrWhiteSpace(candidate)) ?? "";
+    }
 
 }
