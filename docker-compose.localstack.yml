@@ -5,9 +5,10 @@ services:
     ports:
       - "4566:4566"
     environment:
-      - SERVICES=sqs,s3,secretsmanager
+      - SERVICES=sqs,s3,secretsmanager,logs,cloudwatch,cognito-idp,iam,kms,sts,sns,events
       - DEBUG=0
       - AWS_DEFAULT_REGION=us-east-1
+      - PERSISTENCE=1
     volumes:
       - "./.appdata/localstack:/var/lib/localstack"
       - "/var/run/docker.sock:/var/run/docker.sock"
