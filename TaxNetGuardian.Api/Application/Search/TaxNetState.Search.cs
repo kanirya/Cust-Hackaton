@@ -85,6 +85,13 @@ public sealed partial class TaxNetState
             return "Name";
         }
 
+        // Urdu/English mixed text: the same citizen may be registered under an Urdu-script
+        // name in one source and a Latin-script name in another (problem statement §academic).
+        if (!string.IsNullOrWhiteSpace(person.UrduName) && person.UrduName.Contains(qLower, StringComparison.OrdinalIgnoreCase))
+        {
+            return "Name (Urdu)";
+        }
+
         // Fuzzy: a noisy/alternate spelling of the queried name still resolves the citizen.
         if (qLower.Length >= 4 && IdentityResolutionEngine.JaroWinklerSimilarity(person.FullName, qLower) >= 0.86m)
         {
@@ -138,6 +145,7 @@ public sealed partial class TaxNetState
         return new IdentitySearchMatch(
             person.Id,
             person.FullName,
+            person.UrduName,
             person.FatherName,
             person.CnicMasked,
             person.City,
@@ -162,6 +170,7 @@ public sealed record IdentitySearchResponse(
 public sealed record IdentitySearchMatch(
     string PersonId,
     string FullName,
+    string? UrduName,
     string FatherName,
     string CnicMasked,
     string City,

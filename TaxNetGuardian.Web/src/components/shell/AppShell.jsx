@@ -65,6 +65,7 @@ function TopBar({ title, role, roles, setRole, onRefresh, onPipeline, searchQuer
               <button key={m.personId} onClick={() => onOpenResult(m)} style={{ display: "block", width: "100%", textAlign: "left", padding: "9px 11px", marginBottom: 7, border: "1px solid #eef1f6", borderRadius: 9, background: "#f9fafc", cursor: "pointer" }}>
                 <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
                   <strong style={{ fontSize: 13 }}>{m.fullName}</strong>
+                  {m.urduName && <span style={{ fontSize: 12, color: "#3b4763" }} dir="rtl">{m.urduName}</span>}
                   <span style={{ fontFamily: "monospace", fontSize: 11, color: "#67708a" }}>{m.cnicMasked}</span>
                   {m.case && <span className={`risk-pill ${String(m.case.riskBand).toLowerCase()}`}>{m.case.riskBand} {m.case.score}</span>}
                   <span style={{ fontSize: 10, color: "#8a93a8" }}>matched on {m.matchedOn}</span>
