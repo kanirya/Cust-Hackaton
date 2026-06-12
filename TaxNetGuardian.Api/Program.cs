@@ -445,6 +445,14 @@ app.MapGet("/api/identity/entities", (TaxNetState state) => Results.Ok(new
 
 app.MapGet("/api/identity/evaluation", (IdentityResolutionService identityService) => Results.Ok(identityService.GetEvaluation()));
 
+// Universal identity search — resolve a citizen by CNIC/name/NTN/token/caseId and consolidate
+// every linked record + possible same-identity name variants across all government sources.
+app.MapGet("/api/search", (TaxNetState state, string? q, int? limit) =>
+    Results.Ok(state.SearchIdentities(q ?? "", limit ?? 25)));
+
+app.MapGet("/api/identity/search", (TaxNetState state, string? cnic, string? q, int? limit) =>
+    Results.Ok(state.SearchIdentities(cnic ?? q ?? "", limit ?? 25)));
+
 app.MapPost("/api/assistant/cases/{caseId}/ask", (TaxNetState state, ModelGatewayClient modelGatewayClient, string caseId, AssistantRequest request) =>
 {
     if (state.Cases.All(x => !x.Id.Equals(caseId, StringComparison.OrdinalIgnoreCase)))

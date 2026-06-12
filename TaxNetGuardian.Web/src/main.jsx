@@ -121,6 +121,8 @@ function App() {
   const [query, setQuery] = useState("Why was this case marked critical?");
   const [toast, setToast] = useState("");
   const [citizen, setCitizen] = useState(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchResults, setSearchResults] = useState(null);
 
   useEffect(() => {
     localStorage.setItem("taxnet.role", role);
@@ -205,6 +207,44 @@ function App() {
     };
     const url = urls[id] || "/";
     window.history.pushState({}, "", url);
+  }
+
+  async function runSearch(term) {
+    const q = (term ?? "").trim();
+    if (!q) {
+      setSearchResults(null);
+      return;
+    }
+    try {
+      const result = await api(`/api/search?q=${encodeURIComponent(q)}`);
+      setSearchResults(result);
+      if (!result.total) setToast(result.explanation);
+    } catch (e) {
+      setToast("Search failed: " + e.message);
+    }
+  }
+
+  function clearSearch() {
+    setSearchResults(null);
+    setSearchQuery("");
+  }
+
+  async function openSearchResult(match) {
+    setSearchResults(null);
+    setSearchQuery("");
+    if (match.case && match.case.caseId) {
+      setSelectedCaseId(match.case.caseId);
+      navigate("investigation");
+    } else {
+      setToast(`${match.fullName} resolved across ${match.linkedRecords.total} linked record(s) — no open case for this identity yet.`);
+      navigate("sandbox");
+    }
+  }
+
+  function newInvestigation() {
+    clearSearch();
+    navigate("queue");
+    setToast("Pick a flagged citizen below to open a new investigation, or search a CNIC above.");
   }
 
   async function runPipeline() {
@@ -378,7 +418,7 @@ function App() {
 
   return (
     <div className="app-shell">
-      <Sidebar page={page} navigate={navigate} navItems={navItems} />
+      <Sidebar page={page} navigate={navigate} navItems={navItems} onNewInvestigation={newInvestigation} />
       <main className="workspace">
         <TopBar
           title={pageTitle}
@@ -387,6 +427,12 @@ function App() {
           setRole={setRole}
           onRefresh={refreshAll}
           onPipeline={runPipeline}
+          searchQuery={searchQuery}
+          setSearchQuery={setSearchQuery}
+          onSearch={runSearch}
+          searchResults={searchResults}
+          onOpenResult={openSearchResult}
+          onClearSearch={clearSearch}
         />
         {toast && <button className="toast" onClick={() => setToast("")}>{toast}</button>}
         <div className="workspace-grid">
