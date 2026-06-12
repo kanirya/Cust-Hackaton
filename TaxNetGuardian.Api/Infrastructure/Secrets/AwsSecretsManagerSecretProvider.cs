@@ -5,7 +5,7 @@ using Amazon.SecretsManager.Model;
 
 namespace TaxNetGuardian.Api;
 
-public sealed class AwsSecretsManagerSecretProvider : ISecretProvider
+public sealed class AwsSecretsManagerSecretProvider : IWritableSecretProvider
 {
     private readonly TaxNetPlatformOptions _options;
 
@@ -37,6 +37,43 @@ public sealed class AwsSecretsManagerSecretProvider : ISecretProvider
         catch (Exception ex)
         {
             return new SecretReadResult(secretName, false, null, DescribeEndpoint(), null, ex.Message);
+        }
+    }
+
+    public async Task<SecretWriteResult> PutSecretStringAsync(string secretName, string secretString, CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(secretName))
+        {
+            return new SecretWriteResult(secretName, false, DescribeEndpoint(), null, null, "Secret name was empty.");
+        }
+
+        try
+        {
+            using var client = CreateClient();
+            try
+            {
+                var response = await client.PutSecretValueAsync(new PutSecretValueRequest
+                {
+                    SecretId = secretName,
+                    SecretString = secretString
+                }, cancellationToken);
+
+                return new SecretWriteResult(secretName, true, DescribeEndpoint(), (int)response.HttpStatusCode, response.VersionId, null);
+            }
+            catch (ResourceNotFoundException)
+            {
+                var response = await client.CreateSecretAsync(new CreateSecretRequest
+                {
+                    Name = secretName,
+                    SecretString = secretString
+                }, cancellationToken);
+
+                return new SecretWriteResult(secretName, true, DescribeEndpoint(), (int)response.HttpStatusCode, response.VersionId, null);
+            }
+        }
+        catch (Exception ex)
+        {
+            return new SecretWriteResult(secretName, false, DescribeEndpoint(), null, null, ex.Message);
         }
     }
 

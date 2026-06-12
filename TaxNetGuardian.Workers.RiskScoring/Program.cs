@@ -2,7 +2,7 @@ using System.Text.Json;
 using TaxNetGuardian.Worker.Shared;
 
 var options = WorkerOptions.FromEnvironment("RiskScoring.Worker", "taxnet-dev-risk-score-jobs", args);
-using var log = WorkerLogging.CreateLogger(options.WorkerName);
+var log = WorkerLogging.CreateLogger(options.WorkerName);
 return await WorkerHost.RunAsync(options, new RiskScoringWorker(log));
 
 internal sealed class RiskScoringWorker : IWorkerJobHandler

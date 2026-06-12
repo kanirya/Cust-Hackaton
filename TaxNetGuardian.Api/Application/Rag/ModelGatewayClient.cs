@@ -31,6 +31,47 @@ public sealed class ModelGatewayClient
         return new ModelGatewayConfig(defaultProvider, await ProviderStatusesAsync(cancellationToken));
     }
 
+    public async Task<ModelProviderKeyUpdateResult> ConfigureProviderKeyAsync(
+        string provider,
+        ModelProviderKeyUpdateRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        var normalizedProvider = NormalizeProvider(provider);
+        var metadata = ProviderSecretMetadata(normalizedProvider);
+        if (metadata is null)
+        {
+            return new ModelProviderKeyUpdateResult(provider, "", false, false, null, $"Unsupported provider '{provider}'.");
+        }
+
+        if (string.IsNullOrWhiteSpace(request.ApiKey))
+        {
+            return new ModelProviderKeyUpdateResult(normalizedProvider, metadata.Value.SecretName, false, false, null, "API key was empty.");
+        }
+
+        if (_secretProvider is not IWritableSecretProvider writable)
+        {
+            return new ModelProviderKeyUpdateResult(normalizedProvider, metadata.Value.SecretName, false, false, null, "Configured secret provider is read-only.");
+        }
+
+        var secretPayload = JsonSerializer.Serialize(new
+        {
+            provider = normalizedProvider,
+            apiKey = request.ApiKey.Trim(),
+            model = string.IsNullOrWhiteSpace(request.Model) ? metadata.Value.DefaultModel : request.Model.Trim(),
+            updatedAtUtc = DateTimeOffset.UtcNow,
+            source = "TaxNetGuardian.Api"
+        }, _jsonOptions);
+
+        var result = await writable.PutSecretStringAsync(metadata.Value.SecretName, secretPayload, cancellationToken);
+        return new ModelProviderKeyUpdateResult(
+            normalizedProvider,
+            metadata.Value.SecretName,
+            result.Succeeded,
+            result.Succeeded,
+            result.VersionId,
+            result.Succeeded ? null : result.Error);
+    }
+
     public async Task<IReadOnlyList<ModelSecretDiagnostic>> GetSecretDiagnosticsAsync(CancellationToken cancellationToken = default)
     {
         var secrets = new[]
@@ -260,67 +301,70 @@ public sealed class ModelGatewayClient
 
     private async Task<ProviderSelection> OpenAiAsync(CancellationToken cancellationToken)
     {
-        var key = await ResolveApiKeyAsync("OPENAI_API_KEY", "taxnet/dev/model-gateway/openai", cancellationToken);
+        var credentials = await ResolveProviderCredentialsAsync("OPENAI_API_KEY", "taxnet/dev/model-gateway/openai", cancellationToken);
         return new(
             "openai",
-            !string.IsNullOrWhiteSpace(key),
-            key ?? "",
+            !string.IsNullOrWhiteSpace(credentials.ApiKey),
+            credentials.ApiKey ?? "",
             Environment.GetEnvironmentVariable("OPENAI_API_BASE_URL") ?? "https://api.openai.com/v1/chat/completions",
-            Environment.GetEnvironmentVariable("OPENAI_MODEL") ?? "gpt-4o-mini",
+            credentials.Model ?? Environment.GetEnvironmentVariable("OPENAI_MODEL") ?? "gpt-4o-mini",
             "openai-chat-completions");
     }
 
     private async Task<ProviderSelection> DeepSeekAsync(CancellationToken cancellationToken)
     {
-        var key = await ResolveApiKeyAsync("DEEPSEEK_API_KEY", "taxnet/dev/model-gateway/deepseek", cancellationToken);
+        var credentials = await ResolveProviderCredentialsAsync("DEEPSEEK_API_KEY", "taxnet/dev/model-gateway/deepseek", cancellationToken);
         return new(
             "deepseek",
-            !string.IsNullOrWhiteSpace(key),
-            key ?? "",
+            !string.IsNullOrWhiteSpace(credentials.ApiKey),
+            credentials.ApiKey ?? "",
             Environment.GetEnvironmentVariable("DEEPSEEK_API_BASE_URL") ?? "https://api.deepseek.com/chat/completions",
-            Environment.GetEnvironmentVariable("DEEPSEEK_MODEL") ?? "deepseek-chat",
+            credentials.Model ?? Environment.GetEnvironmentVariable("DEEPSEEK_MODEL") ?? "deepseek-chat",
             "deepseek-openai-compatible");
     }
 
     private async Task<ProviderSelection> GeminiAsync(CancellationToken cancellationToken)
     {
-        var key = await ResolveApiKeyAsync("GEMINI_API_KEY", "taxnet/dev/model-gateway/gemini", cancellationToken);
+        var credentials = await ResolveProviderCredentialsAsync("GEMINI_API_KEY", "taxnet/dev/model-gateway/gemini", cancellationToken);
         return new(
             "gemini",
-            !string.IsNullOrWhiteSpace(key),
-            key ?? "",
+            !string.IsNullOrWhiteSpace(credentials.ApiKey),
+            credentials.ApiKey ?? "",
             Environment.GetEnvironmentVariable("GEMINI_API_BASE_URL") ?? "https://generativelanguage.googleapis.com",
-            Environment.GetEnvironmentVariable("GEMINI_MODEL") ?? "gemini-1.5-flash",
+            credentials.Model ?? Environment.GetEnvironmentVariable("GEMINI_MODEL") ?? "gemini-1.5-flash",
             "gemini-generate-content");
     }
 
     private async Task<ProviderSelection> ClaudeAsync(CancellationToken cancellationToken)
     {
-        var key = await ResolveApiKeyAsync("CLAUDE_API_KEY", "taxnet/dev/model-gateway/claude", cancellationToken);
+        var credentials = await ResolveProviderCredentialsAsync("CLAUDE_API_KEY", "taxnet/dev/model-gateway/claude", cancellationToken);
         return new(
             "claude",
-            !string.IsNullOrWhiteSpace(key),
-            key ?? "",
+            !string.IsNullOrWhiteSpace(credentials.ApiKey),
+            credentials.ApiKey ?? "",
             Environment.GetEnvironmentVariable("CLAUDE_API_BASE_URL") ?? "https://api.anthropic.com/v1/messages",
-            Environment.GetEnvironmentVariable("CLAUDE_MODEL") ?? "claude-3-5-haiku-latest",
+            credentials.Model ?? Environment.GetEnvironmentVariable("CLAUDE_MODEL") ?? "claude-3-5-haiku-latest",
             "claude-messages");
     }
 
     private async Task<string?> ResolveApiKeyAsync(string environmentVariable, string secretName, CancellationToken cancellationToken)
+        => (await ResolveProviderCredentialsAsync(environmentVariable, secretName, cancellationToken)).ApiKey;
+
+    private async Task<(string? ApiKey, string? Model)> ResolveProviderCredentialsAsync(string environmentVariable, string secretName, CancellationToken cancellationToken)
     {
         var environmentValue = Environment.GetEnvironmentVariable(environmentVariable);
         if (!string.IsNullOrWhiteSpace(environmentValue))
         {
-            return environmentValue;
+            return (environmentValue, null);
         }
 
         var secretString = await _secretProvider.GetSecretStringAsync(secretName, cancellationToken);
         if (string.IsNullOrWhiteSpace(secretString))
         {
-            return null;
+            return (null, null);
         }
 
-        return ExtractApiKey(secretString);
+        return (ExtractApiKey(secretString), ExtractModel(secretString));
     }
 
     private static string? ExtractApiKey(string secretString)
@@ -353,7 +397,68 @@ public sealed class ModelGatewayClient
 
         return null;
     }
+
+    private static string? ExtractModel(string secretString)
+    {
+        var trimmed = secretString.Trim();
+        if (!trimmed.StartsWith('{'))
+        {
+            return null;
+        }
+
+        try
+        {
+            using var json = JsonDocument.Parse(trimmed);
+            foreach (var name in new[] { "model", "modelName", "deployment" })
+            {
+                if (json.RootElement.TryGetProperty(name, out var property))
+                {
+                    var value = property.GetString();
+                    if (!string.IsNullOrWhiteSpace(value))
+                    {
+                        return value;
+                    }
+                }
+            }
+        }
+        catch (JsonException)
+        {
+            return null;
+        }
+
+        return null;
+    }
+
+    private static string NormalizeProvider(string provider)
+        => (provider ?? "").Trim().ToLowerInvariant() switch
+        {
+            "openai" or "open-ai" => "openai",
+            "deepseek" or "deep-seek" => "deepseek",
+            "gemini" or "google" => "gemini",
+            "claude" or "anthropic" => "claude",
+            var value => value
+        };
+
+    private static (string SecretName, string DefaultModel)? ProviderSecretMetadata(string provider)
+        => provider switch
+        {
+            "openai" => ("taxnet/dev/model-gateway/openai", Environment.GetEnvironmentVariable("OPENAI_MODEL") ?? "gpt-4o-mini"),
+            "deepseek" => ("taxnet/dev/model-gateway/deepseek", Environment.GetEnvironmentVariable("DEEPSEEK_MODEL") ?? "deepseek-chat"),
+            "gemini" => ("taxnet/dev/model-gateway/gemini", Environment.GetEnvironmentVariable("GEMINI_MODEL") ?? "gemini-1.5-flash"),
+            "claude" => ("taxnet/dev/model-gateway/claude", Environment.GetEnvironmentVariable("CLAUDE_MODEL") ?? "claude-3-5-haiku-latest"),
+            _ => null
+        };
 }
+
+public sealed record ModelProviderKeyUpdateRequest(string ApiKey, string? Model);
+
+public sealed record ModelProviderKeyUpdateResult(
+    string Provider,
+    string SecretName,
+    bool Succeeded,
+    bool AvailableForRouting,
+    string? VersionId,
+    string? Error);
 
 public sealed record ModelSecretDiagnostic(
     string Provider,

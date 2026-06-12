@@ -2,7 +2,7 @@ var builder = DistributedApplication.CreateBuilder(args);
 
 var postgresPort = int.TryParse(Environment.GetEnvironmentVariable("POSTGRES_PORT"), out var configuredPostgresPort)
     ? configuredPostgresPort
-    : 55432;
+    : 15432;
 var postgres = builder
     .AddPostgres("postgres", port: postgresPort)
     .WithDataVolume();

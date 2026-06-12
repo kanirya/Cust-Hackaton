@@ -106,7 +106,7 @@ public sealed partial class TaxNetState
             confidence);
     }
 
-    public ModelInvocationResponse InvokeModelGateway(ModelInvocationRequest request)
+    public ModelInvocationResponse InvokeModelGateway(ModelInvocationRequest request, ModelGatewayClient? modelGatewayClient = null)
     {
         var taskType = string.IsNullOrWhiteSpace(request.TaskType) ? "PolicyQuestion" : request.TaskType.Trim();
         var safePrompt = RedactSensitivePrompt(request.Prompt);
@@ -142,7 +142,7 @@ public sealed partial class TaxNetState
             deterministicOutput = $"Model gateway deterministic response for {taskType}: {safePrompt}. Retrieved {rag.Chunks.Count} policy context chunk(s) with {rag.RetrievalConfidence:P0} confidence.";
         }
 
-        var providerResult = new ModelGatewayClient()
+        var providerResult = (modelGatewayClient ?? new ModelGatewayClient())
             .InvokeAsync(request.PreferredProvider, request.AllowExternalProvider, taskType, safePrompt, contextChunks)
             .GetAwaiter()
             .GetResult();

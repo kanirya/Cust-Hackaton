@@ -319,6 +319,15 @@ function App() {
     await refreshAll();
   }
 
+  async function saveModelKey(provider, payload) {
+    const result = await api(`/api/system/model-gateway/providers/${provider}/key`, {
+      method: "POST",
+      body: JSON.stringify(payload)
+    }, "taxnet-model-admin");
+    setToast(`${result.provider} key stored in ${result.secretName}.`);
+    await refreshAll();
+  }
+
   async function updateProvider(providerCode, payload) {
     const result = await api(`/api/sandbox/providers/${providerCode}`, {
       method: "PATCH",
@@ -421,6 +430,7 @@ function App() {
                 ragResult={ragResult}
                 modelGateway={modelGateway}
                 invokeModel={invokeModel}
+                saveModelKey={saveModelKey}
                 modelResult={modelResult}
                 selectedCaseId={selectedCaseId}
               />
@@ -454,6 +464,7 @@ function App() {
                 queryRag={queryRag}
                 ragResult={ragResult}
                 invokeModel={invokeModel}
+                saveModelKey={saveModelKey}
                 modelResult={modelResult}
                 selectedCaseId={selectedCaseId}
               />

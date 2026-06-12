@@ -2,7 +2,7 @@ using System.Text.Json;
 using TaxNetGuardian.Worker.Shared;
 
 var options = WorkerOptions.FromEnvironment("Ingestion.Worker", "taxnet-dev-ingestion-jobs", args);
-using var log = WorkerLogging.CreateLogger(options.WorkerName);
+var log = WorkerLogging.CreateLogger(options.WorkerName);
 return await WorkerHost.RunAsync(options, new IngestionWorker(log));
 
 internal sealed class IngestionWorker : IWorkerJobHandler

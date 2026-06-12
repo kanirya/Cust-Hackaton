@@ -1,0 +1,13 @@
+Using launch settings from C:\Users\hp\Documents\New project\TaxNetGuardian.AppHost\Properties\launchSettings.json...
+info: Aspire.Hosting.DistributedApplication[0]
+      Aspire version: 13.3.0+4517e4a1ffb7f00a4c0e66882c2db952d637c0cc
+info: Aspire.Hosting.DistributedApplication[0]
+      Distributed application starting.
+info: Aspire.Hosting.DistributedApplication[0]
+      Application host directory is: C:\Users\hp\Documents\New project\TaxNetGuardian.AppHost
+info: Aspire.Hosting.DistributedApplication[0]
+      Now listening on: https://localhost:17280
+info: Aspire.Hosting.DistributedApplication[0]
+      Login to the dashboard at https://localhost:17280/login?t=d9cf4dc3a503d2c1c5612cdaf458989e
+info: Aspire.Hosting.DistributedApplication[0]
+      Distributed application started. Press Ctrl+C to shut down.

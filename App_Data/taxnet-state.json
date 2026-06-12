@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "savedAtUtc": "2026-06-12T09:40:34.7125588+00:00",
+  "savedAtUtc": "2026-06-12T09:20:31.8765929+00:00",
   "people": [
     {
       "id": "P001",
@@ -13859,8 +13859,8 @@
           "sourceUpdatedAtUtc": "2026-04-20T12:40:17.8110462+00:00"
         }
       ],
-      "createdAtUtc": "2026-06-10T09:40:34.6799653+00:00",
-      "updatedAtUtc": "2026-06-12T09:40:34.6800391+00:00"
+      "createdAtUtc": "2026-06-10T12:20:31.8358401+00:00",
+      "updatedAtUtc": "2026-06-12T09:20:31.8358438+00:00"
     },
     {
       "id": "case-P003",
@@ -14001,8 +14001,8 @@
           "sourceUpdatedAtUtc": "2025-10-09T12:40:17.8129688+00:00"
         }
       ],
-      "createdAtUtc": "2026-06-11T22:40:34.6808989+00:00",
-      "updatedAtUtc": "2026-06-12T09:40:34.6809032+00:00"
+      "createdAtUtc": "2026-06-11T23:20:31.8362927+00:00",
+      "updatedAtUtc": "2026-06-12T09:20:31.8362932+00:00"
     },
     {
       "id": "case-P004",
@@ -14143,8 +14143,8 @@
           "sourceUpdatedAtUtc": "2026-05-29T12:40:17.8130076+00:00"
         }
       ],
-      "createdAtUtc": "2026-06-11T23:40:34.6812322+00:00",
-      "updatedAtUtc": "2026-06-12T09:40:34.6812325+00:00"
+      "createdAtUtc": "2026-06-11T14:20:31.8365349+00:00",
+      "updatedAtUtc": "2026-06-12T09:20:31.8365352+00:00"
     },
     {
       "id": "case-P005",
@@ -14251,8 +14251,8 @@
           "sourceUpdatedAtUtc": "2026-05-18T12:40:17.8130148+00:00"
         }
       ],
-      "createdAtUtc": "2026-06-10T19:40:34.6815515+00:00",
-      "updatedAtUtc": "2026-06-12T09:40:34.681552+00:00"
+      "createdAtUtc": "2026-06-10T01:20:31.8367391+00:00",
+      "updatedAtUtc": "2026-06-12T09:20:31.8367395+00:00"
     },
     {
       "id": "case-P006",
@@ -14381,8 +14381,8 @@
           "sourceUpdatedAtUtc": "2025-10-20T12:40:17.8131906+00:00"
         }
       ],
-      "createdAtUtc": "2026-06-11T20:40:34.6818745+00:00",
-      "updatedAtUtc": "2026-06-12T09:40:34.681875+00:00"
+      "createdAtUtc": "2026-06-11T11:20:31.8369558+00:00",
+      "updatedAtUtc": "2026-06-12T09:20:31.836956+00:00"
     },
     {
       "id": "case-P008",
@@ -14511,8 +14511,8 @@
           "sourceUpdatedAtUtc": "2026-06-07T12:40:17.8134427+00:00"
         }
       ],
-      "createdAtUtc": "2026-06-11T13:40:34.682432+00:00",
-      "updatedAtUtc": "2026-06-12T09:40:34.6824329+00:00"
+      "createdAtUtc": "2026-06-10T10:20:31.8373653+00:00",
+      "updatedAtUtc": "2026-06-12T09:20:31.8373655+00:00"
     },
     {
       "id": "case-G001",
@@ -14630,8 +14630,8 @@
           "sourceUpdatedAtUtc": "2025-12-08T12:40:17.8145242+00:00"
         }
       ],
-      "createdAtUtc": "2026-06-10T05:40:34.6828209+00:00",
-      "updatedAtUtc": "2026-06-12T09:40:34.6828219+00:00"
+      "createdAtUtc": "2026-06-11T21:20:31.8375741+00:00",
+      "updatedAtUtc": "2026-06-12T09:20:31.8375745+00:00"
     },
     {
       "id": "case-G002",
@@ -14736,8 +14736,8 @@
           "sourceUpdatedAtUtc": "2026-03-03T12:40:17.8146443+00:00"
         }
       ],
-      "createdAtUtc": "2026-06-10T20:40:34.6830583+00:00",
-      "updatedAtUtc": "2026-06-12T09:40:34.6830587+00:00"
+      "createdAtUtc": "2026-06-12T04:20:31.8377702+00:00",
+      "updatedAtUtc": "2026-06-12T09:20:31.8377705+00:00"
     },
     {
       "id": "case-G004",
@@ -14867,8 +14867,8 @@
           "sourceUpdatedAtUtc": "2025-12-03T12:40:17.8146498+00:00"
         }
       ],
-      "createdAtUtc": "2026-06-11T19:40:34.6835116+00:00",
-      "updatedAtUtc": "2026-06-12T09:40:34.6835119+00:00"
+      "createdAtUtc": "2026-06-10T13:20:31.8381621+00:00",
+      "updatedAtUtc": "2026-06-12T09:20:31.8381625+00:00"
     },
     {
       "id": "case-G005",
@@ -14997,8 +14997,8 @@
           "sourceUpdatedAtUtc": "2025-08-26T12:40:17.8147329+00:00"
         }
       ],
-      "createdAtUtc": "2026-06-10T02:40:34.6837823+00:00",
-      "updatedAtUtc": "2026-06-12T09:40:34.6837825+00:00"
+      "createdAtUtc": "2026-06-10T19:20:31.8384579+00:00",
+      "updatedAtUtc": "2026-06-12T09:20:31.8384587+00:00"
     },
     {
       "id": "case-G006",
@@ -15116,8 +15116,8 @@
           "sourceUpdatedAtUtc": "2025-12-08T12:40:17.8147556+00:00"
         }
       ],
-      "createdAtUtc": "2026-06-11T15:40:34.6841312+00:00",
-      "updatedAtUtc": "2026-06-12T09:40:34.6841322+00:00"
+      "createdAtUtc": "2026-06-12T04:20:31.8386962+00:00",
+      "updatedAtUtc": "2026-06-12T09:20:31.8386968+00:00"
     },
     {
       "id": "case-G007",
@@ -15246,8 +15246,8 @@
           "sourceUpdatedAtUtc": "2026-01-22T12:40:17.8147617+00:00"
         }
       ],
-      "createdAtUtc": "2026-06-11T13:40:34.6843772+00:00",
-      "updatedAtUtc": "2026-06-12T09:40:34.6843774+00:00"
+      "createdAtUtc": "2026-06-11T02:20:31.8389311+00:00",
+      "updatedAtUtc": "2026-06-12T09:20:31.8389316+00:00"
     },
     {
       "id": "case-G008",
@@ -15388,8 +15388,8 @@
           "sourceUpdatedAtUtc": "2025-09-20T12:40:17.8147792+00:00"
         }
       ],
-      "createdAtUtc": "2026-06-10T20:40:34.6846427+00:00",
-      "updatedAtUtc": "2026-06-12T09:40:34.6846429+00:00"
+      "createdAtUtc": "2026-06-10T06:20:31.8391603+00:00",
+      "updatedAtUtc": "2026-06-12T09:20:31.8391606+00:00"
     },
     {
       "id": "case-G010",
@@ -15518,8 +15518,8 @@
           "sourceUpdatedAtUtc": "2025-11-24T12:40:17.814786+00:00"
         }
       ],
-      "createdAtUtc": "2026-06-11T09:40:34.6853086+00:00",
-      "updatedAtUtc": "2026-06-12T09:40:34.6853099+00:00"
+      "createdAtUtc": "2026-06-10T12:20:31.8395264+00:00",
+      "updatedAtUtc": "2026-06-12T09:20:31.8395266+00:00"
     },
     {
       "id": "case-G011",
@@ -15660,8 +15660,8 @@
           "sourceUpdatedAtUtc": "2025-10-17T12:40:17.8147903+00:00"
         }
       ],
-      "createdAtUtc": "2026-06-11T05:40:34.6855363+00:00",
-      "updatedAtUtc": "2026-06-12T09:40:34.6855365+00:00"
+      "createdAtUtc": "2026-06-11T16:20:31.8397251+00:00",
+      "updatedAtUtc": "2026-06-12T09:20:31.8397255+00:00"
     },
     {
       "id": "case-G012",
@@ -15791,8 +15791,8 @@
           "sourceUpdatedAtUtc": "2026-04-23T12:40:17.8147946+00:00"
         }
       ],
-      "createdAtUtc": "2026-06-11T13:40:34.6857852+00:00",
-      "updatedAtUtc": "2026-06-12T09:40:34.6857855+00:00"
+      "createdAtUtc": "2026-06-12T07:20:31.8399065+00:00",
+      "updatedAtUtc": "2026-06-12T09:20:31.8399067+00:00"
     },
     {
       "id": "case-G013",
@@ -15922,8 +15922,8 @@
           "sourceUpdatedAtUtc": "2026-05-23T12:40:17.8148023+00:00"
         }
       ],
-      "createdAtUtc": "2026-06-10T19:40:34.6859956+00:00",
-      "updatedAtUtc": "2026-06-12T09:40:34.6859957+00:00"
+      "createdAtUtc": "2026-06-11T06:20:31.8400713+00:00",
+      "updatedAtUtc": "2026-06-12T09:20:31.8400716+00:00"
     },
     {
       "id": "case-G014",
@@ -16064,8 +16064,8 @@
           "sourceUpdatedAtUtc": "2025-11-28T12:40:17.8148074+00:00"
         }
       ],
-      "createdAtUtc": "2026-06-12T05:40:34.6862246+00:00",
-      "updatedAtUtc": "2026-06-12T09:40:34.6862248+00:00"
+      "createdAtUtc": "2026-06-11T13:20:31.840239+00:00",
+      "updatedAtUtc": "2026-06-12T09:20:31.8402392+00:00"
     },
     {
       "id": "case-G015",
@@ -16195,8 +16195,8 @@
           "sourceUpdatedAtUtc": "2025-10-12T12:40:17.8148115+00:00"
         }
       ],
-      "createdAtUtc": "2026-06-09T23:40:34.6864524+00:00",
-      "updatedAtUtc": "2026-06-12T09:40:34.686453+00:00"
+      "createdAtUtc": "2026-06-12T03:20:31.8404049+00:00",
+      "updatedAtUtc": "2026-06-12T09:20:31.8404051+00:00"
     },
     {
       "id": "case-G016",
@@ -16325,8 +16325,8 @@
           "sourceUpdatedAtUtc": "2025-12-27T12:40:17.8148155+00:00"
         }
       ],
-      "createdAtUtc": "2026-06-10T15:40:34.6867026+00:00",
-      "updatedAtUtc": "2026-06-12T09:40:34.686703+00:00"
+      "createdAtUtc": "2026-06-10T05:20:31.840577+00:00",
+      "updatedAtUtc": "2026-06-12T09:20:31.8405773+00:00"
     },
     {
       "id": "case-G017",
@@ -16456,8 +16456,8 @@
           "sourceUpdatedAtUtc": "2025-08-26T12:40:17.8148204+00:00"
         }
       ],
-      "createdAtUtc": "2026-06-11T04:40:34.6869447+00:00",
-      "updatedAtUtc": "2026-06-12T09:40:34.6869449+00:00"
+      "createdAtUtc": "2026-06-12T03:20:31.8407479+00:00",
+      "updatedAtUtc": "2026-06-12T09:20:31.8407481+00:00"
     },
     {
       "id": "case-G018",
@@ -16575,8 +16575,8 @@
           "sourceUpdatedAtUtc": "2026-03-18T12:40:17.8148296+00:00"
         }
       ],
-      "createdAtUtc": "2026-06-11T21:40:34.6871625+00:00",
-      "updatedAtUtc": "2026-06-12T09:40:34.6871627+00:00"
+      "createdAtUtc": "2026-06-10T23:20:31.840924+00:00",
+      "updatedAtUtc": "2026-06-12T09:20:31.8409243+00:00"
     },
     {
       "id": "case-G019",
@@ -16694,8 +16694,8 @@
           "sourceUpdatedAtUtc": "2026-05-09T12:40:17.8148358+00:00"
         }
       ],
-      "createdAtUtc": "2026-06-12T01:40:34.6873889+00:00",
-      "updatedAtUtc": "2026-06-12T09:40:34.6873891+00:00"
+      "createdAtUtc": "2026-06-12T07:20:31.8410986+00:00",
+      "updatedAtUtc": "2026-06-12T09:20:31.8410988+00:00"
     },
     {
       "id": "case-G020",
@@ -16836,8 +16836,8 @@
           "sourceUpdatedAtUtc": "2025-11-25T12:40:17.8148399+00:00"
         }
       ],
-      "createdAtUtc": "2026-06-10T06:40:34.6876377+00:00",
-      "updatedAtUtc": "2026-06-12T09:40:34.6876379+00:00"
+      "createdAtUtc": "2026-06-10T00:20:31.8413423+00:00",
+      "updatedAtUtc": "2026-06-12T09:20:31.8413436+00:00"
     },
     {
       "id": "case-G021",
@@ -16955,8 +16955,8 @@
           "sourceUpdatedAtUtc": "2025-09-26T12:40:17.8148445+00:00"
         }
       ],
-      "createdAtUtc": "2026-06-09T22:40:34.6878497+00:00",
-      "updatedAtUtc": "2026-06-12T09:40:34.6878498+00:00"
+      "createdAtUtc": "2026-06-11T01:20:31.8415236+00:00",
+      "updatedAtUtc": "2026-06-12T09:20:31.8415239+00:00"
     },
     {
       "id": "case-G022",
@@ -17097,8 +17097,8 @@
           "sourceUpdatedAtUtc": "2026-05-31T12:40:17.814849+00:00"
         }
       ],
-      "createdAtUtc": "2026-06-10T18:40:34.688077+00:00",
-      "updatedAtUtc": "2026-06-12T09:40:34.6880772+00:00"
+      "createdAtUtc": "2026-06-10T20:20:31.8417291+00:00",
+      "updatedAtUtc": "2026-06-12T09:20:31.8417293+00:00"
     },
     {
       "id": "case-G023",
@@ -17227,8 +17227,8 @@
           "sourceUpdatedAtUtc": "2025-11-06T12:40:17.8148538+00:00"
         }
       ],
-      "createdAtUtc": "2026-06-12T04:40:34.6882979+00:00",
-      "updatedAtUtc": "2026-06-12T09:40:34.6882981+00:00"
+      "createdAtUtc": "2026-06-10T21:20:31.841898+00:00",
+      "updatedAtUtc": "2026-06-12T09:20:31.8418982+00:00"
     },
     {
       "id": "case-G024",
@@ -17358,8 +17358,8 @@
           "sourceUpdatedAtUtc": "2026-01-24T12:40:17.8148571+00:00"
         }
       ],
-      "createdAtUtc": "2026-06-10T06:40:34.6885204+00:00",
-      "updatedAtUtc": "2026-06-12T09:40:34.6885206+00:00"
+      "createdAtUtc": "2026-06-12T07:20:31.8420701+00:00",
+      "updatedAtUtc": "2026-06-12T09:20:31.8420703+00:00"
     },
     {
       "id": "case-G025",
@@ -17489,8 +17489,8 @@
           "sourceUpdatedAtUtc": "2026-04-10T12:40:17.8148633+00:00"
         }
       ],
-      "createdAtUtc": "2026-06-11T21:40:34.6887592+00:00",
-      "updatedAtUtc": "2026-06-12T09:40:34.6887609+00:00"
+      "createdAtUtc": "2026-06-09T21:20:31.8422589+00:00",
+      "updatedAtUtc": "2026-06-12T09:20:31.8422591+00:00"
     },
     {
       "id": "case-G026",
@@ -17608,8 +17608,8 @@
           "sourceUpdatedAtUtc": "2026-01-01T12:40:17.8148721+00:00"
         }
       ],
-      "createdAtUtc": "2026-06-09T16:40:34.6889759+00:00",
-      "updatedAtUtc": "2026-06-12T09:40:34.6889761+00:00"
+      "createdAtUtc": "2026-06-12T07:20:31.8424273+00:00",
+      "updatedAtUtc": "2026-06-12T09:20:31.8424305+00:00"
     },
     {
       "id": "case-G027",
@@ -17727,8 +17727,8 @@
           "sourceUpdatedAtUtc": "2025-08-29T12:40:17.8148743+00:00"
         }
       ],
-      "createdAtUtc": "2026-06-10T07:40:34.6891798+00:00",
-      "updatedAtUtc": "2026-06-12T09:40:34.68918+00:00"
+      "createdAtUtc": "2026-06-12T07:20:31.8425982+00:00",
+      "updatedAtUtc": "2026-06-12T09:20:31.8425983+00:00"
     },
     {
       "id": "case-G028",
@@ -17833,8 +17833,8 @@
           "sourceUpdatedAtUtc": "2026-01-15T12:40:17.8148773+00:00"
         }
       ],
-      "createdAtUtc": "2026-06-10T19:40:34.6893777+00:00",
-      "updatedAtUtc": "2026-06-12T09:40:34.6893778+00:00"
+      "createdAtUtc": "2026-06-12T03:20:31.8427575+00:00",
+      "updatedAtUtc": "2026-06-12T09:20:31.8427577+00:00"
     },
     {
       "id": "case-G029",
@@ -17964,8 +17964,8 @@
           "sourceUpdatedAtUtc": "2025-10-04T12:40:17.8148787+00:00"
         }
       ],
-      "createdAtUtc": "2026-06-11T18:40:34.6895876+00:00",
-      "updatedAtUtc": "2026-06-12T09:40:34.6895877+00:00"
+      "createdAtUtc": "2026-06-10T10:20:31.8429309+00:00",
+      "updatedAtUtc": "2026-06-12T09:20:31.8429311+00:00"
     },
     {
       "id": "case-G030",
@@ -18095,8 +18095,8 @@
           "sourceUpdatedAtUtc": "2026-04-02T12:40:17.8148819+00:00"
         }
       ],
-      "createdAtUtc": "2026-06-12T05:40:34.6898167+00:00",
-      "updatedAtUtc": "2026-06-12T09:40:34.6898168+00:00"
+      "createdAtUtc": "2026-06-12T05:20:31.8431067+00:00",
+      "updatedAtUtc": "2026-06-12T09:20:31.8431068+00:00"
     },
     {
       "id": "case-G031",
@@ -18237,8 +18237,8 @@
           "sourceUpdatedAtUtc": "2026-03-31T12:40:17.8148837+00:00"
         }
       ],
-      "createdAtUtc": "2026-06-11T10:40:34.6900274+00:00",
-      "updatedAtUtc": "2026-06-12T09:40:34.6900275+00:00"
+      "createdAtUtc": "2026-06-09T16:20:31.8432859+00:00",
+      "updatedAtUtc": "2026-06-12T09:20:31.8432861+00:00"
     },
     {
       "id": "case-G032",
@@ -18368,8 +18368,8 @@
           "sourceUpdatedAtUtc": "2026-02-18T12:40:17.8148869+00:00"
         }
       ],
-      "createdAtUtc": "2026-06-10T15:40:34.6902353+00:00",
-      "updatedAtUtc": "2026-06-12T09:40:34.6902355+00:00"
+      "createdAtUtc": "2026-06-09T14:20:31.8434626+00:00",
+      "updatedAtUtc": "2026-06-12T09:20:31.8434629+00:00"
     },
     {
       "id": "case-G033",
@@ -18510,8 +18510,8 @@
           "sourceUpdatedAtUtc": "2025-11-27T12:40:17.8148948+00:00"
         }
       ],
-      "createdAtUtc": "2026-06-09T22:40:34.6904456+00:00",
-      "updatedAtUtc": "2026-06-12T09:40:34.6904457+00:00"
+      "createdAtUtc": "2026-06-10T23:20:31.843641+00:00",
+      "updatedAtUtc": "2026-06-12T09:20:31.8436412+00:00"
     },
     {
       "id": "case-G034",
@@ -18629,8 +18629,8 @@
           "sourceUpdatedAtUtc": "2026-01-27T12:40:17.814897+00:00"
         }
       ],
-      "createdAtUtc": "2026-06-12T07:40:34.6906653+00:00",
-      "updatedAtUtc": "2026-06-12T09:40:34.6906655+00:00"
+      "createdAtUtc": "2026-06-11T05:20:31.8438176+00:00",
+      "updatedAtUtc": "2026-06-12T09:20:31.8438177+00:00"
     },
     {
       "id": "case-G035",
@@ -18760,8 +18760,8 @@
           "sourceUpdatedAtUtc": "2025-11-03T12:40:17.8148984+00:00"
         }
       ],
-      "createdAtUtc": "2026-06-10T18:40:34.6908809+00:00",
-      "updatedAtUtc": "2026-06-12T09:40:34.6908811+00:00"
+      "createdAtUtc": "2026-06-10T12:20:31.8439982+00:00",
+      "updatedAtUtc": "2026-06-12T09:20:31.8439984+00:00"
     },
     {
       "id": "case-G036",
@@ -18879,8 +18879,8 @@
           "sourceUpdatedAtUtc": "2026-01-09T12:40:17.8149004+00:00"
         }
       ],
-      "createdAtUtc": "2026-06-09T23:40:34.6910841+00:00",
-      "updatedAtUtc": "2026-06-12T09:40:34.6910842+00:00"
+      "createdAtUtc": "2026-06-12T04:20:31.8441693+00:00",
+      "updatedAtUtc": "2026-06-12T09:20:31.8441695+00:00"
     },
     {
       "id": "case-G037",
@@ -19010,8 +19010,8 @@
           "sourceUpdatedAtUtc": "2026-06-03T12:40:17.8149019+00:00"
         }
       ],
-      "createdAtUtc": "2026-06-10T03:40:34.6912941+00:00",
-      "updatedAtUtc": "2026-06-12T09:40:34.6912942+00:00"
+      "createdAtUtc": "2026-06-11T05:20:31.8443507+00:00",
+      "updatedAtUtc": "2026-06-12T09:20:31.8443508+00:00"
     },
     {
       "id": "case-G040",
@@ -19141,8 +19141,8 @@
           "sourceUpdatedAtUtc": "2025-12-12T12:40:17.814907+00:00"
         }
       ],
-      "createdAtUtc": "2026-06-11T05:40:34.6918801+00:00",
-      "updatedAtUtc": "2026-06-12T09:40:34.6918803+00:00"
+      "createdAtUtc": "2026-06-11T22:20:31.8448365+00:00",
+      "updatedAtUtc": "2026-06-12T09:20:31.8448366+00:00"
     },
     {
       "id": "case-G041",
@@ -19271,8 +19271,8 @@
           "sourceUpdatedAtUtc": "2025-09-22T12:40:17.8149088+00:00"
         }
       ],
-      "createdAtUtc": "2026-06-11T21:40:34.6920868+00:00",
-      "updatedAtUtc": "2026-06-12T09:40:34.692087+00:00"
+      "createdAtUtc": "2026-06-11T01:20:31.8450128+00:00",
+      "updatedAtUtc": "2026-06-12T09:20:31.845013+00:00"
     },
     {
       "id": "case-G042",
@@ -19390,8 +19390,8 @@
           "sourceUpdatedAtUtc": "2026-04-19T12:40:17.8149122+00:00"
         }
       ],
-      "createdAtUtc": "2026-06-12T06:40:34.6922881+00:00",
-      "updatedAtUtc": "2026-06-12T09:40:34.6922882+00:00"
+      "createdAtUtc": "2026-06-10T00:20:31.8451875+00:00",
+      "updatedAtUtc": "2026-06-12T09:20:31.8451877+00:00"
     },
     {
       "id": "case-G043",
@@ -19509,8 +19509,8 @@
           "sourceUpdatedAtUtc": "2025-10-16T12:40:17.8149147+00:00"
         }
       ],
-      "createdAtUtc": "2026-06-12T04:40:34.6924908+00:00",
-      "updatedAtUtc": "2026-06-12T09:40:34.692491+00:00"
+      "createdAtUtc": "2026-06-10T18:20:31.8453596+00:00",
+      "updatedAtUtc": "2026-06-12T09:20:31.8453598+00:00"
     },
     {
       "id": "case-G044",
@@ -19640,8 +19640,8 @@
           "sourceUpdatedAtUtc": "2025-10-01T12:40:17.8149161+00:00"
         }
       ],
-      "createdAtUtc": "2026-06-10T01:40:34.6927192+00:00",
-      "updatedAtUtc": "2026-06-12T09:40:34.6927193+00:00"
+      "createdAtUtc": "2026-06-11T03:20:31.8455642+00:00",
+      "updatedAtUtc": "2026-06-12T09:20:31.8455645+00:00"
     }
   ],
   "workers": [
@@ -19652,7 +19652,7 @@
       "processedToday": 9,
       "failedToday": 0,
       "status": "Healthy",
-      "lastRunAtUtc": "2026-06-12T09:34:34.7113091+00:00"
+      "lastRunAtUtc": "2026-06-12T09:14:31.8764378+00:00"
     },
     {
       "name": "IdentityResolution.Worker",
@@ -19661,7 +19661,7 @@
       "processedToday": 148,
       "failedToday": 1,
       "status": "Healthy",
-      "lastRunAtUtc": "2026-06-12T09:35:34.711318+00:00"
+      "lastRunAtUtc": "2026-06-12T09:15:31.8764415+00:00"
     },
     {
       "name": "GraphIntelligence.Worker",
@@ -19670,7 +19670,7 @@
       "processedToday": 148,
       "failedToday": 0,
       "status": "Healthy",
-      "lastRunAtUtc": "2026-06-12T09:36:34.7113182+00:00"
+      "lastRunAtUtc": "2026-06-12T09:16:31.8764417+00:00"
     },
     {
       "name": "RiskScoring.Worker",
@@ -19679,7 +19679,7 @@
       "processedToday": 148,
       "failedToday": 0,
       "status": "Healthy",
-      "lastRunAtUtc": "2026-06-12T09:37:34.7113183+00:00"
+      "lastRunAtUtc": "2026-06-12T09:17:31.8764419+00:00"
     },
     {
       "name": "RagPolicy.Worker",
@@ -19688,7 +19688,7 @@
       "processedToday": 8,
       "failedToday": 0,
       "status": "Healthy",
-      "lastRunAtUtc": "2026-06-12T09:38:34.7113185+00:00"
+      "lastRunAtUtc": "2026-06-12T09:18:31.8764421+00:00"
     },
     {
       "name": "Report.Worker",
@@ -19697,16 +19697,16 @@
       "processedToday": 5,
       "failedToday": 0,
       "status": "Healthy",
-      "lastRunAtUtc": "2026-06-12T09:20:34.7113199+00:00"
+      "lastRunAtUtc": "2026-06-12T09:00:31.8764428+00:00"
     },
     {
       "name": "AuditLog.Worker",
       "queueName": "taxnet-dev-audit-log-jobs",
       "queueDepth": 0,
-      "processedToday": 943,
+      "processedToday": 851,
       "failedToday": 0,
       "status": "Healthy",
-      "lastRunAtUtc": "2026-06-12T09:39:34.7113201+00:00"
+      "lastRunAtUtc": "2026-06-12T09:19:31.876443+00:00"
     }
   ],
   "providers": [
@@ -20269,742 +20269,6 @@
     }
   ],
   "timelineEvents": [
-    {
-      "id": "evt-20260612094034692-463",
-      "caseId": "case-G044",
-      "eventType": "CaseCreated",
-      "actor": "RiskScoring.Worker",
-      "summary": "High case created with score 64/100.",
-      "timestampUtc": "2026-06-12T09:40:34.6927212+00:00"
-    },
-    {
-      "id": "evt-20260612094034692-462",
-      "caseId": "case-G043",
-      "eventType": "CaseCreated",
-      "actor": "RiskScoring.Worker",
-      "summary": "Medium case created with score 37/100.",
-      "timestampUtc": "2026-06-12T09:40:34.6924923+00:00"
-    },
-    {
-      "id": "evt-20260612094034692-461",
-      "caseId": "case-G042",
-      "eventType": "CaseCreated",
-      "actor": "RiskScoring.Worker",
-      "summary": "Medium case created with score 58/100.",
-      "timestampUtc": "2026-06-12T09:40:34.6922895+00:00"
-    },
-    {
-      "id": "evt-20260612094034692-460",
-      "caseId": "case-G041",
-      "eventType": "CaseCreated",
-      "actor": "RiskScoring.Worker",
-      "summary": "High case created with score 79/100.",
-      "timestampUtc": "2026-06-12T09:40:34.6920883+00:00"
-    },
-    {
-      "id": "evt-20260612094034691-459",
-      "caseId": "case-G040",
-      "eventType": "CaseCreated",
-      "actor": "RiskScoring.Worker",
-      "summary": "Critical case created with score 82/100.",
-      "timestampUtc": "2026-06-12T09:40:34.6918821+00:00"
-    },
-    {
-      "id": "evt-20260612094034691-458",
-      "caseId": "case-G037",
-      "eventType": "CaseCreated",
-      "actor": "RiskScoring.Worker",
-      "summary": "Critical case created with score 82/100.",
-      "timestampUtc": "2026-06-12T09:40:34.6912955+00:00"
-    },
-    {
-      "id": "evt-20260612094034691-457",
-      "caseId": "case-G036",
-      "eventType": "CaseCreated",
-      "actor": "RiskScoring.Worker",
-      "summary": "Medium case created with score 55/100.",
-      "timestampUtc": "2026-06-12T09:40:34.6910857+00:00"
-    },
-    {
-      "id": "evt-20260612094034690-456",
-      "caseId": "case-G035",
-      "eventType": "CaseCreated",
-      "actor": "RiskScoring.Worker",
-      "summary": "High case created with score 62/100.",
-      "timestampUtc": "2026-06-12T09:40:34.6908827+00:00"
-    },
-    {
-      "id": "evt-20260612094034690-455",
-      "caseId": "case-G034",
-      "eventType": "CaseCreated",
-      "actor": "RiskScoring.Worker",
-      "summary": "Medium case created with score 40/100.",
-      "timestampUtc": "2026-06-12T09:40:34.6906671+00:00"
-    },
-    {
-      "id": "evt-20260612094034690-454",
-      "caseId": "case-G033",
-      "eventType": "CaseCreated",
-      "actor": "RiskScoring.Worker",
-      "summary": "High case created with score 80/100.",
-      "timestampUtc": "2026-06-12T09:40:34.6904471+00:00"
-    },
-    {
-      "id": "evt-20260612094034690-453",
-      "caseId": "case-G032",
-      "eventType": "CaseCreated",
-      "actor": "RiskScoring.Worker",
-      "summary": "High case created with score 75/100.",
-      "timestampUtc": "2026-06-12T09:40:34.6902369+00:00"
-    },
-    {
-      "id": "evt-20260612094034690-452",
-      "caseId": "case-G031",
-      "eventType": "CaseCreated",
-      "actor": "RiskScoring.Worker",
-      "summary": "High case created with score 68/100.",
-      "timestampUtc": "2026-06-12T09:40:34.6900289+00:00"
-    },
-    {
-      "id": "evt-20260612094034689-451",
-      "caseId": "case-G030",
-      "eventType": "CaseCreated",
-      "actor": "RiskScoring.Worker",
-      "summary": "High case created with score 77/100.",
-      "timestampUtc": "2026-06-12T09:40:34.6898185+00:00"
-    },
-    {
-      "id": "evt-20260612094034689-450",
-      "caseId": "case-G029",
-      "eventType": "CaseCreated",
-      "actor": "RiskScoring.Worker",
-      "summary": "Critical case created with score 90/100.",
-      "timestampUtc": "2026-06-12T09:40:34.6895893+00:00"
-    },
-    {
-      "id": "evt-20260612094034689-449",
-      "caseId": "case-G028",
-      "eventType": "CaseCreated",
-      "actor": "RiskScoring.Worker",
-      "summary": "Medium case created with score 32/100.",
-      "timestampUtc": "2026-06-12T09:40:34.6893791+00:00"
-    },
-    {
-      "id": "evt-20260612094034689-448",
-      "caseId": "case-G027",
-      "eventType": "CaseCreated",
-      "actor": "RiskScoring.Worker",
-      "summary": "Medium case created with score 32/100.",
-      "timestampUtc": "2026-06-12T09:40:34.6891813+00:00"
-    },
-    {
-      "id": "evt-20260612094034688-447",
-      "caseId": "case-G026",
-      "eventType": "CaseCreated",
-      "actor": "RiskScoring.Worker",
-      "summary": "Medium case created with score 36/100.",
-      "timestampUtc": "2026-06-12T09:40:34.6889776+00:00"
-    },
-    {
-      "id": "evt-20260612094034688-446",
-      "caseId": "case-G025",
-      "eventType": "CaseCreated",
-      "actor": "RiskScoring.Worker",
-      "summary": "High case created with score 74/100.",
-      "timestampUtc": "2026-06-12T09:40:34.6887713+00:00"
-    },
-    {
-      "id": "evt-20260612094034688-445",
-      "caseId": "case-G024",
-      "eventType": "CaseCreated",
-      "actor": "RiskScoring.Worker",
-      "summary": "High case created with score 76/100.",
-      "timestampUtc": "2026-06-12T09:40:34.6885221+00:00"
-    },
-    {
-      "id": "evt-20260612094034688-444",
-      "caseId": "case-G023",
-      "eventType": "CaseCreated",
-      "actor": "RiskScoring.Worker",
-      "summary": "Medium case created with score 41/100.",
-      "timestampUtc": "2026-06-12T09:40:34.6882996+00:00"
-    },
-    {
-      "id": "evt-20260612094034688-443",
-      "caseId": "case-G022",
-      "eventType": "CaseCreated",
-      "actor": "RiskScoring.Worker",
-      "summary": "Critical case created with score 85/100.",
-      "timestampUtc": "2026-06-12T09:40:34.6880787+00:00"
-    },
-    {
-      "id": "evt-20260612094034687-442",
-      "caseId": "case-G021",
-      "eventType": "CaseCreated",
-      "actor": "RiskScoring.Worker",
-      "summary": "High case created with score 67/100.",
-      "timestampUtc": "2026-06-12T09:40:34.6878514+00:00"
-    },
-    {
-      "id": "evt-20260612094034687-441",
-      "caseId": "case-G020",
-      "eventType": "CaseCreated",
-      "actor": "RiskScoring.Worker",
-      "summary": "Critical case created with score 85/100.",
-      "timestampUtc": "2026-06-12T09:40:34.6876398+00:00"
-    },
-    {
-      "id": "evt-20260612094034687-440",
-      "caseId": "case-G019",
-      "eventType": "CaseCreated",
-      "actor": "RiskScoring.Worker",
-      "summary": "Medium case created with score 46/100.",
-      "timestampUtc": "2026-06-12T09:40:34.6873913+00:00"
-    },
-    {
-      "id": "evt-20260612094034687-439",
-      "caseId": "case-G018",
-      "eventType": "CaseCreated",
-      "actor": "RiskScoring.Worker",
-      "summary": "Medium case created with score 53/100.",
-      "timestampUtc": "2026-06-12T09:40:34.6871643+00:00"
-    },
-    {
-      "id": "evt-20260612094034686-438",
-      "caseId": "case-G017",
-      "eventType": "CaseCreated",
-      "actor": "RiskScoring.Worker",
-      "summary": "High case created with score 72/100.",
-      "timestampUtc": "2026-06-12T09:40:34.6869477+00:00"
-    },
-    {
-      "id": "evt-20260612094034686-437",
-      "caseId": "case-G016",
-      "eventType": "CaseCreated",
-      "actor": "RiskScoring.Worker",
-      "summary": "High case created with score 66/100.",
-      "timestampUtc": "2026-06-12T09:40:34.6867072+00:00"
-    },
-    {
-      "id": "evt-20260612094034686-436",
-      "caseId": "case-G015",
-      "eventType": "CaseCreated",
-      "actor": "RiskScoring.Worker",
-      "summary": "Critical case created with score 81/100.",
-      "timestampUtc": "2026-06-12T09:40:34.6864545+00:00"
-    },
-    {
-      "id": "evt-20260612094034686-435",
-      "caseId": "case-G014",
-      "eventType": "CaseCreated",
-      "actor": "RiskScoring.Worker",
-      "summary": "Critical case created with score 83/100.",
-      "timestampUtc": "2026-06-12T09:40:34.6862263+00:00"
-    },
-    {
-      "id": "evt-20260612094034685-434",
-      "caseId": "case-G013",
-      "eventType": "CaseCreated",
-      "actor": "RiskScoring.Worker",
-      "summary": "High case created with score 75/100.",
-      "timestampUtc": "2026-06-12T09:40:34.6859973+00:00"
-    },
-    {
-      "id": "evt-20260612094034685-433",
-      "caseId": "case-G012",
-      "eventType": "CaseCreated",
-      "actor": "RiskScoring.Worker",
-      "summary": "High case created with score 67/100.",
-      "timestampUtc": "2026-06-12T09:40:34.6857875+00:00"
-    },
-    {
-      "id": "evt-20260612094034685-432",
-      "caseId": "case-G011",
-      "eventType": "CaseCreated",
-      "actor": "RiskScoring.Worker",
-      "summary": "Critical case created with score 95/100.",
-      "timestampUtc": "2026-06-12T09:40:34.685539+00:00"
-    },
-    {
-      "id": "evt-20260612094034685-431",
-      "caseId": "case-G010",
-      "eventType": "CaseCreated",
-      "actor": "RiskScoring.Worker",
-      "summary": "Medium case created with score 54/100.",
-      "timestampUtc": "2026-06-12T09:40:34.685316+00:00"
-    },
-    {
-      "id": "evt-20260612094034684-430",
-      "caseId": "case-G008",
-      "eventType": "CaseCreated",
-      "actor": "RiskScoring.Worker",
-      "summary": "Critical case created with score 85/100.",
-      "timestampUtc": "2026-06-12T09:40:34.6846473+00:00"
-    },
-    {
-      "id": "evt-20260612094034684-429",
-      "caseId": "case-G007",
-      "eventType": "CaseCreated",
-      "actor": "RiskScoring.Worker",
-      "summary": "High case created with score 63/100.",
-      "timestampUtc": "2026-06-12T09:40:34.6843792+00:00"
-    },
-    {
-      "id": "evt-20260612094034684-428",
-      "caseId": "case-G006",
-      "eventType": "CaseCreated",
-      "actor": "RiskScoring.Worker",
-      "summary": "Medium case created with score 51/100.",
-      "timestampUtc": "2026-06-12T09:40:34.6841383+00:00"
-    },
-    {
-      "id": "evt-20260612094034683-427",
-      "caseId": "case-G005",
-      "eventType": "CaseCreated",
-      "actor": "RiskScoring.Worker",
-      "summary": "Critical case created with score 83/100.",
-      "timestampUtc": "2026-06-12T09:40:34.6837845+00:00"
-    },
-    {
-      "id": "evt-20260612094034683-426",
-      "caseId": "case-G004",
-      "eventType": "CaseCreated",
-      "actor": "RiskScoring.Worker",
-      "summary": "Critical case created with score 87/100.",
-      "timestampUtc": "2026-06-12T09:40:34.6835156+00:00"
-    },
-    {
-      "id": "evt-20260612094034683-425",
-      "caseId": "case-G002",
-      "eventType": "CaseCreated",
-      "actor": "RiskScoring.Worker",
-      "summary": "Medium case created with score 31/100.",
-      "timestampUtc": "2026-06-12T09:40:34.6830612+00:00"
-    },
-    {
-      "id": "evt-20260612094034682-424",
-      "caseId": "case-G001",
-      "eventType": "CaseCreated",
-      "actor": "RiskScoring.Worker",
-      "summary": "High case created with score 64/100.",
-      "timestampUtc": "2026-06-12T09:40:34.6828273+00:00"
-    },
-    {
-      "id": "evt-20260612094034682-423",
-      "caseId": "case-P008",
-      "eventType": "CaseCreated",
-      "actor": "RiskScoring.Worker",
-      "summary": "Medium case created with score 45/100.",
-      "timestampUtc": "2026-06-12T09:40:34.6824379+00:00"
-    },
-    {
-      "id": "evt-20260612094034681-422",
-      "caseId": "case-P006",
-      "eventType": "CaseCreated",
-      "actor": "RiskScoring.Worker",
-      "summary": "Critical case created with score 81/100.",
-      "timestampUtc": "2026-06-12T09:40:34.6818799+00:00"
-    },
-    {
-      "id": "evt-20260612094034681-421",
-      "caseId": "case-P005",
-      "eventType": "CaseCreated",
-      "actor": "RiskScoring.Worker",
-      "summary": "Medium case created with score 31/100.",
-      "timestampUtc": "2026-06-12T09:40:34.6815564+00:00"
-    },
-    {
-      "id": "evt-20260612094034681-420",
-      "caseId": "case-P004",
-      "eventType": "CaseCreated",
-      "actor": "RiskScoring.Worker",
-      "summary": "Critical case created with score 94/100.",
-      "timestampUtc": "2026-06-12T09:40:34.6812363+00:00"
-    },
-    {
-      "id": "evt-20260612094034680-419",
-      "caseId": "case-P003",
-      "eventType": "CaseCreated",
-      "actor": "RiskScoring.Worker",
-      "summary": "Critical case created with score 86/100.",
-      "timestampUtc": "2026-06-12T09:40:34.6809114+00:00"
-    },
-    {
-      "id": "evt-20260612094034680-418",
-      "caseId": "case-P001",
-      "eventType": "CaseCreated",
-      "actor": "RiskScoring.Worker",
-      "summary": "Critical case created with score 98/100.",
-      "timestampUtc": "2026-06-12T09:40:34.6802763+00:00"
-    },
-    {
-      "id": "evt-20260612092440041-417",
-      "caseId": "case-G044",
-      "eventType": "CaseCreated",
-      "actor": "RiskScoring.Worker",
-      "summary": "High case created with score 64/100.",
-      "timestampUtc": "2026-06-12T09:24:40.0418085+00:00"
-    },
-    {
-      "id": "evt-20260612092440041-416",
-      "caseId": "case-G043",
-      "eventType": "CaseCreated",
-      "actor": "RiskScoring.Worker",
-      "summary": "Medium case created with score 37/100.",
-      "timestampUtc": "2026-06-12T09:24:40.041383+00:00"
-    },
-    {
-      "id": "evt-20260612092440040-415",
-      "caseId": "case-G042",
-      "eventType": "CaseCreated",
-      "actor": "RiskScoring.Worker",
-      "summary": "Medium case created with score 58/100.",
-      "timestampUtc": "2026-06-12T09:24:40.0409655+00:00"
-    },
-    {
-      "id": "evt-20260612092440040-414",
-      "caseId": "case-G041",
-      "eventType": "CaseCreated",
-      "actor": "RiskScoring.Worker",
-      "summary": "High case created with score 79/100.",
-      "timestampUtc": "2026-06-12T09:24:40.0405652+00:00"
-    },
-    {
-      "id": "evt-20260612092440040-413",
-      "caseId": "case-G040",
-      "eventType": "CaseCreated",
-      "actor": "RiskScoring.Worker",
-      "summary": "Critical case created with score 82/100.",
-      "timestampUtc": "2026-06-12T09:24:40.0401507+00:00"
-    },
-    {
-      "id": "evt-20260612092440038-412",
-      "caseId": "case-G037",
-      "eventType": "CaseCreated",
-      "actor": "RiskScoring.Worker",
-      "summary": "Critical case created with score 82/100.",
-      "timestampUtc": "2026-06-12T09:24:40.0390032+00:00"
-    },
-    {
-      "id": "evt-20260612092440038-411",
-      "caseId": "case-G036",
-      "eventType": "CaseCreated",
-      "actor": "RiskScoring.Worker",
-      "summary": "Medium case created with score 55/100.",
-      "timestampUtc": "2026-06-12T09:24:40.0385704+00:00"
-    },
-    {
-      "id": "evt-20260612092440038-410",
-      "caseId": "case-G035",
-      "eventType": "CaseCreated",
-      "actor": "RiskScoring.Worker",
-      "summary": "High case created with score 62/100.",
-      "timestampUtc": "2026-06-12T09:24:40.0381588+00:00"
-    },
-    {
-      "id": "evt-20260612092440037-409",
-      "caseId": "case-G034",
-      "eventType": "CaseCreated",
-      "actor": "RiskScoring.Worker",
-      "summary": "Medium case created with score 40/100.",
-      "timestampUtc": "2026-06-12T09:24:40.0377223+00:00"
-    },
-    {
-      "id": "evt-20260612092440037-408",
-      "caseId": "case-G033",
-      "eventType": "CaseCreated",
-      "actor": "RiskScoring.Worker",
-      "summary": "High case created with score 80/100.",
-      "timestampUtc": "2026-06-12T09:24:40.037213+00:00"
-    },
-    {
-      "id": "evt-20260612092440036-407",
-      "caseId": "case-G032",
-      "eventType": "CaseCreated",
-      "actor": "RiskScoring.Worker",
-      "summary": "High case created with score 75/100.",
-      "timestampUtc": "2026-06-12T09:24:40.0365614+00:00"
-    },
-    {
-      "id": "evt-20260612092440036-406",
-      "caseId": "case-G031",
-      "eventType": "CaseCreated",
-      "actor": "RiskScoring.Worker",
-      "summary": "High case created with score 68/100.",
-      "timestampUtc": "2026-06-12T09:24:40.0362942+00:00"
-    },
-    {
-      "id": "evt-20260612092440035-405",
-      "caseId": "case-G030",
-      "eventType": "CaseCreated",
-      "actor": "RiskScoring.Worker",
-      "summary": "High case created with score 77/100.",
-      "timestampUtc": "2026-06-12T09:24:40.0356691+00:00"
-    },
-    {
-      "id": "evt-20260612092440035-404",
-      "caseId": "case-G029",
-      "eventType": "CaseCreated",
-      "actor": "RiskScoring.Worker",
-      "summary": "Critical case created with score 90/100.",
-      "timestampUtc": "2026-06-12T09:24:40.0352365+00:00"
-    },
-    {
-      "id": "evt-20260612092440034-403",
-      "caseId": "case-G028",
-      "eventType": "CaseCreated",
-      "actor": "RiskScoring.Worker",
-      "summary": "Medium case created with score 32/100.",
-      "timestampUtc": "2026-06-12T09:24:40.0347914+00:00"
-    },
-    {
-      "id": "evt-20260612092440034-402",
-      "caseId": "case-G027",
-      "eventType": "CaseCreated",
-      "actor": "RiskScoring.Worker",
-      "summary": "Medium case created with score 32/100.",
-      "timestampUtc": "2026-06-12T09:24:40.0344112+00:00"
-    },
-    {
-      "id": "evt-20260612092440033-401",
-      "caseId": "case-G026",
-      "eventType": "CaseCreated",
-      "actor": "RiskScoring.Worker",
-      "summary": "Medium case created with score 36/100.",
-      "timestampUtc": "2026-06-12T09:24:40.0340053+00:00"
-    },
-    {
-      "id": "evt-20260612092440033-400",
-      "caseId": "case-G025",
-      "eventType": "CaseCreated",
-      "actor": "RiskScoring.Worker",
-      "summary": "High case created with score 74/100.",
-      "timestampUtc": "2026-06-12T09:24:40.0335869+00:00"
-    },
-    {
-      "id": "evt-20260612092440033-399",
-      "caseId": "case-G024",
-      "eventType": "CaseCreated",
-      "actor": "RiskScoring.Worker",
-      "summary": "High case created with score 76/100.",
-      "timestampUtc": "2026-06-12T09:24:40.033119+00:00"
-    },
-    {
-      "id": "evt-20260612092440032-398",
-      "caseId": "case-G023",
-      "eventType": "CaseCreated",
-      "actor": "RiskScoring.Worker",
-      "summary": "Medium case created with score 41/100.",
-      "timestampUtc": "2026-06-12T09:24:40.0326703+00:00"
-    },
-    {
-      "id": "evt-20260612092440032-397",
-      "caseId": "case-G022",
-      "eventType": "CaseCreated",
-      "actor": "RiskScoring.Worker",
-      "summary": "Critical case created with score 85/100.",
-      "timestampUtc": "2026-06-12T09:24:40.0321928+00:00"
-    },
-    {
-      "id": "evt-20260612092440031-396",
-      "caseId": "case-G021",
-      "eventType": "CaseCreated",
-      "actor": "RiskScoring.Worker",
-      "summary": "High case created with score 67/100.",
-      "timestampUtc": "2026-06-12T09:24:40.0316473+00:00"
-    },
-    {
-      "id": "evt-20260612092440030-395",
-      "caseId": "case-G020",
-      "eventType": "CaseCreated",
-      "actor": "RiskScoring.Worker",
-      "summary": "Critical case created with score 85/100.",
-      "timestampUtc": "2026-06-12T09:24:40.0308817+00:00"
-    },
-    {
-      "id": "evt-20260612092440030-394",
-      "caseId": "case-G019",
-      "eventType": "CaseCreated",
-      "actor": "RiskScoring.Worker",
-      "summary": "Medium case created with score 46/100.",
-      "timestampUtc": "2026-06-12T09:24:40.0302435+00:00"
-    },
-    {
-      "id": "evt-20260612092440029-393",
-      "caseId": "case-G018",
-      "eventType": "CaseCreated",
-      "actor": "RiskScoring.Worker",
-      "summary": "Medium case created with score 53/100.",
-      "timestampUtc": "2026-06-12T09:24:40.0294138+00:00"
-    },
-    {
-      "id": "evt-20260612092440028-392",
-      "caseId": "case-G017",
-      "eventType": "CaseCreated",
-      "actor": "RiskScoring.Worker",
-      "summary": "High case created with score 72/100.",
-      "timestampUtc": "2026-06-12T09:24:40.0285085+00:00"
-    },
-    {
-      "id": "evt-20260612092440025-391",
-      "caseId": "case-G016",
-      "eventType": "CaseCreated",
-      "actor": "RiskScoring.Worker",
-      "summary": "High case created with score 66/100.",
-      "timestampUtc": "2026-06-12T09:24:40.0255486+00:00"
-    },
-    {
-      "id": "evt-20260612092440024-390",
-      "caseId": "case-G015",
-      "eventType": "CaseCreated",
-      "actor": "RiskScoring.Worker",
-      "summary": "Critical case created with score 81/100.",
-      "timestampUtc": "2026-06-12T09:24:40.024778+00:00"
-    },
-    {
-      "id": "evt-20260612092440023-389",
-      "caseId": "case-G014",
-      "eventType": "CaseCreated",
-      "actor": "RiskScoring.Worker",
-      "summary": "Critical case created with score 83/100.",
-      "timestampUtc": "2026-06-12T09:24:40.0239448+00:00"
-    },
-    {
-      "id": "evt-20260612092440023-388",
-      "caseId": "case-G013",
-      "eventType": "CaseCreated",
-      "actor": "RiskScoring.Worker",
-      "summary": "High case created with score 75/100.",
-      "timestampUtc": "2026-06-12T09:24:40.0231256+00:00"
-    },
-    {
-      "id": "evt-20260612092440022-387",
-      "caseId": "case-G012",
-      "eventType": "CaseCreated",
-      "actor": "RiskScoring.Worker",
-      "summary": "High case created with score 67/100.",
-      "timestampUtc": "2026-06-12T09:24:40.0223284+00:00"
-    },
-    {
-      "id": "evt-20260612092440021-386",
-      "caseId": "case-G011",
-      "eventType": "CaseCreated",
-      "actor": "RiskScoring.Worker",
-      "summary": "Critical case created with score 95/100.",
-      "timestampUtc": "2026-06-12T09:24:40.021512+00:00"
-    },
-    {
-      "id": "evt-20260612092440020-385",
-      "caseId": "case-G010",
-      "eventType": "CaseCreated",
-      "actor": "RiskScoring.Worker",
-      "summary": "Medium case created with score 54/100.",
-      "timestampUtc": "2026-06-12T09:24:40.0206764+00:00"
-    },
-    {
-      "id": "evt-20260612092439999-384",
-      "caseId": "case-G008",
-      "eventType": "CaseCreated",
-      "actor": "RiskScoring.Worker",
-      "summary": "Critical case created with score 85/100.",
-      "timestampUtc": "2026-06-12T09:24:39.9996484+00:00"
-    },
-    {
-      "id": "evt-20260612092439999-383",
-      "caseId": "case-G007",
-      "eventType": "CaseCreated",
-      "actor": "RiskScoring.Worker",
-      "summary": "High case created with score 63/100.",
-      "timestampUtc": "2026-06-12T09:24:39.999175+00:00"
-    },
-    {
-      "id": "evt-20260612092439998-382",
-      "caseId": "case-G006",
-      "eventType": "CaseCreated",
-      "actor": "RiskScoring.Worker",
-      "summary": "Medium case created with score 51/100.",
-      "timestampUtc": "2026-06-12T09:24:39.9987511+00:00"
-    },
-    {
-      "id": "evt-20260612092439998-381",
-      "caseId": "case-G005",
-      "eventType": "CaseCreated",
-      "actor": "RiskScoring.Worker",
-      "summary": "Critical case created with score 83/100.",
-      "timestampUtc": "2026-06-12T09:24:39.998334+00:00"
-    },
-    {
-      "id": "evt-20260612092439997-380",
-      "caseId": "case-G004",
-      "eventType": "CaseCreated",
-      "actor": "RiskScoring.Worker",
-      "summary": "Critical case created with score 87/100.",
-      "timestampUtc": "2026-06-12T09:24:39.9979034+00:00"
-    },
-    {
-      "id": "evt-20260612092439997-379",
-      "caseId": "case-G002",
-      "eventType": "CaseCreated",
-      "actor": "RiskScoring.Worker",
-      "summary": "Medium case created with score 31/100.",
-      "timestampUtc": "2026-06-12T09:24:39.9971002+00:00"
-    },
-    {
-      "id": "evt-20260612092439996-378",
-      "caseId": "case-G001",
-      "eventType": "CaseCreated",
-      "actor": "RiskScoring.Worker",
-      "summary": "High case created with score 64/100.",
-      "timestampUtc": "2026-06-12T09:24:39.9967007+00:00"
-    },
-    {
-      "id": "evt-20260612092439996-377",
-      "caseId": "case-P008",
-      "eventType": "CaseCreated",
-      "actor": "RiskScoring.Worker",
-      "summary": "Medium case created with score 45/100.",
-      "timestampUtc": "2026-06-12T09:24:39.9962892+00:00"
-    },
-    {
-      "id": "evt-20260612092439995-376",
-      "caseId": "case-P006",
-      "eventType": "CaseCreated",
-      "actor": "RiskScoring.Worker",
-      "summary": "Critical case created with score 81/100.",
-      "timestampUtc": "2026-06-12T09:24:39.9954654+00:00"
-    },
-    {
-      "id": "evt-20260612092439994-375",
-      "caseId": "case-P005",
-      "eventType": "CaseCreated",
-      "actor": "RiskScoring.Worker",
-      "summary": "Medium case created with score 31/100.",
-      "timestampUtc": "2026-06-12T09:24:39.9950041+00:00"
-    },
-    {
-      "id": "evt-20260612092439994-374",
-      "caseId": "case-P004",
-      "eventType": "CaseCreated",
-      "actor": "RiskScoring.Worker",
-      "summary": "Critical case created with score 94/100.",
-      "timestampUtc": "2026-06-12T09:24:39.994582+00:00"
-    },
-    {
-      "id": "evt-20260612092439994-373",
-      "caseId": "case-P003",
-      "eventType": "CaseCreated",
-      "actor": "RiskScoring.Worker",
-      "summary": "Critical case created with score 86/100.",
-      "timestampUtc": "2026-06-12T09:24:39.9940724+00:00"
-    },
-    {
-      "id": "evt-20260612092439992-372",
-      "caseId": "case-P001",
-      "eventType": "CaseCreated",
-      "actor": "RiskScoring.Worker",
-      "summary": "Critical case created with score 98/100.",
-      "timestampUtc": "2026-06-12T09:24:39.9927785+00:00"
-    },
     {
       "id": "evt-20260612092031845-371",
       "caseId": "case-G044",

@@ -2,7 +2,7 @@ using System.Text.Json;
 using TaxNetGuardian.Worker.Shared;
 
 var options = WorkerOptions.FromEnvironment("IdentityResolution.Worker", "taxnet-dev-identity-resolution-jobs", args);
-using var log = WorkerLogging.CreateLogger(options.WorkerName);
+var log = WorkerLogging.CreateLogger(options.WorkerName);
 return await WorkerHost.RunAsync(options, new IdentityResolutionWorker(log));
 
 internal sealed class IdentityResolutionWorker : IWorkerJobHandler

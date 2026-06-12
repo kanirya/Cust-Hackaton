@@ -73,51 +73,61 @@ public sealed partial class TaxNetState
 
     private void SaveSnapshot()
     {
-        Directory.CreateDirectory(_dataRoot);
-        var snapshot = new TaxNetSnapshot
+        lock (_lock)
         {
-            Version = 1,
-            SavedAtUtc = DateTimeOffset.UtcNow,
-            People = People.ToList(),
-            TaxProfiles = TaxProfiles.ToList(),
-            Vehicles = Vehicles.ToList(),
-            Properties = Properties.ToList(),
-            UtilityBills = UtilityBills.ToList(),
-            Businesses = Businesses.ToList(),
-            Travel = Travel.ToList(),
-            Entities = Entities.ToList(),
-            Cases = Cases.ToList(),
-            Workers = Workers.ToList(),
-            Providers = Providers.ToList(),
-            RagDocuments = RagDocuments.ToList(),
-            RagChunks = RagChunks.ToList(),
-            DatasetBatches = DatasetBatches.ToList(),
-            ImportJobs = ImportJobs.ToList(),
-            TimelineEvents = TimelineEvents.ToList(),
-            Reports = Reports.ToList(),
-            ModelInvocations = ModelInvocations.ToList(),
-            AuditEvents = AuditEvents.ToList(),
-            Notifications = Notifications.ToList(),
-            ObjectStore = ObjectStore.ToList(),
-            Corrections = _corrections.ToList(),
-            ProviderConfigs = new Dictionary<string, ProviderConfigUpdateRequest>(ProviderConfigs, StringComparer.OrdinalIgnoreCase)
-        };
+            Directory.CreateDirectory(_dataRoot);
+            var snapshot = new TaxNetSnapshot
+            {
+                Version = 1,
+                SavedAtUtc = DateTimeOffset.UtcNow,
+                People = People.ToList(),
+                TaxProfiles = TaxProfiles.ToList(),
+                Vehicles = Vehicles.ToList(),
+                Properties = Properties.ToList(),
+                UtilityBills = UtilityBills.ToList(),
+                Businesses = Businesses.ToList(),
+                Travel = Travel.ToList(),
+                Entities = Entities.ToList(),
+                Cases = Cases.ToList(),
+                Workers = Workers.ToList(),
+                Providers = Providers.ToList(),
+                RagDocuments = RagDocuments.ToList(),
+                RagChunks = RagChunks.ToList(),
+                DatasetBatches = DatasetBatches.ToList(),
+                ImportJobs = ImportJobs.ToList(),
+                TimelineEvents = TimelineEvents.ToList(),
+                Reports = Reports.ToList(),
+                ModelInvocations = ModelInvocations.ToList(),
+                AuditEvents = AuditEvents.ToList(),
+                Notifications = Notifications.ToList(),
+                ObjectStore = ObjectStore.ToList(),
+                Corrections = _corrections.ToList(),
+                ProviderConfigs = new Dictionary<string, ProviderConfigUpdateRequest>(ProviderConfigs, StringComparer.OrdinalIgnoreCase)
+            };
 
-        if (UsePostgresSnapshots())
-        {
+            if (UsePostgresSnapshots())
+            {
+                try
+                {
+                    _postgresSnapshots.SaveAsync(snapshot, _jsonOptions).GetAwaiter().GetResult();
+                }
+                catch (Exception ex)
+                {
+                    File.WriteAllText(Path.Combine(_dataRoot, "last-postgres-save-error.txt"), ex.ToString());
+                }
+            }
+
+            var tempPath = Path.Combine(_dataRoot, $"taxnet-state.{Environment.ProcessId}.{Guid.NewGuid():N}.tmp");
             try
             {
-                _postgresSnapshots.SaveAsync(snapshot, _jsonOptions).GetAwaiter().GetResult();
+                File.WriteAllText(tempPath, JsonSerializer.Serialize(snapshot, _jsonOptions));
+                File.Move(tempPath, _statePath, overwrite: true);
             }
-            catch (Exception ex)
+            finally
             {
-                File.WriteAllText(Path.Combine(_dataRoot, "last-postgres-save-error.txt"), ex.ToString());
+                File.Delete(tempPath);
             }
         }
-
-        var tempPath = _statePath + ".tmp";
-        File.WriteAllText(tempPath, JsonSerializer.Serialize(snapshot, _jsonOptions));
-        File.Move(tempPath, _statePath, overwrite: true);
     }
 
     public object GetPersistenceStatus()

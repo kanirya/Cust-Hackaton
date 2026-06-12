@@ -4,6 +4,7 @@ import {
   FileText,
   KeyRound,
   Layers3,
+  LockKeyhole,
   Save,
   Search,
   ShieldCheck,
@@ -15,7 +16,7 @@ import { EmptyState, Panel } from "../common/Primitives.jsx";
 function pct(value) {
   return `${Math.round(Number(value || 0) * 100)}%`;
 }
-function RagWorkspace({ rag, feedRagDocument, queryRag, ragResult, modelGateway, invokeModel, modelResult, selectedCaseId }) {
+function RagWorkspace({ rag, feedRagDocument, queryRag, ragResult, modelGateway, invokeModel, modelResult, selectedCaseId, saveModelKey }) {
   return (
     <div className="page-stack">
       <div className="hero-strip">
@@ -31,6 +32,7 @@ function RagWorkspace({ rag, feedRagDocument, queryRag, ragResult, modelGateway,
           <RagQueryCenter queryRag={queryRag} ragResult={ragResult} />
         </Panel>
         <Panel title="Model Gateway Test Bench" subtitle="Invoke local/template or external-ready routes with redaction." icon={Sparkles}>
+          <ModelKeyCenter modelGateway={modelGateway} saveModelKey={saveModelKey} />
           <ModelInvokeCenter invokeModel={invokeModel} modelResult={modelResult} selectedCaseId={selectedCaseId} />
           <div className="cards-grid">
             {modelGateway?.routing?.map((route) => (
@@ -156,7 +158,7 @@ function BackendSystems({ workers, infra, audit, objectStore, notifications, per
   );
 }
 
-function System({ workers, rag, authz, modelGateway, infra, audit, objectStore, notifications, persistence, feedRagDocument, queryRag, ragResult, invokeModel, modelResult, selectedCaseId }) {
+function System({ workers, rag, authz, modelGateway, infra, audit, objectStore, notifications, persistence, feedRagDocument, queryRag, ragResult, invokeModel, modelResult, selectedCaseId, saveModelKey }) {
   return (
     <div className="page-stack">
       <div className="system-grid">
@@ -200,6 +202,7 @@ function System({ workers, rag, authz, modelGateway, infra, audit, objectStore, 
           </div>
         </Panel>
         <Panel title="Model Gateway" icon={Sparkles}>
+          <ModelKeyCenter modelGateway={modelGateway} saveModelKey={saveModelKey} />
           <ModelInvokeCenter invokeModel={invokeModel} modelResult={modelResult} selectedCaseId={selectedCaseId} />
           <div className="cards-grid">
             {modelGateway?.routing?.map((route) => (
@@ -396,6 +399,38 @@ function ModelInvokeCenter({ invokeModel, modelResult, selectedCaseId }) {
     </div>
   );
 }
+
+function ModelKeyCenter({ modelGateway, saveModelKey }) {
+  const [provider, setProvider] = useState("openai");
+  const [model, setModel] = useState("gpt-4o-mini");
+  const [apiKey, setApiKey] = useState("");
+
+  const providerStatus = modelGateway?.providerStatus?.find((item) => item.provider === provider);
+  const providerOptions = ["openai", "deepseek", "gemini", "claude"];
+
+  async function submit() {
+    await saveModelKey(provider, { apiKey, model });
+    setApiKey("");
+  }
+
+  return (
+    <div className="rag-feed query-console">
+      <div className="feed-controls">
+        <label>Provider<select value={provider} onChange={(e) => setProvider(e.target.value)}>
+          {providerOptions.map((item) => <option key={item} value={item}>{item}</option>)}
+        </select></label>
+        <label>Model<input value={model} onChange={(e) => setModel(e.target.value)} /></label>
+        <label>API key<input type="password" value={apiKey} onChange={(e) => setApiKey(e.target.value)} /></label>
+      </div>
+      <div className="upload-strip">
+        <button onClick={submit} disabled={!apiKey.trim()}><KeyRound size={15} /> Store key</button>
+        <span className={`risk-pill ${providerStatus?.hasApiKey ? "low" : "medium"}`}>{providerStatus?.hasApiKey ? "Configured" : "Missing key"}</span>
+        <span className="risk-pill low">{providerStatus?.model || model}</span>
+      </div>
+    </div>
+  );
+}
+
 function WorkerCard({ worker }) {
   return (
     <article className="small-card">

@@ -38,6 +38,16 @@ builder.Services.AddSingleton<CognitoIdentityProviderStatus>();
 
 builder.Services.AddSingleton<IGovernmentProviderRegistry>(sp =>
     new GovernmentProviderRegistry(sp.GetRequiredService<TaxNetState>()));
+builder.Services.AddSingleton<IngestionPipelineService>();
+builder.Services.AddSingleton<IdentityResolutionService>();
+builder.Services.AddSingleton<GraphIntelligenceService>();
+builder.Services.AddSingleton<RiskScoringService>();
+builder.Services.AddSingleton<TaxNetPipelineOrchestrator>();
+builder.Services.AddSingleton<CaseManagementService>();
+builder.Services.AddSingleton<RagPolicyService>();
+builder.Services.AddSingleton<AiOrchestratorService>();
+builder.Services.AddSingleton<AuditLogService>();
+builder.Services.AddSingleton<PostgresOperationalSchemaService>();
 
 builder.Services.AddHealthChecks();
 
@@ -330,7 +340,7 @@ app.MapGet("/api/cases/{caseId}/timeline", (TaxNetState state, string caseId) =>
     return Results.Ok(new { items = state.GetTimeline(caseId) });
 });
 
-app.MapPost("/api/cases/{caseId}/assign", (TaxNetState state, HttpContext context, string caseId, CaseAssignmentRequest request) =>
+app.MapPost("/api/cases/{caseId}/assign", (CaseManagementService cases, HttpContext context, string caseId, CaseAssignmentRequest request) =>
 {
     if (!AuthorizationCatalog.HasRole(context, "taxnet-supervisor", "taxnet-senior-auditor"))
     {
@@ -339,7 +349,7 @@ app.MapPost("/api/cases/{caseId}/assign", (TaxNetState state, HttpContext contex
 
     try
     {
-        return Results.Ok(state.AssignCase(caseId, request, AuthorizationCatalog.GetCurrentActor(context)));
+        return Results.Ok(cases.Assign(caseId, request, AuthorizationCatalog.GetCurrentActor(context)));
     }
     catch (InvalidOperationException ex)
     {
@@ -347,7 +357,7 @@ app.MapPost("/api/cases/{caseId}/assign", (TaxNetState state, HttpContext contex
     }
 });
 
-app.MapPost("/api/cases/{caseId}/request-citizen-clarification", (TaxNetState state, HttpContext context, string caseId) =>
+app.MapPost("/api/cases/{caseId}/request-citizen-clarification", (CaseManagementService cases, HttpContext context, string caseId) =>
 {
     if (!AuthorizationCatalog.HasRole(context, "taxnet-auditor", "taxnet-senior-auditor", "taxnet-supervisor"))
     {
@@ -356,7 +366,7 @@ app.MapPost("/api/cases/{caseId}/request-citizen-clarification", (TaxNetState st
 
     try
     {
-        return Results.Ok(state.RequestCitizenClarification(caseId, AuthorizationCatalog.GetCurrentActor(context)));
+        return Results.Ok(cases.RequestCitizenClarification(caseId, AuthorizationCatalog.GetCurrentActor(context)));
     }
     catch (InvalidOperationException ex)
     {
@@ -364,7 +374,7 @@ app.MapPost("/api/cases/{caseId}/request-citizen-clarification", (TaxNetState st
     }
 });
 
-app.MapPost("/api/cases/{caseId}/decision", (TaxNetState state, HttpContext context, string caseId, CaseDecisionRequest request) =>
+app.MapPost("/api/cases/{caseId}/decision", (CaseManagementService cases, HttpContext context, string caseId, CaseDecisionRequest request) =>
 {
     if (!AuthorizationCatalog.HasRole(context, "taxnet-auditor", "taxnet-senior-auditor"))
     {
@@ -373,7 +383,7 @@ app.MapPost("/api/cases/{caseId}/decision", (TaxNetState state, HttpContext cont
 
     try
     {
-        return Results.Ok(state.RecordDecision(caseId, request, AuthorizationCatalog.GetCurrentActor(context)));
+        return Results.Ok(cases.RecordDecision(caseId, request, AuthorizationCatalog.GetCurrentActor(context)));
     }
     catch (InvalidOperationException ex)
     {
@@ -381,17 +391,29 @@ app.MapPost("/api/cases/{caseId}/decision", (TaxNetState state, HttpContext cont
     }
 });
 
-app.MapGet("/api/graph/entities/{entityId}/neighborhood", (TaxNetState state, string entityId) =>
-{
-    var graph = state.BuildGraph(entityId);
-    return graph.Nodes.Count == 0 ? Results.NotFound(new { message = $"Entity {entityId} was not found." }) : Results.Ok(graph);
-});
-
-app.MapGet("/api/graph/entities/{entityId}/features", (TaxNetState state, string entityId) =>
+app.MapGet("/api/cases/{caseId}/workspace", (CaseManagementService cases, string caseId) =>
 {
     try
     {
-        return Results.Ok(state.ExtractGraphFeatures(entityId));
+        return Results.Ok(cases.GetCaseWorkspace(caseId));
+    }
+    catch (InvalidOperationException ex)
+    {
+        return Results.NotFound(new { message = ex.Message });
+    }
+});
+
+app.MapGet("/api/graph/entities/{entityId}/neighborhood", (GraphIntelligenceService graphService, string entityId) =>
+{
+    var graph = graphService.BuildNeighborhood(entityId);
+    return graph.Nodes.Count == 0 ? Results.NotFound(new { message = $"Entity {entityId} was not found." }) : Results.Ok(graph);
+});
+
+app.MapGet("/api/graph/entities/{entityId}/features", (GraphIntelligenceService graphService, string entityId) =>
+{
+    try
+    {
+        return Results.Ok(graphService.ExtractFeatures(entityId));
     }
     catch (InvalidOperationException ex)
     {
@@ -405,7 +427,7 @@ app.MapGet("/api/identity/entities", (TaxNetState state) => Results.Ok(new
     total = state.Entities.Count
 }));
 
-app.MapGet("/api/identity/evaluation", (TaxNetState state) => Results.Ok(state.GetIdentityEvaluation()));
+app.MapGet("/api/identity/evaluation", (IdentityResolutionService identityService) => Results.Ok(identityService.GetEvaluation()));
 
 app.MapPost("/api/assistant/cases/{caseId}/ask", (TaxNetState state, string caseId, AssistantRequest request) =>
 {
@@ -417,14 +439,14 @@ app.MapPost("/api/assistant/cases/{caseId}/ask", (TaxNetState state, string case
     return Results.Ok(state.AskAssistant(caseId, request.Question));
 });
 
-app.MapPost("/api/reports/cases/{caseId}", (TaxNetState state, string caseId) =>
+app.MapPost("/api/reports/cases/{caseId}", (TaxNetState state, CaseManagementService cases, string caseId) =>
 {
     if (state.Cases.All(x => !x.Id.Equals(caseId, StringComparison.OrdinalIgnoreCase)))
     {
         return Results.NotFound(new { message = $"Case {caseId} was not found." });
     }
 
-    return Results.Ok(state.BuildReport(caseId));
+    return Results.Ok(cases.BuildReport(caseId));
 });
 
 app.MapGet("/api/reports", (TaxNetState state, string? caseId) =>
@@ -445,18 +467,53 @@ app.MapGet("/api/reports/{reportId}", (TaxNetState state, string reportId) =>
     return report is null ? Results.NotFound(new { message = $"Report {reportId} was not found." }) : Results.Ok(report);
 });
 
-app.MapPost("/api/ingestion/run", (TaxNetState state) =>
+app.MapPost("/api/ingestion/run", async (TaxNetPipelineOrchestrator orchestrator, PipelineRunRequest? request, CancellationToken cancellationToken) =>
 {
-    state.RebuildIntelligence();
-    return Results.Ok(new
-    {
-        message = "Synthetic import pipeline completed.",
-        importedProfiles = state.People.Count,
-        resolvedEntities = state.Entities.Count,
-        cases = state.Cases.Count,
-        timestampUtc = DateTimeOffset.UtcNow
-    });
+    var result = await orchestrator.RunAsync(request ?? new PipelineRunRequest("SANDBOX", 500), cancellationToken);
+    return Results.Ok(result);
 });
+
+app.MapPost("/api/ingestion/providers/{providerCode}/import", async (
+    IngestionPipelineService ingestion,
+    string providerCode,
+    int? maxProfiles,
+    CancellationToken cancellationToken) =>
+{
+    try
+    {
+        return Results.Ok(await ingestion.ImportFromProviderAsync(providerCode, maxProfiles ?? 250, cancellationToken));
+    }
+    catch (InvalidOperationException ex)
+    {
+        return Results.NotFound(new { message = ex.Message });
+    }
+});
+
+app.MapPost("/api/pipeline/run", async (TaxNetPipelineOrchestrator orchestrator, PipelineRunRequest request, CancellationToken cancellationToken) =>
+    Results.Ok(await orchestrator.RunAsync(request, cancellationToken)));
+
+app.MapGet("/api/system/backend/services", (
+    IngestionPipelineService ingestion,
+    IdentityResolutionService identity,
+    GraphIntelligenceService graph,
+    RiskScoringService risk,
+    RagPolicyService rag,
+    AuditLogService audit) => Results.Ok(new
+{
+    architecture = "Modular monolith with DDD-style application services and future deployable service boundaries.",
+    services = new object[]
+    {
+        new { name = nameof(IngestionPipelineService), boundary = "Provider ingestion and canonical contract validation", status = ingestion.GetProviderReadiness() },
+        new { name = nameof(IdentityResolutionService), boundary = "Entity resolution, match confidence, review flags", status = identity.GetEvaluation() },
+        new { name = nameof(GraphIntelligenceService), boundary = "Knowledge graph and graph feature extraction", status = graph.GetGraphBuildSummary() },
+        new { name = nameof(RiskScoringService), boundary = "Evidence-backed tax compliance deviation scoring", status = risk.GetRiskSummary() },
+        new { name = nameof(CaseManagementService), boundary = "Case workspace, assignment, clarification, decision, report generation" },
+        new { name = nameof(RagPolicyService), boundary = "Policy document ingestion, retrieval, citations, context packs", status = rag.GetIndexStatus() },
+        new { name = nameof(AiOrchestratorService), boundary = "Case context assembly, RAG retrieval, model gateway invocation, guardrail validation" },
+        new { name = nameof(AuditLogService), boundary = "Structured audit query and immutable logging target", status = audit.Query(null, null, 5) },
+        new { name = nameof(PostgresOperationalSchemaService), boundary = "Operational PostgreSQL schema provisioning and migration status" }
+    }
+}));
 
 app.MapGet("/api/system/workers", (TaxNetState state) => Results.Ok(new
 {
@@ -525,22 +582,8 @@ app.MapPost("/api/system/workers/enqueue-demo", async (IConfiguration configurat
     });
 });
 
-app.MapGet("/api/system/audit", (TaxNetState state, string? action, string? resource) =>
-{
-    var query = state.AuditEvents.AsEnumerable();
-    if (!string.IsNullOrWhiteSpace(action))
-    {
-        query = query.Where(x => x.Action.Contains(action, StringComparison.OrdinalIgnoreCase));
-    }
-
-    if (!string.IsNullOrWhiteSpace(resource))
-    {
-        query = query.Where(x => x.Resource.Contains(resource, StringComparison.OrdinalIgnoreCase));
-    }
-
-    var items = query.Take(100).ToArray();
-    return Results.Ok(new { items, total = items.Length });
-});
+app.MapGet("/api/system/audit", (AuditLogService audit, string? action, string? resource, int? limit) =>
+    Results.Ok(audit.Query(action, resource, limit ?? 100)));
 
 app.MapGet("/api/system/object-store", (TaxNetState state) => Results.Ok(new
 {
@@ -549,6 +592,15 @@ app.MapGet("/api/system/object-store", (TaxNetState state) => Results.Ok(new
 }));
 
 app.MapGet("/api/system/persistence", (TaxNetState state) => Results.Ok(state.GetPersistenceStatus()));
+
+app.MapPost("/api/system/storage/migrate", async (PostgresOperationalSchemaService postgres, CancellationToken cancellationToken) =>
+    Results.Ok(await postgres.EnsureSchemaAsync(cancellationToken)));
+
+app.MapPost("/api/system/storage/sync", async (TaxNetState state, PostgresOperationalSchemaService postgres, CancellationToken cancellationToken) =>
+    Results.Ok(await postgres.SyncFromStateAsync(state, cancellationToken)));
+
+app.MapGet("/api/system/storage/projection", async (PostgresOperationalSchemaService postgres, CancellationToken cancellationToken) =>
+    Results.Ok(await postgres.GetProjectionCountsAsync(cancellationToken)));
 
 app.MapGet("/api/system/notifications", (TaxNetState state) => Results.Ok(new
 {
@@ -640,22 +692,19 @@ app.MapGet("/api/connectors/providers", async (IGovernmentProviderRegistry regis
     });
 });
 
-app.MapGet("/api/system/rag", (TaxNetState state) => Results.Ok(new
+app.MapGet("/api/system/rag", (TaxNetState state, RagPolicyService rag) => Results.Ok(new
 {
-    service = "TaxNet.RagPolicy",
-    purpose = "Current policy memory for explanations, citations, and audit guidance.",
+    status = rag.GetIndexStatus(),
     documents = state.RagDocuments,
-    chunks = state.RagChunks.Take(50),
-    chunkCount = state.RagChunks.Count,
-    queryPipeline = new[] { "query rewrite", "hybrid retrieval", "rerank", "date/jurisdiction filter", "context pack", "citations" }
+    chunks = state.RagChunks.Take(50)
 }));
 
-app.MapPost("/api/system/rag/query", (TaxNetState state, RagQueryRequest request) =>
-    Results.Ok(state.QueryRag(request)));
+app.MapPost("/api/system/rag/query", (RagPolicyService rag, RagQueryRequest request) =>
+    Results.Ok(rag.Query(request)));
 
-app.MapPost("/api/system/rag/documents", (TaxNetState state, RagFeedRequest request) =>
+app.MapPost("/api/system/rag/documents", (TaxNetState state, RagPolicyService rag, RagFeedRequest request) =>
 {
-    var job = state.FeedRagDocument(request);
+    var job = rag.Feed(request);
     return Results.Ok(new
     {
         message = "RAG document fed and indexed.",
@@ -692,8 +741,40 @@ app.MapGet("/api/system/model-gateway", async (ModelGatewayClient client, Cancel
     });
 });
 
-app.MapPost("/api/system/model-gateway/invoke", (TaxNetState state, ModelInvocationRequest request) =>
-    Results.Ok(state.InvokeModelGateway(request)));
+app.MapPost("/api/system/model-gateway/invoke", (TaxNetState state, ModelGatewayClient client, ModelInvocationRequest request) =>
+    Results.Ok(state.InvokeModelGateway(request, client)));
+
+app.MapPost("/api/system/model-gateway/providers/{provider}/key", async (
+    ModelGatewayClient client,
+    string provider,
+    ModelProviderKeyUpdateRequest request,
+    CancellationToken cancellationToken) =>
+{
+    var result = await client.ConfigureProviderKeyAsync(provider, request, cancellationToken);
+    if (!result.Succeeded)
+    {
+        return Results.BadRequest(new
+        {
+            result.Provider,
+            result.SecretName,
+            result.Succeeded,
+            result.AvailableForRouting,
+            result.Error
+        });
+    }
+
+    var config = await client.GetConfigAsync(cancellationToken);
+    return Results.Ok(new
+    {
+        result.Provider,
+        result.SecretName,
+        result.Succeeded,
+        result.AvailableForRouting,
+        result.VersionId,
+        providerStatus = config.Providers.FirstOrDefault(x => x.Provider.Equals(result.Provider, StringComparison.OrdinalIgnoreCase)),
+        message = "Model provider key stored in Secrets Manager. The raw key is never returned by the API."
+    });
+});
 
 app.MapGet("/api/system/model-gateway/invocations", (TaxNetState state) => Results.Ok(new
 {
@@ -702,27 +783,14 @@ app.MapGet("/api/system/model-gateway/invocations", (TaxNetState state) => Resul
     estimatedCostUsd = state.ModelInvocations.Sum(x => x.EstimatedCostUsd)
 }));
 
-app.MapPost("/api/orchestrator/cases/{caseId}/explain", (TaxNetState state, string caseId) =>
+app.MapPost("/api/orchestrator/cases/{caseId}/explain", (TaxNetState state, AiOrchestratorService orchestrator, string caseId, bool? allowExternalProvider, string? preferredProvider) =>
 {
     if (state.Cases.All(x => !x.Id.Equals(caseId, StringComparison.OrdinalIgnoreCase)))
     {
         return Results.NotFound(new { message = $"Case {caseId} was not found." });
     }
 
-    var invocation = state.InvokeModelGateway(new ModelInvocationRequest(
-        "AuditExplanation",
-        $"Generate grounded audit explanation for {caseId}",
-        caseId,
-        "auto",
-        false));
-    return Results.Ok(new
-    {
-        orchestrator = "TaxNet.AI.Orchestrator",
-        caseId,
-        modelInvocation = invocation,
-        explanation = state.BuildExplanation(caseId),
-        graph = state.BuildGraph(state.Cases.First(x => x.Id.Equals(caseId, StringComparison.OrdinalIgnoreCase)).EntityId)
-    });
+    return Results.Ok(orchestrator.ExplainCase(caseId, allowExternalProvider == true, preferredProvider ?? "auto"));
 });
 
 app.MapGet("/api/system/architecture", () => Results.Ok(new

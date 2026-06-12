@@ -2,7 +2,7 @@ using System.Text.Json;
 using TaxNetGuardian.Worker.Shared;
 
 var options = WorkerOptions.FromEnvironment("GraphIntelligence.Worker", "taxnet-dev-graph-build-jobs", args);
-using var log = WorkerLogging.CreateLogger(options.WorkerName);
+var log = WorkerLogging.CreateLogger(options.WorkerName);
 return await WorkerHost.RunAsync(options, new GraphIntelligenceWorker(log));
 
 internal sealed class GraphIntelligenceWorker : IWorkerJobHandler
