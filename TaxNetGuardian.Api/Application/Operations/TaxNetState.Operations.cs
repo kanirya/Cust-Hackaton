@@ -33,21 +33,110 @@ public sealed partial class TaxNetState
         }
     }
 
+    /// <summary>
+    /// REAL entity-resolution evaluation. Pairwise precision/recall/F1 are
+    /// computed by ComputeIdentityEvaluation() against the generator's
+    /// ground-truth labels - recalculated live on every call, never hardcoded.
+    /// Includes concrete examples of correct links, missed links and
+    /// review-band duplicate candidates so the result is auditable.
+    /// </summary>
     public object GetIdentityEvaluation()
     {
+        var metrics = ComputeIdentityEvaluation();
         var total = Math.Max(1, Entities.Count);
         var reviewCount = Entities.Count(x => x.RequiresHumanReview);
+
+        var personNames = People.ToDictionary(p => p.Id, p => p.FullName, StringComparer.OrdinalIgnoreCase);
+
+        // Example correctly-merged clusters: multi-fragment, multi-provider.
+        var correctLinkExamples = IdentityClusters
+            .Where(c => c.FragmentTokenValues.Count >= 2)
+            .OrderByDescending(c => c.FragmentTokenValues.Count)
+            .Take(5)
+            .Select(c => new
+            {
+                entityId = c.EntityId,
+                person = personNames.GetValueOrDefault(c.PrimaryPersonId, c.PrimaryPersonId),
+                fragments = c.FragmentTokenValues.Count,
+                providers = c.ProviderCodes,
+                confidence = c.Confidence,
+                recordedNames = IdentityRecords
+                    .Where(r => c.FragmentTokenValues.Contains(r.FragmentToken.Value))
+                    .Select(r => $"{r.ProviderCode}: {(string.IsNullOrWhiteSpace(r.FullName) ? r.UrduName : r.FullName)}")
+                    .ToArray()
+            })
+            .ToArray();
+
+        // Example missed links: ground-truth same-person fragments the resolver
+        // left in different clusters (these are exactly what recall penalises).
+        var entityByToken = new Dictionary<string, string>(StringComparer.Ordinal);
+        foreach (var cluster in IdentityClusters)
+        {
+            foreach (var token in cluster.FragmentTokenValues)
+            {
+                entityByToken[token] = cluster.EntityId;
+            }
+        }
+
+        var missedExamples = GroundTruth
+            .GroupBy(g => g.TruePersonId, StringComparer.OrdinalIgnoreCase)
+            .Where(g => g
+                .Select(x => entityByToken.GetValueOrDefault(x.FragmentTokenValue, ""))
+                .Where(e => e.Length > 0)
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .Count() > 1)
+            .Take(5)
+            .Select(g => new
+            {
+                person = personNames.GetValueOrDefault(g.Key, g.Key),
+                truePersonId = g.Key,
+                splitAcrossEntities = g
+                    .Select(x => entityByToken.GetValueOrDefault(x.FragmentTokenValue, ""))
+                    .Where(e => e.Length > 0)
+                    .Distinct(StringComparer.OrdinalIgnoreCase)
+                    .ToArray()
+            })
+            .ToArray();
+
+        var duplicateExamples = DuplicateCandidates
+            .OrderByDescending(d => d.Score)
+            .Take(5)
+            .Select(d => new
+            {
+                entityA = d.EntityIdA,
+                entityB = d.EntityIdB,
+                nameA = d.DisplayNameA,
+                nameB = d.DisplayNameB,
+                score = d.Score,
+                reasons = d.Reasons
+            })
+            .ToArray();
+
         return new
         {
             service = "TaxNet.IdentityResolution.Worker",
+            algorithm = "Blocking + deterministic identifiers (CNIC/NTN/phone) + probabilistic Jaro-Winkler with Urdu transliteration; auto-link >= 0.92, human-review band 0.75 - 0.92",
+            evaluationMethod = "Pairwise precision/recall against generator ground-truth labels, recomputed live",
+            identityFragments = IdentityRecords.Count,
             resolvedEntities = Entities.Count,
             linkedRecords = Entities.Sum(x => x.LinkedRecordIds.Count),
             requiresHumanReview = reviewCount,
-            precision = 0.93m,
-            recall = 0.89m,
+            precision = metrics.Precision,
+            recall = metrics.Recall,
+            f1 = metrics.F1,
+            reviewAssistedRecall = metrics.ReviewAssistedRecall,
+            truePairs = metrics.TruePairs,
+            predictedPairs = metrics.PredictedPairs,
+            truePositivePairs = metrics.TruePositivePairs,
+            falsePositivePairs = metrics.FalsePositivePairs,
+            missedPairs = metrics.MissedPairs,
             ambiguityRate = decimal.Round(reviewCount / (decimal)total, 2),
-            evaluationSet = "Synthetic labels from Gov Data Sandbox",
-            matchSignals = new[] { "identity token", "masked CNIC", "name/address normalization", "provider record linkage", "business relationship" },
+            duplicateCandidates = DuplicateCandidates.Count,
+            evaluationSet = "Ground-truth labels written by the Gov Data Sandbox generator (never visible to the resolver)",
+            matchSignals = new[] { "CNIC hash (deterministic)", "NTN (deterministic)", "phone hash + name corroboration", "Jaro-Winkler name similarity with Urdu transliteration", "father name similarity", "address token overlap", "city/province agreement" },
+            correctLinkExamples,
+            missedLinkExamples = missedExamples,
+            duplicateCandidateExamples = duplicateExamples,
             sample = Entities.Take(20)
         };
     }
@@ -60,28 +149,50 @@ public sealed partial class TaxNetState
             throw new InvalidOperationException($"Entity {entityId} was not found.");
         }
 
-        var person = People.First(x => x.Id == entity.PersonId);
-        var token = person.IdentityToken.Value;
-        var vehicles = Vehicles.Where(x => x.OwnerIdentityToken.Value == token).ToArray();
-        var properties = Properties.Where(x => x.OwnerIdentityToken.Value == token).ToArray();
-        var utilities = UtilityBills.Where(x => x.OwnerIdentityToken.Value == token).ToArray();
-        var businesses = Businesses.Where(x => x.RelatedIdentityToken.Value == token).ToArray();
-        var travel = Travel.Where(x => x.TravelerIdentityToken.Value == token).ToArray();
+        var cluster = IdentityClusters.FirstOrDefault(x => x.EntityId.Equals(entity.Id, StringComparison.OrdinalIgnoreCase));
+        var person = People.FirstOrDefault(x => x.Id == entity.PersonId);
+        var tokenSet = cluster is not null
+            ? cluster.FragmentTokenValues.ToHashSet(StringComparer.Ordinal)
+            : (person is not null ? new HashSet<string>(StringComparer.Ordinal) { person.IdentityToken.Value } : new HashSet<string>(StringComparer.Ordinal));
+
+        var vehicles = Vehicles.Where(x => tokenSet.Contains(x.OwnerIdentityToken.Value)).ToArray();
+        var properties = Properties.Where(x => tokenSet.Contains(x.OwnerIdentityToken.Value)).ToArray();
+        var utilities = UtilityBills.Where(x => tokenSet.Contains(x.OwnerIdentityToken.Value)).ToArray();
+        var businesses = Businesses.Where(x => tokenSet.Contains(x.RelatedIdentityToken.Value)).ToArray();
+        var travel = Travel.Where(x => tokenSet.Contains(x.TravelerIdentityToken.Value)).ToArray();
         var graph = BuildGraph(entityId);
+
+        // Real degree centrality: this node's degree relative to the maximum
+        // degree of any node in its neighbourhood subgraph.
+        var degreeByNode = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+        foreach (var edge in graph.Edges)
+        {
+            degreeByNode[edge.Source] = degreeByNode.GetValueOrDefault(edge.Source) + 1;
+            degreeByNode[edge.Target] = degreeByNode.GetValueOrDefault(edge.Target) + 1;
+        }
+
+        var ownDegree = degreeByNode.GetValueOrDefault(entity.Id);
+        var maxDegree = degreeByNode.Count > 0 ? degreeByNode.Values.Max() : 0;
+        var degreeCentrality = maxDegree > 0 ? decimal.Round(ownDegree / (decimal)maxDegree, 2) : 0m;
+        var personEdges = graph.Edges.Count(e =>
+            e.Type is "SHARES_PHONE_WITH" or "HOUSEHOLD_MEMBER_OF" or "CO_DIRECTOR_OF" or "POSSIBLE_DUPLICATE_OF");
 
         return new
         {
             entityId,
             nodeCount = graph.Nodes.Count,
             edgeCount = graph.Edges.Count,
+            identityFragmentCount = tokenSet.Count,
+            personToPersonEdgeCount = personEdges,
             assetValue = vehicles.Sum(x => x.EstimatedValue) + properties.Sum(x => x.EstimatedValue),
             luxuryVehicleCount = vehicles.Count(x => x.EngineCc >= 2000 || x.EstimatedValue >= 15_000_000),
             propertyCount = properties.Length,
             activeBusinessCount = businesses.Count(x => x.Status.Equals("Active", StringComparison.OrdinalIgnoreCase)),
             averageMonthlyUtilityBill = utilities.Any() ? decimal.Round(utilities.Average(x => x.AverageMonthlyBill), 0) : 0,
             travelSpend = travel.Sum(x => x.EstimatedSpend),
-            centrality = decimal.Round(Math.Min(0.99m, graph.Edges.Count / 12m), 2),
-            featureVersion = "graph-features-v1.0"
+            degreeCentrality,
+            degree = ownDegree,
+            featureVersion = "graph-features-v2.0"
         };
     }
 
@@ -93,9 +204,11 @@ public sealed partial class TaxNetState
             tables = new[]
             {
                 new { name = "persons", key = "person_id", columns = new[] { "person_id", "full_name", "city", "province", "cnic_masked", "identity_token_hash" } },
+                new { name = "identity_fragments", key = "record_id", columns = new[] { "record_id", "provider_code", "fragment_token_hash", "full_name", "urdu_name", "father_name", "cnic_hash", "phone_hash", "ntn", "address", "city" } },
                 new { name = "tax_profiles", key = "provider_record_id", columns = new[] { "identity_token_hash", "ntn", "filer_status", "declared_annual_income", "tax_paid", "tax_year" } },
                 new { name = "assets", key = "provider_record_id", columns = new[] { "identity_token_hash", "asset_type", "estimated_value", "source_provider", "source_updated_at_utc" } },
-                new { name = "resolved_entities", key = "entity_id", columns = new[] { "person_id", "match_confidence", "requires_human_review", "match_reasons_json" } },
+                new { name = "resolved_entities", key = "entity_id", columns = new[] { "person_id", "match_confidence", "requires_human_review", "match_reasons_json", "fragment_tokens_json" } },
+                new { name = "ground_truth_links", key = "fragment_token_hash", columns = new[] { "fragment_token_hash", "true_person_id" } },
                 new { name = "cases", key = "case_id", columns = new[] { "entity_id", "status", "assigned_to", "score", "risk_band", "score_version" } },
                 new { name = "rag_documents", key = "document_id", columns = new[] { "title", "source_type", "url", "summary", "captured_at_utc" } },
                 new { name = "audit_events", key = "audit_event_id", columns = new[] { "actor", "action", "resource", "outcome", "correlation_id", "timestamp_utc" } }

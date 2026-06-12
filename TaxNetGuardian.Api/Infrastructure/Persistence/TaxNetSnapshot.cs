@@ -2,7 +2,7 @@ namespace TaxNetGuardian.Api;
 
 public sealed record TaxNetSnapshot
 {
-    public int Version { get; init; } = 1;
+    public int Version { get; init; } = 2;
     public DateTimeOffset SavedAtUtc { get; init; } = DateTimeOffset.UtcNow;
     public List<SyntheticPerson> People { get; init; } = [];
     public List<TaxProfile> TaxProfiles { get; init; } = [];
@@ -27,4 +27,11 @@ public sealed record TaxNetSnapshot
     public List<ObjectStoreItem> ObjectStore { get; init; } = [];
     public List<CitizenCorrection> Corrections { get; init; } = [];
     public Dictionary<string, ProviderConfigUpdateRequest> ProviderConfigs { get; init; } = new(StringComparer.OrdinalIgnoreCase);
+
+    // Entity-resolution corpus (snapshot schema v2).
+    public List<ProviderIdentityRecord> IdentityRecords { get; init; } = [];
+    public List<GroundTruthLink> GroundTruth { get; init; } = [];
+    public List<IdentityClusterInfo> IdentityClusters { get; init; } = [];
+    public List<DuplicateCandidate> DuplicateCandidates { get; init; } = [];
+    public int TokenCounter { get; init; }
 }

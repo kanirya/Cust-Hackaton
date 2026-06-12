@@ -27,23 +27,6 @@ public sealed partial class TaxNetState
 
     private bool LoadSnapshot()
     {
-        if (UsePostgresSnapshots())
-        {
-            try
-            {
-                var postgresSnapshot = _postgresSnapshots.LoadLatestAsync(_jsonOptions).GetAwaiter().GetResult();
-                if (postgresSnapshot is not null)
-                {
-                    ApplySnapshot(postgresSnapshot);
-                    return People.Count > 0 && Cases.Count > 0;
-                }
-            }
-            catch (Exception ex)
-            {
-                File.WriteAllText(Path.Combine(_dataRoot, "last-postgres-load-error.txt"), ex.ToString());
-            }
-        }
-
         if (!File.Exists(_statePath))
         {
             return false;
@@ -58,7 +41,51 @@ public sealed partial class TaxNetState
                 return false;
             }
 
-            ApplySnapshot(snapshot);
+            // Pre-v2 snapshots have no entity-resolution corpus (identity
+            // fragments + ground truth). Loading one would leave the resolver
+            // and the evaluation empty, so force regeneration instead.
+            if (snapshot.Version < 2 || snapshot.IdentityRecords.Count == 0)
+            {
+                return false;
+            }
+
+            People.AddRange(snapshot.People);
+            TaxProfiles.AddRange(snapshot.TaxProfiles);
+            Vehicles.AddRange(snapshot.Vehicles);
+            Properties.AddRange(snapshot.Properties);
+            UtilityBills.AddRange(snapshot.UtilityBills);
+            Businesses.AddRange(snapshot.Businesses);
+            Travel.AddRange(snapshot.Travel);
+            Entities.AddRange(snapshot.Entities);
+            Cases.AddRange(snapshot.Cases);
+            Workers.AddRange(snapshot.Workers);
+            Providers.AddRange(snapshot.Providers);
+            RagDocuments.AddRange(snapshot.RagDocuments);
+            RagChunks.AddRange(snapshot.RagChunks);
+            DatasetBatches.AddRange(snapshot.DatasetBatches);
+            ImportJobs.AddRange(snapshot.ImportJobs);
+            TimelineEvents.AddRange(snapshot.TimelineEvents);
+            Reports.AddRange(snapshot.Reports);
+            ModelInvocations.AddRange(snapshot.ModelInvocations);
+            AuditEvents.AddRange(snapshot.AuditEvents);
+            Notifications.AddRange(snapshot.Notifications);
+            ObjectStore.AddRange(snapshot.ObjectStore);
+            _corrections.AddRange(snapshot.Corrections);
+            foreach (var item in snapshot.ProviderConfigs)
+            {
+                ProviderConfigs[item.Key] = item.Value;
+            }
+
+            IdentityRecords.AddRange(snapshot.IdentityRecords);
+            GroundTruth.AddRange(snapshot.GroundTruth);
+            IdentityClusters.AddRange(snapshot.IdentityClusters);
+            DuplicateCandidates.AddRange(snapshot.DuplicateCandidates);
+            _tokenCounter = snapshot.TokenCounter;
+
+            if (Workers.Count == 0)
+            {
+                SeedWorkers();
+            }
 
             return People.Count > 0 && Cases.Count > 0;
         }
@@ -76,7 +103,7 @@ public sealed partial class TaxNetState
         Directory.CreateDirectory(_dataRoot);
         var snapshot = new TaxNetSnapshot
         {
-            Version = 1,
+            Version = 2,
             SavedAtUtc = DateTimeOffset.UtcNow,
             People = People.ToList(),
             TaxProfiles = TaxProfiles.ToList(),
@@ -100,20 +127,13 @@ public sealed partial class TaxNetState
             Notifications = Notifications.ToList(),
             ObjectStore = ObjectStore.ToList(),
             Corrections = _corrections.ToList(),
-            ProviderConfigs = new Dictionary<string, ProviderConfigUpdateRequest>(ProviderConfigs, StringComparer.OrdinalIgnoreCase)
+            ProviderConfigs = new Dictionary<string, ProviderConfigUpdateRequest>(ProviderConfigs, StringComparer.OrdinalIgnoreCase),
+            IdentityRecords = IdentityRecords.ToList(),
+            GroundTruth = GroundTruth.ToList(),
+            IdentityClusters = IdentityClusters.ToList(),
+            DuplicateCandidates = DuplicateCandidates.ToList(),
+            TokenCounter = _tokenCounter
         };
-
-        if (UsePostgresSnapshots())
-        {
-            try
-            {
-                _postgresSnapshots.SaveAsync(snapshot, _jsonOptions).GetAwaiter().GetResult();
-            }
-            catch (Exception ex)
-            {
-                File.WriteAllText(Path.Combine(_dataRoot, "last-postgres-save-error.txt"), ex.ToString());
-            }
-        }
 
         var tempPath = _statePath + ".tmp";
         File.WriteAllText(tempPath, JsonSerializer.Serialize(snapshot, _jsonOptions));
@@ -123,20 +143,20 @@ public sealed partial class TaxNetState
     public object GetPersistenceStatus()
     {
         var stateInfo = File.Exists(_statePath) ? new FileInfo(_statePath) : null;
-        var postgresStatus = _postgresSnapshots.GetStatusAsync().GetAwaiter().GetResult();
         return new
         {
-            operationalStore = _platformOptions.Storage.OperationalStore,
             dataRoot = _dataRoot,
             statePath = _statePath,
             stateExists = stateInfo is not null,
             stateBytes = stateInfo?.Length ?? 0,
-            postgres = postgresStatus,
             objectRoot = _objectRoot,
             objectFiles = Directory.Exists(_objectRoot) ? Directory.GetFiles(_objectRoot, "*", SearchOption.AllDirectories).Length : 0,
             snapshotCollections = new
             {
                 people = People.Count,
+                identityFragments = IdentityRecords.Count,
+                resolvedEntities = Entities.Count,
+                duplicateCandidates = DuplicateCandidates.Count,
                 cases = Cases.Count,
                 ragDocuments = RagDocuments.Count,
                 ragChunks = RagChunks.Count,
@@ -145,68 +165,5 @@ public sealed partial class TaxNetState
                 objectMetadata = ObjectStore.Count
             }
         };
-    }
-
-    private bool UsePostgresSnapshots()
-        => _platformOptions.Storage.OperationalStore.Equals("PostgreSql", StringComparison.OrdinalIgnoreCase) &&
-           _postgresSnapshots.IsConfigured;
-
-    private void ApplySnapshot(TaxNetSnapshot snapshot)
-    {
-        People.Clear();
-        TaxProfiles.Clear();
-        Vehicles.Clear();
-        Properties.Clear();
-        UtilityBills.Clear();
-        Businesses.Clear();
-        Travel.Clear();
-        Entities.Clear();
-        Cases.Clear();
-        Workers.Clear();
-        Providers.Clear();
-        RagDocuments.Clear();
-        RagChunks.Clear();
-        DatasetBatches.Clear();
-        ImportJobs.Clear();
-        TimelineEvents.Clear();
-        Reports.Clear();
-        ModelInvocations.Clear();
-        AuditEvents.Clear();
-        Notifications.Clear();
-        ObjectStore.Clear();
-        ProviderConfigs.Clear();
-        _corrections.Clear();
-
-        People.AddRange(snapshot.People);
-        TaxProfiles.AddRange(snapshot.TaxProfiles);
-        Vehicles.AddRange(snapshot.Vehicles);
-        Properties.AddRange(snapshot.Properties);
-        UtilityBills.AddRange(snapshot.UtilityBills);
-        Businesses.AddRange(snapshot.Businesses);
-        Travel.AddRange(snapshot.Travel);
-        Entities.AddRange(snapshot.Entities);
-        Cases.AddRange(snapshot.Cases);
-        Workers.AddRange(snapshot.Workers);
-        Providers.AddRange(snapshot.Providers);
-        RagDocuments.AddRange(snapshot.RagDocuments);
-        RagChunks.AddRange(snapshot.RagChunks);
-        DatasetBatches.AddRange(snapshot.DatasetBatches);
-        ImportJobs.AddRange(snapshot.ImportJobs);
-        TimelineEvents.AddRange(snapshot.TimelineEvents);
-        Reports.AddRange(snapshot.Reports);
-        ModelInvocations.AddRange(snapshot.ModelInvocations);
-        AuditEvents.AddRange(snapshot.AuditEvents);
-        Notifications.AddRange(snapshot.Notifications);
-        ObjectStore.AddRange(snapshot.ObjectStore);
-        _corrections.AddRange(snapshot.Corrections);
-        foreach (var item in snapshot.ProviderConfigs)
-        {
-            ProviderConfigs[item.Key] = item.Value;
-        }
-
-        if (Workers.Count == 0)
-        {
-            SeedWorkers();
-        }
     }
 }
