@@ -1,0 +1,17 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "taxnet",
+      "runtimeExecutable": "dotnet",
+      "runtimeArgs": [
+        "C:\\Users\\hp\\Cust-Hackaton\\TaxNetGuardian.Api\\bin\\Debug\\net10.0\\TaxNetGuardian.Api.dll",
+        "--urls",
+        "http://localhost:5187",
+        "--contentRoot",
+        "C:\\Users\\hp\\Cust-Hackaton\\TaxNetGuardian.Api"
+      ],
+      "port": 5187
+    }
+  ]
+}
