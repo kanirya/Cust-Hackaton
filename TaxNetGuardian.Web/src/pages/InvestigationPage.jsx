@@ -1,5 +1,5 @@
-import React from "react";
-import { Activity, ArrowRight, BadgeCheck, Bot, CheckCircle2, ClipboardCheck, FileText, Network, Scale, UserCircle, Users } from "lucide-react";
+import React, { useEffect, useState } from "react";
+import { Activity, ArrowRight, BadgeCheck, Bot, CheckCircle2, ClipboardCheck, FileText, Fingerprint, Network, Scale, UserCircle, Users } from "lucide-react";
 import { EmptyState, InfoRows, JsonPreview, Panel, RadialScore } from "../components/common/Primitives.jsx";
 import { GraphCanvas } from "../components/graph/GraphCanvas.jsx";
 import { AssistantAnswer } from "../components/assistant/AssistantDrawer.jsx";
@@ -11,7 +11,15 @@ function pct(value) {
 function riskClass(value) {
   return String(value || "low").toLowerCase();
 }
-function Investigation({ selectedCase, graph, query, setQuery, askAssistant, generateReport, assignSelectedCase, requestClarification, recordDecision, assistantAnswer }) {
+function Investigation({ selectedCase, graph, query, setQuery, askAssistant, generateReport, assignSelectedCase, requestClarification, recordDecision, assistantAnswer, investigateCnic, cnicInvestigation }) {
+  const [cnic, setCnic] = useState("");
+
+  useEffect(() => {
+    if (selectedCase?.person?.cnicMasked) {
+      setCnic(selectedCase.person.cnicMasked);
+    }
+  }, [selectedCase?.person?.cnicMasked]);
+
   if (!selectedCase) return <EmptyState title="Loading investigation" />;
   const c = selectedCase.caseItem;
   const p = selectedCase.person;
@@ -82,6 +90,16 @@ function Investigation({ selectedCase, graph, query, setQuery, askAssistant, gen
             {assistantAnswer && <AssistantAnswer answer={assistantAnswer} />}
           </div>
         </Panel>
+        <Panel title="CNIC Investigation" subtitle="Link records by Pakistan's stable identity number, even when names differ." icon={Fingerprint}>
+          <div className="cnic-investigation">
+            <label>
+              CNIC
+              <input value={cnic} onChange={(e) => setCnic(e.target.value)} placeholder="42201-***01" />
+            </label>
+            <button onClick={() => investigateCnic(cnic)}><Fingerprint size={16} /> Investigate CNIC</button>
+          </div>
+          {cnicInvestigation && <CnicInvestigationResult result={cnicInvestigation} />}
+        </Panel>
         <Panel title="Case Timeline" subtitle="Audit log stream for reports, corrections, and decisions." icon={Activity}>
           <div className="timeline-list">
             {timeline.slice(0, 8).map((event) => (
@@ -113,6 +131,45 @@ function Investigation({ selectedCase, graph, query, setQuery, askAssistant, gen
           </div>
         </Panel>
       </section>
+    </div>
+  );
+}
+
+function CnicInvestigationResult({ result }) {
+  return (
+    <div className="cnic-result">
+      <div className="result-box">
+        <strong>{result.status} - {result.cnicMasked}</strong>
+        <p>{result.aiNarrative}</p>
+        <small>{result.model?.selectedProvider} via {result.model?.route}</small>
+      </div>
+      <div className="investigation-sections">
+        <section>
+          <strong>Findings</strong>
+          {result.findings?.map((item) => <p key={item}>{item}</p>)}
+        </section>
+        <section>
+          <strong>Recommended actions</strong>
+          {result.recommendedActions?.map((item) => <p key={item}>{item}</p>)}
+        </section>
+      </div>
+      <div className="signal-list">
+        {result.signals?.slice(0, 6).map((signal) => (
+          <article className="evidence-card" key={signal.name}>
+            <div><strong>{signal.name}</strong><span>{signal.severity}</span></div>
+            <p>{signal.detail}</p>
+          </article>
+        ))}
+      </div>
+      <div className="record-list">
+        {result.matchedRecords?.slice(0, 8).map((record) => (
+          <article className="job-row" key={record.recordId}>
+            <span className="risk-pill low">{record.recordType}</span>
+            <div><strong>{record.provider} - {record.displayName}</strong><small>{record.summary}</small></div>
+          </article>
+        ))}
+      </div>
+      <small>{result.humanReviewWarning}</small>
     </div>
   );
 }

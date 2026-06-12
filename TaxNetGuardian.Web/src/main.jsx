@@ -117,6 +117,7 @@ function App() {
   const [ragResult, setRagResult] = useState(null);
   const [modelResult, setModelResult] = useState(null);
   const [assistantAnswer, setAssistantAnswer] = useState(null);
+  const [cnicInvestigation, setCnicInvestigation] = useState(null);
   const [query, setQuery] = useState("Why was this case marked critical?");
   const [toast, setToast] = useState("");
   const [citizen, setCitizen] = useState(null);
@@ -219,6 +220,19 @@ function App() {
       body: JSON.stringify({ question: customQuestion })
     }, role);
     setAssistantAnswer(result);
+  }
+
+  async function investigateCnic(cnic) {
+    const result = await api("/api/investigations/cnic", {
+      method: "POST",
+      body: JSON.stringify({
+        cnic,
+        preferredProvider: "claude",
+        allowExternalProvider: true
+      })
+    }, "taxnet-auditor");
+    setCnicInvestigation(result);
+    setToast(`CNIC investigation completed for ${result.cnicMasked}.`);
   }
 
   async function generateReport() {
@@ -407,6 +421,8 @@ function App() {
                 requestClarification={requestClarification}
                 recordDecision={recordDecision}
                 assistantAnswer={assistantAnswer}
+                investigateCnic={investigateCnic}
+                cnicInvestigation={cnicInvestigation}
               />
             )}
             {page === "sandbox" && (

@@ -65,6 +65,41 @@ public sealed record CitizenCorrection(
 
 public sealed record AssistantRequest(string Question);
 
+public sealed record CnicInvestigationRequest(
+    string Cnic,
+    bool AllowExternalProvider,
+    string? PreferredProvider);
+
+public sealed record CnicInvestigationRecord(
+    string Provider,
+    string RecordType,
+    string RecordId,
+    string DisplayName,
+    string Summary,
+    decimal? Amount,
+    DateTimeOffset SourceUpdatedAtUtc);
+
+public sealed record CnicInvestigationSignal(
+    string Name,
+    string Severity,
+    string Detail,
+    IReadOnlyList<string> EvidenceIds);
+
+public sealed record CnicInvestigationResult(
+    string InvestigationId,
+    string Status,
+    string CnicMasked,
+    object Subject,
+    object? CaseContext,
+    IReadOnlyList<CnicInvestigationRecord> MatchedRecords,
+    IReadOnlyList<CnicInvestigationSignal> Signals,
+    string AiNarrative,
+    IReadOnlyList<string> Findings,
+    IReadOnlyList<string> RecommendedActions,
+    object Model,
+    string HumanReviewWarning,
+    DateTimeOffset CompletedAtUtc);
+
 public sealed record CaseAssignmentRequest(string AssignedTo);
 
 public sealed record CaseDecisionRequest(string Decision, string Notes);

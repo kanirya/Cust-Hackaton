@@ -1035,6 +1035,66 @@ tbody tr:hover {
   min-height: 78px;
 }
 
+.cnic-investigation {
+  display: grid;
+  gap: 10px;
+}
+
+.cnic-investigation label {
+  display: grid;
+  gap: 6px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 750;
+}
+
+.cnic-investigation input {
+  min-height: 38px;
+}
+
+.cnic-investigation button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.cnic-result {
+  display: grid;
+  gap: 12px;
+}
+
+.cnic-result .result-box p {
+  white-space: pre-line;
+}
+
+.investigation-sections {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.investigation-sections section,
+.signal-list,
+.record-list {
+  display: grid;
+  gap: 8px;
+}
+
+.investigation-sections section {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fff;
+  padding: 10px;
+}
+
+.investigation-sections p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
 .button-row {
   display: flex;
   gap: 8px;

@@ -455,6 +455,18 @@ app.MapPost("/api/assistant/cases/{caseId}/ask", (TaxNetState state, ModelGatewa
     return Results.Ok(state.AskAssistant(caseId, request.Question, modelGatewayClient));
 });
 
+app.MapPost("/api/investigations/cnic", (TaxNetState state, ModelGatewayClient modelGatewayClient, CnicInvestigationRequest request) =>
+{
+    try
+    {
+        return Results.Ok(state.InvestigateByCnic(request, modelGatewayClient));
+    }
+    catch (InvalidOperationException ex)
+    {
+        return Results.BadRequest(new { message = ex.Message });
+    }
+});
+
 app.MapPost("/api/reports/cases/{caseId}", (TaxNetState state, CaseManagementService cases, string caseId) =>
 {
     if (state.Cases.All(x => !x.Id.Equals(caseId, StringComparison.OrdinalIgnoreCase)))

@@ -254,11 +254,245 @@ public sealed partial class TaxNetState
         };
     }
 
+    public CnicInvestigationResult InvestigateByCnic(CnicInvestigationRequest request, ModelGatewayClient? modelGatewayClient = null)
+    {
+        var rawCnic = (request.Cnic ?? "").Trim();
+        if (string.IsNullOrWhiteSpace(rawCnic))
+        {
+            throw new InvalidOperationException("CNIC is required for investigation.");
+        }
+
+        var person = ResolvePersonByCnic(rawCnic)
+            ?? throw new InvalidOperationException("No sandbox identity matched the supplied CNIC.");
+        var token = person.IdentityToken.Value;
+        var caseItem = Cases.FirstOrDefault(x => x.PersonId.Equals(person.Id, StringComparison.OrdinalIgnoreCase));
+        var entity = Entities.FirstOrDefault(x => x.PersonId.Equals(person.Id, StringComparison.OrdinalIgnoreCase));
+        var records = BuildCnicLinkedRecords(token);
+        var signals = BuildCnicInvestigationSignals(person, records, caseItem);
+        var prompt = BuildCnicInvestigationPrompt(person, caseItem, records, signals);
+
+        var invocation = InvokeModelGateway(new ModelInvocationRequest(
+            "CnicInvestigation",
+            prompt,
+            caseItem?.Id ?? "",
+            string.IsNullOrWhiteSpace(request.PreferredProvider) ? "claude" : request.PreferredProvider.Trim(),
+            ModelGatewayClient.ExternalProvidersAllowed(request.AllowExternalProvider)),
+            modelGatewayClient);
+
+        var fallbackNarrative = BuildDeterministicCnicNarrative(person, caseItem, records, signals);
+        var usedExternal = invocation.UsedExternalProvider && !string.IsNullOrWhiteSpace(invocation.Output);
+        var narrative = usedExternal ? invocation.Output : fallbackNarrative;
+        var findings = signals
+            .OrderByDescending(x => x.Severity == "Critical")
+            .ThenByDescending(x => x.Severity == "High")
+            .Select(x => x.Detail)
+            .Take(6)
+            .ToArray();
+        var actions = BuildCnicRecommendedActions(caseItem, records, usedExternal).ToArray();
+
+        AddAuditEvent("TaxNet.AI.CnicInvestigator", "taxnet-auditor", "CnicInvestigation", person.Id, "Succeeded", new Dictionary<string, object>
+        {
+            ["caseId"] = caseItem?.Id ?? "",
+            ["records"] = records.Count,
+            ["signals"] = signals.Count,
+            ["modelProvider"] = invocation.SelectedProvider,
+            ["usedExternalProvider"] = usedExternal
+        });
+        SaveSnapshot();
+
+        return new CnicInvestigationResult(
+            $"cnic-investigation-{DateTimeOffset.UtcNow:yyyyMMddHHmmssfff}",
+            "Completed",
+            person.CnicMasked,
+            new
+            {
+                person.Id,
+                person.FullName,
+                person.FatherName,
+                person.City,
+                person.Province,
+                identityTokenType = person.IdentityToken.TokenType,
+                identityLinking = "All matched provider records share the same canonical CNIC identity token."
+            },
+            caseItem is null ? null : new
+            {
+                caseItem.Id,
+                caseItem.Status,
+                caseItem.Score.Score,
+                caseItem.Score.RiskBand,
+                caseItem.Score.Confidence,
+                caseItem.Score.RecommendedAction
+            },
+            records,
+            signals,
+            narrative,
+            findings,
+            actions,
+            new
+            {
+                selectedProvider = invocation.SelectedProvider,
+                invocation.Route,
+                usedExternalProvider = usedExternal,
+                invocation.InvocationId,
+                invocation.PromptTokens,
+                invocation.CompletionTokens
+            },
+            "CNIC-linked investigation is a decision-support view only. It does not prove fraud and requires authorized human review plus citizen correction opportunity.",
+            DateTimeOffset.UtcNow);
+    }
+
     private static decimal EstimateRecoverableTax(CaseItem caseItem)
     {
         var assetSignals = caseItem.Evidence.Where(x => x.Type is "Vehicle" or "Property").Sum(x => x.Amount ?? 0);
         return decimal.Round(assetSignals * (caseItem.Score.Score / 100m) * 0.035m, 0);
     }
+
+    private SyntheticPerson? ResolvePersonByCnic(string cnic)
+    {
+        var normalized = NormalizeCnic(cnic);
+        var digits = DigitsOnly(cnic);
+        return People.FirstOrDefault(person =>
+            NormalizeCnic(person.CnicMasked).Equals(normalized, StringComparison.OrdinalIgnoreCase) ||
+            DigitsOnly(person.CnicMasked).Equals(digits, StringComparison.OrdinalIgnoreCase) ||
+            (!string.IsNullOrWhiteSpace(digits) &&
+             digits.Length >= 2 &&
+             DigitsOnly(person.CnicMasked).StartsWith(digits[..Math.Min(5, digits.Length)], StringComparison.OrdinalIgnoreCase) &&
+             DigitsOnly(person.CnicMasked).EndsWith(digits[^2..], StringComparison.OrdinalIgnoreCase)) ||
+            person.IdentityToken.Value.Equals(cnic, StringComparison.OrdinalIgnoreCase));
+    }
+
+    private IReadOnlyList<CnicInvestigationRecord> BuildCnicLinkedRecords(string identityToken)
+    {
+        var records = new List<CnicInvestigationRecord>();
+        records.AddRange(TaxProfiles
+            .Where(x => x.IdentityToken.Value == identityToken)
+            .Select(x => new CnicInvestigationRecord("FBR", "TaxProfile", x.ProviderRecordId, x.Ntn, $"{x.FilerStatus}; declared income PKR {x.DeclaredAnnualIncome:N0}; tax paid PKR {x.TaxPaid:N0}.", x.DeclaredAnnualIncome, x.SourceUpdatedAtUtc)));
+        records.AddRange(Vehicles
+            .Where(x => x.OwnerIdentityToken.Value == identityToken)
+            .Select(x => new CnicInvestigationRecord("Excise", "Vehicle", x.ProviderRecordId, x.RegistrationNumberMasked, $"{x.Make} {x.Model}, {x.EngineCc}cc, estimated value PKR {x.EstimatedValue:N0}.", x.EstimatedValue, x.SourceUpdatedAtUtc)));
+        records.AddRange(Properties
+            .Where(x => x.OwnerIdentityToken.Value == identityToken)
+            .Select(x => new CnicInvestigationRecord("Property", "Property", x.ProviderRecordId, x.PropertyToken, $"{x.PropertyType} property at {x.Area}, {x.City}; estimated value PKR {x.EstimatedValue:N0}.", x.EstimatedValue, x.SourceUpdatedAtUtc)));
+        records.AddRange(UtilityBills
+            .Where(x => x.OwnerIdentityToken.Value == identityToken)
+            .Select(x => new CnicInvestigationRecord("Utility", "UtilityBill", x.ProviderRecordId, x.MeterToken, $"{x.UtilityType}; average monthly bill PKR {x.AverageMonthlyBill:N0}; latest bill PKR {x.LatestBillAmount:N0}.", x.AverageMonthlyBill, x.SourceUpdatedAtUtc)));
+        records.AddRange(Businesses
+            .Where(x => x.RelatedIdentityToken.Value == identityToken)
+            .Select(x => new CnicInvestigationRecord("SECP", "Business", x.ProviderRecordId, x.CompanyRegistrationNumber, $"{x.RelationshipType} of {x.CompanyName}; status {x.Status}.", null, x.SourceUpdatedAtUtc)));
+        records.AddRange(Travel
+            .Where(x => x.TravelerIdentityToken.Value == identityToken)
+            .Select(x => new CnicInvestigationRecord("Travel", "Travel", x.ProviderRecordId, x.Destination, $"{x.TripsInLast24Months} trip(s) in last 24 months; estimated spend PKR {x.EstimatedSpend:N0}.", x.EstimatedSpend, x.SourceUpdatedAtUtc)));
+        return records.OrderBy(x => x.Provider).ThenBy(x => x.RecordType).ToArray();
+    }
+
+    private static IReadOnlyList<CnicInvestigationSignal> BuildCnicInvestigationSignals(
+        SyntheticPerson person,
+        IReadOnlyList<CnicInvestigationRecord> records,
+        CaseItem? caseItem)
+    {
+        var signals = new List<CnicInvestigationSignal>
+        {
+            new(
+                "CNIC identity linkage",
+                "Verified",
+                $"CNIC {person.CnicMasked} resolves to one canonical sandbox identity token used across tax, vehicle, property, utility, business, and travel records even if displayed names differ.",
+                records.Select(x => x.RecordId).Take(12).ToArray())
+        };
+
+        if (caseItem is not null)
+        {
+            signals.AddRange(caseItem.Score.Components
+                .Where(x => x.Score > 0)
+                .OrderByDescending(x => x.Score)
+                .Take(5)
+                .Select(x => new CnicInvestigationSignal(
+                    x.Name,
+                    x.Score >= Math.Max(1, x.MaxScore * 0.75m) ? "High" : "Medium",
+                    x.Explanation,
+                    x.EvidenceIds)));
+        }
+
+        var taxIncome = records.FirstOrDefault(x => x.RecordType == "TaxProfile")?.Amount ?? 0m;
+        var assetValue = records.Where(x => x.RecordType is "Vehicle" or "Property").Sum(x => x.Amount ?? 0);
+        if (taxIncome > 0 && assetValue / taxIncome > 10)
+        {
+            signals.Add(new CnicInvestigationSignal(
+                "CNIC asset-to-income mismatch",
+                "High",
+                $"The same CNIC identity links PKR {assetValue:N0} of vehicle/property records against declared income PKR {taxIncome:N0}.",
+                records.Where(x => x.RecordType is "Vehicle" or "Property" or "TaxProfile").Select(x => x.RecordId).ToArray()));
+        }
+
+        return signals.DistinctBy(x => x.Name).ToArray();
+    }
+
+    private static string BuildCnicInvestigationPrompt(
+        SyntheticPerson person,
+        CaseItem? caseItem,
+        IReadOnlyList<CnicInvestigationRecord> records,
+        IReadOnlyList<CnicInvestigationSignal> signals)
+    {
+        var recordLines = string.Join("\n", records.Select(x => $"- {x.Provider}/{x.RecordType}/{x.RecordId}: {x.Summary}"));
+        var signalLines = string.Join("\n", signals.Select(x => $"- {x.Severity} {x.Name}: {x.Detail}"));
+        return $"""
+               Investigate this taxpayer by CNIC identity linkage.
+               CNIC is the stable identifier in Pakistan. Names may vary across vehicle registration, utility bills, salary/tax records, or business records, but records sharing the same CNIC identity token should be assessed together.
+
+               Subject:
+               {person.FullName}, {person.CnicMasked}, {person.City}, {person.Province}
+
+               Case:
+               {(caseItem is null ? "No risk case exists." : $"{caseItem.Id}; score {caseItem.Score.Score}/100 {caseItem.Score.RiskBand}; status {caseItem.Status}.")}
+
+               Matched CNIC-linked records:
+               {recordLines}
+
+               Deterministic signals:
+               {signalLines}
+
+               Return a concise auditor-ready narrative with these headings:
+               Assessment, CNIC linkage, Key mismatches, Evidence to verify, Recommended next steps, Human review warning.
+               Do not return JSON. Do not say fraud is proven.
+               """;
+    }
+
+    private static string BuildDeterministicCnicNarrative(
+        SyntheticPerson person,
+        CaseItem? caseItem,
+        IReadOnlyList<CnicInvestigationRecord> records,
+        IReadOnlyList<CnicInvestigationSignal> signals)
+    {
+        var topSignals = string.Join(" ", signals.Take(4).Select(x => $"{x.Name}: {x.Detail}"));
+        return $"Assessment: {person.FullName} has {records.Count} records linked through the same CNIC identity. CNIC linkage: the investigation uses {person.CnicMasked} as the stable identity key, so name differences in vehicle, utility, tax, salary, or business systems do not break linkage. Key mismatches: {topSignals} Recommended next steps: verify ownership dates, confirm filing status and declared salary/tax records, request citizen clarification for stale records, and document evidence before escalation. Human review warning: this is decision support only and does not prove fraud.";
+    }
+
+    private static IEnumerable<string> BuildCnicRecommendedActions(
+        CaseItem? caseItem,
+        IReadOnlyList<CnicInvestigationRecord> records,
+        bool usedExternal)
+    {
+        yield return "Verify the CNIC token against authoritative identity records before relying on cross-provider matches.";
+        yield return "Compare tax/salary declaration records with asset ownership dates, utility consumption, and business directorship periods.";
+        if (records.Any(x => x.RecordType is "Vehicle" or "Property"))
+        {
+            yield return "Confirm current ownership and transfer dates for linked vehicle/property records.";
+        }
+
+        if (caseItem?.Score.RiskBand is "Critical" or "High")
+        {
+            yield return "Keep the case in human review and request citizen clarification before escalation.";
+        }
+
+        yield return usedExternal
+            ? "Review the Claude-generated narrative against structured evidence before copying it into a report."
+            : "Configure a Claude API key for a richer external-model narrative; deterministic safeguards are currently being used.";
+    }
+
+    private static string NormalizeCnic(string value)
+        => new((value ?? "").Where(c => char.IsLetterOrDigit(c) || c == '*').Select(char.ToUpperInvariant).ToArray());
+
+    private static string DigitsOnly(string value)
+        => new((value ?? "").Where(char.IsDigit).ToArray());
 
     private CaseItem GetCaseOrThrow(string caseId)
     {
