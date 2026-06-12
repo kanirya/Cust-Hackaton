@@ -280,8 +280,9 @@ public sealed class RagPolicyService
         documents = _state.RagDocuments.Count,
         chunks = _state.RagChunks.Count,
         latestDocument = _state.RagDocuments.OrderByDescending(x => x.CapturedAtUtc).FirstOrDefault(),
-        retrievalPipeline = new[] { "query rewrite", "hybrid lexical retrieval", "citation extraction", "guardrail context pack" },
-        productionVectorTarget = "pgvector/Qdrant/OpenSearch vector index"
+        retrievalPipeline = new[] { "query rewrite", "deterministic embeddings", "hybrid vector + lexical retrieval", "citation extraction", "guardrail context pack" },
+        embeddingDimensions = 24,
+        productionVectorTarget = "Swap deterministic embeddings for provider embeddings and persist/query with pgvector/Qdrant/OpenSearch vector index"
     };
 }
 
@@ -577,6 +578,37 @@ public sealed class PostgresOperationalSchemaService
                 rows++;
             }
 
+            foreach (var chunk in state.RagChunks.Where(x => x is not null))
+            {
+                await ExecuteAsync(
+                    connection,
+                    transaction,
+                    """
+                    insert into taxnet_rag_chunks (chunk_id, document_id, title, text, keywords, embedding, quality_score, indexed_at_utc, citation)
+                    values (@id, @document, @title, @text, @keywords::jsonb, @embedding::jsonb, @quality, @indexed, @citation::jsonb)
+                    on conflict (chunk_id) do update
+                    set document_id = excluded.document_id,
+                        title = excluded.title,
+                        text = excluded.text,
+                        keywords = excluded.keywords,
+                        embedding = excluded.embedding,
+                        quality_score = excluded.quality_score,
+                        indexed_at_utc = excluded.indexed_at_utc,
+                        citation = excluded.citation;
+                    """,
+                    cancellationToken,
+                    ("id", chunk.Id),
+                    ("document", chunk.DocumentId),
+                    ("title", chunk.Title),
+                    ("text", chunk.Text),
+                    ("keywords", ToJson(chunk.Keywords ?? [])),
+                    ("embedding", ToJson(chunk.Embedding ?? [])),
+                    ("quality", chunk.QualityScore),
+                    ("indexed", chunk.IndexedAtUtc),
+                    ("citation", ToJson(chunk.Citation)));
+                rows++;
+            }
+
             await transaction.CommitAsync(cancellationToken);
             return new PostgresProjectionStatus(true, true, rows, null);
         }
@@ -606,6 +638,7 @@ public sealed class PostgresOperationalSchemaService
                 union all select 'taxnet_cases', count(*) from taxnet_cases
                 union all select 'taxnet_audit_events', count(*) from taxnet_audit_events
                 union all select 'taxnet_rag_documents', count(*) from taxnet_rag_documents
+                union all select 'taxnet_rag_chunks', count(*) from taxnet_rag_chunks
                 order by table_name;
                 """,
                 connection);
@@ -655,7 +688,8 @@ public sealed class PostgresOperationalSchemaService
                 taxnet_resolved_entities,
                 taxnet_cases,
                 taxnet_audit_events,
-                taxnet_rag_documents;
+                taxnet_rag_documents,
+                taxnet_rag_chunks;
             """,
             connection,
             transaction);
@@ -744,6 +778,8 @@ public sealed class PostgresOperationalSchemaService
         var candidates = new[]
         {
             Environment.GetEnvironmentVariable("POSTGRES_CONNECTION_STRING"),
+            Environment.GetEnvironmentVariable("ConnectionStrings__taxnet"),
+            Environment.GetEnvironmentVariable("ConnectionStrings__postgres"),
             _options.Storage.PostgresConnectionString,
             _configuration.GetConnectionString("taxnet"),
             _configuration.GetConnectionString("postgres")
@@ -817,6 +853,18 @@ public sealed class PostgresOperationalSchemaService
             captured_at_utc timestamptz not null
         );
 
+        create table if not exists taxnet_rag_chunks (
+            chunk_id text primary key,
+            document_id text not null references taxnet_rag_documents(document_id) on delete cascade,
+            title text not null,
+            text text not null,
+            keywords jsonb not null,
+            embedding jsonb not null,
+            quality_score numeric(5,4) not null,
+            indexed_at_utc timestamptz not null,
+            citation jsonb not null
+        );
+
         create table if not exists taxnet_migrations (
             migration_id text primary key,
             applied_at_utc timestamptz not null default now()
@@ -829,6 +877,7 @@ public sealed class PostgresOperationalSchemaService
         create index if not exists ix_taxnet_cases_risk_status on taxnet_cases(risk_band, status);
         create index if not exists ix_taxnet_provider_records_person on taxnet_provider_records(person_id, record_type);
         create index if not exists ix_taxnet_audit_events_resource on taxnet_audit_events(resource, timestamp_utc desc);
+        create index if not exists ix_taxnet_rag_chunks_document on taxnet_rag_chunks(document_id);
         """;
 }
 

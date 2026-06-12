@@ -51,6 +51,7 @@ builder.Services.AddSingleton<RagPolicyService>();
 builder.Services.AddSingleton<AiOrchestratorService>();
 builder.Services.AddSingleton<AuditLogService>();
 builder.Services.AddSingleton<PostgresOperationalSchemaService>();
+builder.Services.AddHostedService<PostgresProjectionStartupService>();
 
 builder.Services.AddHealthChecks();
 

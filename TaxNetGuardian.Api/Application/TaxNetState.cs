@@ -291,6 +291,8 @@ public sealed partial class TaxNetState
         var candidates = new[]
         {
             Environment.GetEnvironmentVariable("POSTGRES_CONNECTION_STRING"),
+            Environment.GetEnvironmentVariable("ConnectionStrings__taxnet"),
+            Environment.GetEnvironmentVariable("ConnectionStrings__postgres"),
             _platformOptions.Storage.PostgresConnectionString,
             configuration.GetConnectionString("taxnet"),
             configuration.GetConnectionString("postgres")

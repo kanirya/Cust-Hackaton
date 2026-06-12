@@ -46,6 +46,39 @@ http://localhost:5187/sandbox
 http://localhost:5187/citizen
 ```
 
+## Run Full Aspire Stack
+
+Docker Desktop must be running. Aspire starts PostgreSQL, LocalStack, Terraform provisioning,
+the API, the React dev server, and all worker projects.
+
+```powershell
+dotnet run --project TaxNetGuardian.AppHost\TaxNetGuardian.AppHost.csproj
+```
+
+The AppHost provisions LocalStack resources from `infra/localstack`:
+
+- S3 buckets for raw snapshots, reports, audit events, worker artifacts, RAG documents, and sandbox datasets
+- SQS queues and DLQs for every worker
+- CloudWatch log groups and DLQ alarms
+- Secrets Manager placeholders for model/provider credentials
+- Cognito resources when LocalStack supports `cognito-idp`
+- SNS/EventBridge/IAM local production-shape resources
+
+PostgreSQL is passed through Aspire as the `taxnet` connection string. When
+`TaxNet__Storage__OperationalStore=PostgreSql`, the API loads/saves the primary snapshot in
+PostgreSQL and syncs relational projection tables on startup.
+
+## Verify Stack
+
+After starting either the direct API or Aspire stack:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\verify-taxnet-stack.ps1 -BaseUrl http://localhost:5191
+```
+
+The verifier checks API readiness, hybrid RAG retrieval, CNIC investigation, model gateway
+status, persistence/projection status, and LocalStack/Terraform outputs when available.
+
 ## Build Frontend
 
 ```powershell

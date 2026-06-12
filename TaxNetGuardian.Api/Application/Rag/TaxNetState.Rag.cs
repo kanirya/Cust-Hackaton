@@ -53,6 +53,7 @@ public sealed partial class TaxNetState
         var jurisdiction = string.IsNullOrWhiteSpace(request.Jurisdiction) ? "Pakistan" : request.Jurisdiction.Trim();
         var requestedTags = request.Tags ?? [];
         var tokens = Tokenize($"{query} {taskType} {jurisdiction} {string.Join(' ', requestedTags)}");
+        var queryEmbedding = BuildDeterministicEmbedding($"{query} {taskType} {jurisdiction} {string.Join(' ', requestedTags)}");
         var topK = Math.Clamp(request.TopK <= 0 ? 5 : request.TopK, 1, 10);
 
         var scoredWithMetrics = RagChunks
@@ -63,11 +64,16 @@ public sealed partial class TaxNetState
                 var sourceBoost = chunk.Citation.SourceType.Contains("Sop", StringComparison.OrdinalIgnoreCase) ? 1 : 0;
                 var phraseBoost = tokens.Count(token => chunk.Text.Contains(token, StringComparison.OrdinalIgnoreCase)) / 3m;
                 var recencyBoost = chunk.IndexedAtUtc >= DateTimeOffset.UtcNow.AddDays(-30) ? 0.25m : 0m;
-                var score = overlap + tagBoost + sourceBoost + phraseBoost + recencyBoost + chunk.QualityScore;
-                return new { Chunk = chunk, Score = decimal.Round(score, 3), Overlap = overlap, TagBoost = tagBoost, PhraseBoost = phraseBoost };
+                var chunkEmbedding = chunk.Embedding?.Count > 0
+                    ? chunk.Embedding
+                    : BuildDeterministicEmbedding($"{chunk.Title} {chunk.Text} {string.Join(' ', chunk.Keywords ?? [])}");
+                var vectorSimilarity = CosineSimilarity(queryEmbedding, chunkEmbedding);
+                var score = overlap + tagBoost + sourceBoost + phraseBoost + recencyBoost + chunk.QualityScore + (vectorSimilarity * 3m);
+                return new { Chunk = chunk, Score = decimal.Round(score, 3), Overlap = overlap, TagBoost = tagBoost, PhraseBoost = phraseBoost, VectorSimilarity = decimal.Round(vectorSimilarity, 3) };
             })
             .Where(x => x.Score > 0)
             .OrderByDescending(x => x.Score)
+            .ThenByDescending(x => x.VectorSimilarity)
             .ThenByDescending(x => x.Chunk.IndexedAtUtc)
             .ToArray();
 
@@ -83,8 +89,8 @@ public sealed partial class TaxNetState
             "Query rewritten with task type, jurisdiction, and requested tags.",
             "Retrieved chunks include citation metadata and source timestamps.",
             "Context pack excludes raw PII and private citizen records.",
-            $"Hybrid score considered token overlap, phrase match, source type, recency, and chunk quality across {RagChunks.Count} chunks.",
-            scoredWithMetrics.Length > 0 ? $"Top score {scoredWithMetrics[0].Score}; keyword overlap {scoredWithMetrics[0].Overlap}; tag boost {scoredWithMetrics[0].TagBoost}." : "No lexical score available.",
+            $"Hybrid score considered vector similarity, token overlap, phrase match, source type, recency, and chunk quality across {RagChunks.Count} chunks.",
+            scoredWithMetrics.Length > 0 ? $"Top score {scoredWithMetrics[0].Score}; vector similarity {scoredWithMetrics[0].VectorSimilarity}; keyword overlap {scoredWithMetrics[0].Overlap}; tag boost {scoredWithMetrics[0].TagBoost}." : "No retrieval score available.",
             scored.Length > 0 ? "At least one policy context chunk was retrieved." : "No policy context chunks were available."
         };
 
@@ -212,10 +218,49 @@ public sealed partial class TaxNetState
                 document.Title,
                 text,
                 keywords,
+                BuildDeterministicEmbedding($"{document.Title} {document.SourceType} {text} {string.Join(' ', document.Tags)}"),
                 citation,
                 decimal.Round(Math.Min(0.98m, 0.72m + (keywords.Length * 0.007m)), 2),
                 DateTimeOffset.UtcNow));
         }
+    }
+
+    private static IReadOnlyList<decimal> BuildDeterministicEmbedding(string value)
+    {
+        const int dimensions = 24;
+        var vector = new decimal[dimensions];
+        foreach (var token in Tokenize(value))
+        {
+            var hash = StringComparer.OrdinalIgnoreCase.GetHashCode(token);
+            var index = Math.Abs(hash % dimensions);
+            var sign = (hash & 1) == 0 ? 1m : -1m;
+            vector[index] += sign * (1m + Math.Min(8, token.Length) / 10m);
+        }
+
+        var magnitude = (decimal)Math.Sqrt(vector.Sum(x => Math.Pow((double)x, 2)));
+        if (magnitude == 0)
+        {
+            return vector;
+        }
+
+        return vector.Select(x => decimal.Round(x / magnitude, 6)).ToArray();
+    }
+
+    private static decimal CosineSimilarity(IReadOnlyList<decimal> left, IReadOnlyList<decimal> right)
+    {
+        if (left.Count == 0 || right.Count == 0)
+        {
+            return 0m;
+        }
+
+        var count = Math.Min(left.Count, right.Count);
+        var dot = 0m;
+        for (var i = 0; i < count; i++)
+        {
+            dot += left[i] * right[i];
+        }
+
+        return Math.Clamp((dot + 1m) / 2m, 0m, 1m);
     }
 
     private static IReadOnlyList<string> ChunkText(string content, int targetLength)

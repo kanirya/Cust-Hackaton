@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "savedAtUtc": "2026-06-12T11:33:36.293627+00:00",
+  "savedAtUtc": "2026-06-12T21:01:55.2126856+00:00",
   "people": [
     {
       "id": "P001",
@@ -19920,6 +19920,7 @@
         "correction",
         "window"
       ],
+      "embedding": null,
       "citation": {
         "title": "Tax compliance review SOP",
         "url": "sandbox://policy/tax-compliance-review-sop",
@@ -19961,6 +19962,7 @@
         "ownership",
         "dates"
       ],
+      "embedding": null,
       "citation": {
         "title": "Vehicle and asset signal guidance",
         "url": "sandbox://policy/vehicle-asset-signal",
@@ -20002,6 +20004,7 @@
         "records",
         "incorrect"
       ],
+      "embedding": null,
       "citation": {
         "title": "Citizen correction and appeal policy",
         "url": "sandbox://policy/citizen-correction",
@@ -20043,6 +20046,7 @@
         "signal",
         "paired"
       ],
+      "embedding": null,
       "citation": {
         "title": "Business ownership income review note",
         "url": "sandbox://policy/business-ownership-income",
@@ -20084,6 +20088,7 @@
         "but",
         "never"
       ],
+      "embedding": null,
       "citation": {
         "title": "Demo bootstrap audit safeguards",
         "url": "sandbox://demo/bootstrap-audit-safeguards",
@@ -20115,6 +20120,7 @@
         "before",
         "escalation"
       ],
+      "embedding": null,
       "citation": {
         "title": "API seeded worker policy",
         "url": "sandbox://api-worker-seed/policy",
@@ -20156,6 +20162,7 @@
         "enforcement",
         "tax"
       ],
+      "embedding": null,
       "citation": {
         "title": "Punjab property valuation bulletin",
         "url": "https://example.gov.pk/property-valuation",
@@ -20194,6 +20201,7 @@
         "report",
         "language"
       ],
+      "embedding": null,
       "citation": {
         "title": "Live test policy",
         "url": "sandbox://live-test",
@@ -23987,6 +23995,454 @@
   ],
   "modelInvocations": [
     {
+      "invocationId": "model-20260612210155193-017",
+      "taskType": "CnicInvestigation",
+      "selectedProvider": "Deterministic template fallback",
+      "route": "offline-template: external provider disabled",
+      "output": "Muhammad Ali Khan was flagged for human review because the declared tax profile is inconsistent with observed asset, consumption, and business signals. The current score is 98/100 (Critical) with 98% confidence. RAG confidence 98%. Key grounded reasons: AssetIncomeMismatch: Observed assets total PKR 73,000,000 against declared annual income PKR 0. UtilityIncomeMismatch: Average monthly utility bill is PKR 310,000. VehicleLuxurySignal: Largest linked vehicle engine capacity is 2700cc. Provider fallback: No external provider selected or configured.",
+      "usedExternalProvider": false,
+      "guardrailsApplied": [
+        "PII redaction",
+        "evidence ID validation",
+        "citation validation",
+        "no fraud-proven language",
+        "human review warning"
+      ],
+      "citations": [
+        {
+          "title": "Vehicle and asset signal guidance",
+          "url": "sandbox://policy/vehicle-asset-signal",
+          "sourceType": "ExciseSchedule",
+          "chunkId": "chunk-rag-002-001",
+          "capturedAtUtc": "2026-06-08T12:40:17.8027177+00:00"
+        },
+        {
+          "title": "Tax compliance review SOP",
+          "url": "sandbox://policy/tax-compliance-review-sop",
+          "sourceType": "AuditSop",
+          "chunkId": "chunk-rag-001-001",
+          "capturedAtUtc": "2026-06-09T12:40:17.8027071+00:00"
+        },
+        {
+          "title": "Demo bootstrap audit safeguards",
+          "url": "sandbox://demo/bootstrap-audit-safeguards",
+          "sourceType": "AuditSop",
+          "chunkId": "chunk-rag-005-001",
+          "capturedAtUtc": "2026-06-11T12:40:17.9054227+00:00"
+        },
+        {
+          "title": "Punjab property valuation bulletin",
+          "url": "https://example.gov.pk/property-valuation",
+          "sourceType": "PolicyPDF",
+          "chunkId": "chunk-rag-007-001",
+          "capturedAtUtc": "2026-06-11T18:08:56.4929837+00:00"
+        },
+        {
+          "title": "Business ownership income review note",
+          "url": "sandbox://policy/business-ownership-income",
+          "sourceType": "TaxNotice",
+          "chunkId": "chunk-rag-004-001",
+          "capturedAtUtc": "2026-06-06T12:40:17.8027183+00:00"
+        }
+      ],
+      "promptTokens": 424,
+      "completionTokens": 138,
+      "estimatedCostUsd": 0,
+      "invokedAtUtc": "2026-06-12T21:01:55.1932353+00:00"
+    },
+    {
+      "invocationId": "model-20260612210129270-016",
+      "taskType": "CnicInvestigation",
+      "selectedProvider": "Deterministic template fallback",
+      "route": "offline-template: external provider disabled",
+      "output": "Muhammad Ali Khan was flagged for human review because the declared tax profile is inconsistent with observed asset, consumption, and business signals. The current score is 98/100 (Critical) with 98% confidence. RAG confidence 98%. Key grounded reasons: AssetIncomeMismatch: Observed assets total PKR 73,000,000 against declared annual income PKR 0. UtilityIncomeMismatch: Average monthly utility bill is PKR 310,000. VehicleLuxurySignal: Largest linked vehicle engine capacity is 2700cc. Provider fallback: No external provider selected or configured.",
+      "usedExternalProvider": false,
+      "guardrailsApplied": [
+        "PII redaction",
+        "evidence ID validation",
+        "citation validation",
+        "no fraud-proven language",
+        "human review warning"
+      ],
+      "citations": [
+        {
+          "title": "Vehicle and asset signal guidance",
+          "url": "sandbox://policy/vehicle-asset-signal",
+          "sourceType": "ExciseSchedule",
+          "chunkId": "chunk-rag-002-001",
+          "capturedAtUtc": "2026-06-08T12:40:17.8027177+00:00"
+        },
+        {
+          "title": "Tax compliance review SOP",
+          "url": "sandbox://policy/tax-compliance-review-sop",
+          "sourceType": "AuditSop",
+          "chunkId": "chunk-rag-001-001",
+          "capturedAtUtc": "2026-06-09T12:40:17.8027071+00:00"
+        },
+        {
+          "title": "Demo bootstrap audit safeguards",
+          "url": "sandbox://demo/bootstrap-audit-safeguards",
+          "sourceType": "AuditSop",
+          "chunkId": "chunk-rag-005-001",
+          "capturedAtUtc": "2026-06-11T12:40:17.9054227+00:00"
+        },
+        {
+          "title": "Punjab property valuation bulletin",
+          "url": "https://example.gov.pk/property-valuation",
+          "sourceType": "PolicyPDF",
+          "chunkId": "chunk-rag-007-001",
+          "capturedAtUtc": "2026-06-11T18:08:56.4929837+00:00"
+        },
+        {
+          "title": "Business ownership income review note",
+          "url": "sandbox://policy/business-ownership-income",
+          "sourceType": "TaxNotice",
+          "chunkId": "chunk-rag-004-001",
+          "capturedAtUtc": "2026-06-06T12:40:17.8027183+00:00"
+        }
+      ],
+      "promptTokens": 424,
+      "completionTokens": 138,
+      "estimatedCostUsd": 0,
+      "invokedAtUtc": "2026-06-12T21:01:29.2704151+00:00"
+    },
+    {
+      "invocationId": "model-20260612210057839-015",
+      "taskType": "CnicInvestigation",
+      "selectedProvider": "Deterministic template fallback",
+      "route": "offline-template: external provider disabled",
+      "output": "Muhammad Ali Khan was flagged for human review because the declared tax profile is inconsistent with observed asset, consumption, and business signals. The current score is 98/100 (Critical) with 98% confidence. RAG confidence 98%. Key grounded reasons: AssetIncomeMismatch: Observed assets total PKR 73,000,000 against declared annual income PKR 0. UtilityIncomeMismatch: Average monthly utility bill is PKR 310,000. VehicleLuxurySignal: Largest linked vehicle engine capacity is 2700cc. Provider fallback: No external provider selected or configured.",
+      "usedExternalProvider": false,
+      "guardrailsApplied": [
+        "PII redaction",
+        "evidence ID validation",
+        "citation validation",
+        "no fraud-proven language",
+        "human review warning"
+      ],
+      "citations": [
+        {
+          "title": "Vehicle and asset signal guidance",
+          "url": "sandbox://policy/vehicle-asset-signal",
+          "sourceType": "ExciseSchedule",
+          "chunkId": "chunk-rag-002-001",
+          "capturedAtUtc": "2026-06-08T12:40:17.8027177+00:00"
+        },
+        {
+          "title": "Tax compliance review SOP",
+          "url": "sandbox://policy/tax-compliance-review-sop",
+          "sourceType": "AuditSop",
+          "chunkId": "chunk-rag-001-001",
+          "capturedAtUtc": "2026-06-09T12:40:17.8027071+00:00"
+        },
+        {
+          "title": "Demo bootstrap audit safeguards",
+          "url": "sandbox://demo/bootstrap-audit-safeguards",
+          "sourceType": "AuditSop",
+          "chunkId": "chunk-rag-005-001",
+          "capturedAtUtc": "2026-06-11T12:40:17.9054227+00:00"
+        },
+        {
+          "title": "Punjab property valuation bulletin",
+          "url": "https://example.gov.pk/property-valuation",
+          "sourceType": "PolicyPDF",
+          "chunkId": "chunk-rag-007-001",
+          "capturedAtUtc": "2026-06-11T18:08:56.4929837+00:00"
+        },
+        {
+          "title": "Business ownership income review note",
+          "url": "sandbox://policy/business-ownership-income",
+          "sourceType": "TaxNotice",
+          "chunkId": "chunk-rag-004-001",
+          "capturedAtUtc": "2026-06-06T12:40:17.8027183+00:00"
+        }
+      ],
+      "promptTokens": 424,
+      "completionTokens": 138,
+      "estimatedCostUsd": 0,
+      "invokedAtUtc": "2026-06-12T21:00:57.8396295+00:00"
+    },
+    {
+      "invocationId": "model-20260612204612240-014",
+      "taskType": "CnicInvestigation",
+      "selectedProvider": "Deterministic template fallback",
+      "route": "offline-template: external provider disabled",
+      "output": "Muhammad Ali Khan was flagged for human review because the declared tax profile is inconsistent with observed asset, consumption, and business signals. The current score is 98/100 (Critical) with 98% confidence. RAG confidence 98%. Key grounded reasons: AssetIncomeMismatch: Observed assets total PKR 73,000,000 against declared annual income PKR 0. UtilityIncomeMismatch: Average monthly utility bill is PKR 310,000. VehicleLuxurySignal: Largest linked vehicle engine capacity is 2700cc. Provider fallback: No external provider selected or configured.",
+      "usedExternalProvider": false,
+      "guardrailsApplied": [
+        "PII redaction",
+        "evidence ID validation",
+        "citation validation",
+        "no fraud-proven language",
+        "human review warning"
+      ],
+      "citations": [
+        {
+          "title": "Vehicle and asset signal guidance",
+          "url": "sandbox://policy/vehicle-asset-signal",
+          "sourceType": "ExciseSchedule",
+          "chunkId": "chunk-rag-002-001",
+          "capturedAtUtc": "2026-06-08T12:40:17.8027177+00:00"
+        },
+        {
+          "title": "Tax compliance review SOP",
+          "url": "sandbox://policy/tax-compliance-review-sop",
+          "sourceType": "AuditSop",
+          "chunkId": "chunk-rag-001-001",
+          "capturedAtUtc": "2026-06-09T12:40:17.8027071+00:00"
+        },
+        {
+          "title": "Demo bootstrap audit safeguards",
+          "url": "sandbox://demo/bootstrap-audit-safeguards",
+          "sourceType": "AuditSop",
+          "chunkId": "chunk-rag-005-001",
+          "capturedAtUtc": "2026-06-11T12:40:17.9054227+00:00"
+        },
+        {
+          "title": "Punjab property valuation bulletin",
+          "url": "https://example.gov.pk/property-valuation",
+          "sourceType": "PolicyPDF",
+          "chunkId": "chunk-rag-007-001",
+          "capturedAtUtc": "2026-06-11T18:08:56.4929837+00:00"
+        },
+        {
+          "title": "Business ownership income review note",
+          "url": "sandbox://policy/business-ownership-income",
+          "sourceType": "TaxNotice",
+          "chunkId": "chunk-rag-004-001",
+          "capturedAtUtc": "2026-06-06T12:40:17.8027183+00:00"
+        }
+      ],
+      "promptTokens": 424,
+      "completionTokens": 138,
+      "estimatedCostUsd": 0,
+      "invokedAtUtc": "2026-06-12T20:46:12.2408862+00:00"
+    },
+    {
+      "invocationId": "model-20260612204553254-013",
+      "taskType": "CnicInvestigation",
+      "selectedProvider": "Deterministic template fallback",
+      "route": "offline-template: external provider disabled",
+      "output": "Muhammad Ali Khan was flagged for human review because the declared tax profile is inconsistent with observed asset, consumption, and business signals. The current score is 98/100 (Critical) with 98% confidence. RAG confidence 98%. Key grounded reasons: AssetIncomeMismatch: Observed assets total PKR 73,000,000 against declared annual income PKR 0. UtilityIncomeMismatch: Average monthly utility bill is PKR 310,000. VehicleLuxurySignal: Largest linked vehicle engine capacity is 2700cc. Provider fallback: No external provider selected or configured.",
+      "usedExternalProvider": false,
+      "guardrailsApplied": [
+        "PII redaction",
+        "evidence ID validation",
+        "citation validation",
+        "no fraud-proven language",
+        "human review warning"
+      ],
+      "citations": [
+        {
+          "title": "Vehicle and asset signal guidance",
+          "url": "sandbox://policy/vehicle-asset-signal",
+          "sourceType": "ExciseSchedule",
+          "chunkId": "chunk-rag-002-001",
+          "capturedAtUtc": "2026-06-08T12:40:17.8027177+00:00"
+        },
+        {
+          "title": "Tax compliance review SOP",
+          "url": "sandbox://policy/tax-compliance-review-sop",
+          "sourceType": "AuditSop",
+          "chunkId": "chunk-rag-001-001",
+          "capturedAtUtc": "2026-06-09T12:40:17.8027071+00:00"
+        },
+        {
+          "title": "Demo bootstrap audit safeguards",
+          "url": "sandbox://demo/bootstrap-audit-safeguards",
+          "sourceType": "AuditSop",
+          "chunkId": "chunk-rag-005-001",
+          "capturedAtUtc": "2026-06-11T12:40:17.9054227+00:00"
+        },
+        {
+          "title": "Punjab property valuation bulletin",
+          "url": "https://example.gov.pk/property-valuation",
+          "sourceType": "PolicyPDF",
+          "chunkId": "chunk-rag-007-001",
+          "capturedAtUtc": "2026-06-11T18:08:56.4929837+00:00"
+        },
+        {
+          "title": "Business ownership income review note",
+          "url": "sandbox://policy/business-ownership-income",
+          "sourceType": "TaxNotice",
+          "chunkId": "chunk-rag-004-001",
+          "capturedAtUtc": "2026-06-06T12:40:17.8027183+00:00"
+        }
+      ],
+      "promptTokens": 424,
+      "completionTokens": 138,
+      "estimatedCostUsd": 0,
+      "invokedAtUtc": "2026-06-12T20:45:53.2549658+00:00"
+    },
+    {
+      "invocationId": "model-20260612204126402-012",
+      "taskType": "CnicInvestigation",
+      "selectedProvider": "Deterministic template fallback",
+      "route": "offline-template: requested provider claude has no configured key",
+      "output": "Muhammad Ali Khan was flagged for human review because the declared tax profile is inconsistent with observed asset, consumption, and business signals. The current score is 98/100 (Critical) with 98% confidence. RAG confidence 98%. Key grounded reasons: AssetIncomeMismatch: Observed assets total PKR 73,000,000 against declared annual income PKR 0. UtilityIncomeMismatch: Average monthly utility bill is PKR 310,000. VehicleLuxurySignal: Largest linked vehicle engine capacity is 2700cc. Provider fallback: No external provider selected or configured.",
+      "usedExternalProvider": false,
+      "guardrailsApplied": [
+        "PII redaction",
+        "evidence ID validation",
+        "citation validation",
+        "no fraud-proven language",
+        "human review warning"
+      ],
+      "citations": [
+        {
+          "title": "Vehicle and asset signal guidance",
+          "url": "sandbox://policy/vehicle-asset-signal",
+          "sourceType": "ExciseSchedule",
+          "chunkId": "chunk-rag-002-001",
+          "capturedAtUtc": "2026-06-08T12:40:17.8027177+00:00"
+        },
+        {
+          "title": "Demo bootstrap audit safeguards",
+          "url": "sandbox://demo/bootstrap-audit-safeguards",
+          "sourceType": "AuditSop",
+          "chunkId": "chunk-rag-005-001",
+          "capturedAtUtc": "2026-06-11T12:40:17.9054227+00:00"
+        },
+        {
+          "title": "Tax compliance review SOP",
+          "url": "sandbox://policy/tax-compliance-review-sop",
+          "sourceType": "AuditSop",
+          "chunkId": "chunk-rag-001-001",
+          "capturedAtUtc": "2026-06-09T12:40:17.8027071+00:00"
+        },
+        {
+          "title": "Punjab property valuation bulletin",
+          "url": "https://example.gov.pk/property-valuation",
+          "sourceType": "PolicyPDF",
+          "chunkId": "chunk-rag-007-001",
+          "capturedAtUtc": "2026-06-11T18:08:56.4929837+00:00"
+        },
+        {
+          "title": "Business ownership income review note",
+          "url": "sandbox://policy/business-ownership-income",
+          "sourceType": "TaxNotice",
+          "chunkId": "chunk-rag-004-001",
+          "capturedAtUtc": "2026-06-06T12:40:17.8027183+00:00"
+        }
+      ],
+      "promptTokens": 424,
+      "completionTokens": 138,
+      "estimatedCostUsd": 0,
+      "invokedAtUtc": "2026-06-12T20:41:26.4024232+00:00"
+    },
+    {
+      "invocationId": "model-20260612204052611-011",
+      "taskType": "CnicInvestigation",
+      "selectedProvider": "Deterministic template fallback",
+      "route": "offline-template: external provider disabled",
+      "output": "Muhammad Ali Khan was flagged for human review because the declared tax profile is inconsistent with observed asset, consumption, and business signals. The current score is 98/100 (Critical) with 98% confidence. RAG confidence 98%. Key grounded reasons: AssetIncomeMismatch: Observed assets total PKR 73,000,000 against declared annual income PKR 0. UtilityIncomeMismatch: Average monthly utility bill is PKR 310,000. VehicleLuxurySignal: Largest linked vehicle engine capacity is 2700cc. Provider fallback: No external provider selected or configured.",
+      "usedExternalProvider": false,
+      "guardrailsApplied": [
+        "PII redaction",
+        "evidence ID validation",
+        "citation validation",
+        "no fraud-proven language",
+        "human review warning"
+      ],
+      "citations": [
+        {
+          "title": "Vehicle and asset signal guidance",
+          "url": "sandbox://policy/vehicle-asset-signal",
+          "sourceType": "ExciseSchedule",
+          "chunkId": "chunk-rag-002-001",
+          "capturedAtUtc": "2026-06-08T12:40:17.8027177+00:00"
+        },
+        {
+          "title": "Demo bootstrap audit safeguards",
+          "url": "sandbox://demo/bootstrap-audit-safeguards",
+          "sourceType": "AuditSop",
+          "chunkId": "chunk-rag-005-001",
+          "capturedAtUtc": "2026-06-11T12:40:17.9054227+00:00"
+        },
+        {
+          "title": "Tax compliance review SOP",
+          "url": "sandbox://policy/tax-compliance-review-sop",
+          "sourceType": "AuditSop",
+          "chunkId": "chunk-rag-001-001",
+          "capturedAtUtc": "2026-06-09T12:40:17.8027071+00:00"
+        },
+        {
+          "title": "Punjab property valuation bulletin",
+          "url": "https://example.gov.pk/property-valuation",
+          "sourceType": "PolicyPDF",
+          "chunkId": "chunk-rag-007-001",
+          "capturedAtUtc": "2026-06-11T18:08:56.4929837+00:00"
+        },
+        {
+          "title": "Business ownership income review note",
+          "url": "sandbox://policy/business-ownership-income",
+          "sourceType": "TaxNotice",
+          "chunkId": "chunk-rag-004-001",
+          "capturedAtUtc": "2026-06-06T12:40:17.8027183+00:00"
+        }
+      ],
+      "promptTokens": 424,
+      "completionTokens": 138,
+      "estimatedCostUsd": 0,
+      "invokedAtUtc": "2026-06-12T20:40:52.6112724+00:00"
+    },
+    {
+      "invocationId": "model-20260612204037943-010",
+      "taskType": "CnicInvestigation",
+      "selectedProvider": "Deterministic template fallback",
+      "route": "offline-template: external provider disabled",
+      "output": "Muhammad Ali Khan was flagged for human review because the declared tax profile is inconsistent with observed asset, consumption, and business signals. The current score is 98/100 (Critical) with 98% confidence. RAG confidence 98%. Key grounded reasons: AssetIncomeMismatch: Observed assets total PKR 73,000,000 against declared annual income PKR 0. UtilityIncomeMismatch: Average monthly utility bill is PKR 310,000. VehicleLuxurySignal: Largest linked vehicle engine capacity is 2700cc. Provider fallback: No external provider selected or configured.",
+      "usedExternalProvider": false,
+      "guardrailsApplied": [
+        "PII redaction",
+        "evidence ID validation",
+        "citation validation",
+        "no fraud-proven language",
+        "human review warning"
+      ],
+      "citations": [
+        {
+          "title": "Vehicle and asset signal guidance",
+          "url": "sandbox://policy/vehicle-asset-signal",
+          "sourceType": "ExciseSchedule",
+          "chunkId": "chunk-rag-002-001",
+          "capturedAtUtc": "2026-06-08T12:40:17.8027177+00:00"
+        },
+        {
+          "title": "Demo bootstrap audit safeguards",
+          "url": "sandbox://demo/bootstrap-audit-safeguards",
+          "sourceType": "AuditSop",
+          "chunkId": "chunk-rag-005-001",
+          "capturedAtUtc": "2026-06-11T12:40:17.9054227+00:00"
+        },
+        {
+          "title": "Tax compliance review SOP",
+          "url": "sandbox://policy/tax-compliance-review-sop",
+          "sourceType": "AuditSop",
+          "chunkId": "chunk-rag-001-001",
+          "capturedAtUtc": "2026-06-09T12:40:17.8027071+00:00"
+        },
+        {
+          "title": "Punjab property valuation bulletin",
+          "url": "https://example.gov.pk/property-valuation",
+          "sourceType": "PolicyPDF",
+          "chunkId": "chunk-rag-007-001",
+          "capturedAtUtc": "2026-06-11T18:08:56.4929837+00:00"
+        },
+        {
+          "title": "Business ownership income review note",
+          "url": "sandbox://policy/business-ownership-income",
+          "sourceType": "TaxNotice",
+          "chunkId": "chunk-rag-004-001",
+          "capturedAtUtc": "2026-06-06T12:40:17.8027183+00:00"
+        }
+      ],
+      "promptTokens": 424,
+      "completionTokens": 138,
+      "estimatedCostUsd": 0,
+      "invokedAtUtc": "2026-06-12T20:40:37.9437991+00:00"
+    },
+    {
       "invocationId": "model-20260612113336293-009",
       "taskType": "AuditExplanation",
       "selectedProvider": "claude",
@@ -24492,6 +24948,489 @@
     }
   ],
   "auditEvents": [
+    {
+      "id": "audit-20260612210155212-065",
+      "actor": "TaxNet.AI.CnicInvestigator",
+      "actorRole": "taxnet-auditor",
+      "action": "CnicInvestigation",
+      "resource": "P001",
+      "outcome": "Succeeded",
+      "correlationId": "corr-20260612210155212",
+      "timestampUtc": "2026-06-12T21:01:55.2125499+00:00",
+      "metadata": {
+        "caseId": "case-P001",
+        "records": 6,
+        "signals": 6,
+        "modelProvider": "Deterministic template fallback",
+        "usedExternalProvider": false
+      }
+    },
+    {
+      "id": "audit-20260612210155193-064",
+      "actor": "TaxNet.AI.ModelGateway",
+      "actorRole": "taxnet-model-admin",
+      "action": "ModelInvoked",
+      "resource": "CnicInvestigation",
+      "outcome": "Succeeded",
+      "correlationId": "corr-20260612210155193",
+      "timestampUtc": "2026-06-12T21:01:55.1932587+00:00",
+      "metadata": {
+        "provider": "Deterministic template fallback",
+        "route": "offline-template: external provider disabled",
+        "model": "taxnet-template-v1",
+        "external": false,
+        "caseId": "case-P001",
+        "promptTokens": 424,
+        "completionTokens": 138
+      }
+    },
+    {
+      "id": "audit-20260612210155176-063",
+      "actor": "RagPolicy.Api",
+      "actorRole": "taxnet-policy-analyst",
+      "action": "RagQuery",
+      "resource": "CnicInvestigation",
+      "outcome": "Succeeded",
+      "correlationId": "corr-20260612210155176",
+      "timestampUtc": "2026-06-12T21:01:55.1768973+00:00",
+      "metadata": {
+        "query": "AssetIncomeMismatch: Observed assets total PKR 73,000,000 against declared annual income PKR 0. UtilityIncomeMismatch: Average monthly utility bill is PKR 310,000. VehicleLuxurySignal: Largest linked vehicle engine capacity is 2700cc. PropertyOwnershipMismatch: Linked property value is PKR 45,000,000.",
+        "chunks": 5,
+        "confidence": 0.98
+      }
+    },
+    {
+      "id": "audit-20260612210155127-062",
+      "actor": "RagPolicy.Api",
+      "actorRole": "taxnet-policy-analyst",
+      "action": "RagQuery",
+      "resource": "AuditExplanation",
+      "outcome": "Succeeded",
+      "correlationId": "corr-20260612210155127",
+      "timestampUtc": "2026-06-12T21:01:55.127971+00:00",
+      "metadata": {
+        "query": "asset mismatch human review policy",
+        "chunks": 3,
+        "confidence": 0.93
+      }
+    },
+    {
+      "id": "audit-20260612210129277-061",
+      "actor": "TaxNet.AI.CnicInvestigator",
+      "actorRole": "taxnet-auditor",
+      "action": "CnicInvestigation",
+      "resource": "P001",
+      "outcome": "Succeeded",
+      "correlationId": "corr-20260612210129277",
+      "timestampUtc": "2026-06-12T21:01:29.2779085+00:00",
+      "metadata": {
+        "caseId": "case-P001",
+        "records": 6,
+        "signals": 6,
+        "modelProvider": "Deterministic template fallback",
+        "usedExternalProvider": false
+      }
+    },
+    {
+      "id": "audit-20260612210129270-060",
+      "actor": "TaxNet.AI.ModelGateway",
+      "actorRole": "taxnet-model-admin",
+      "action": "ModelInvoked",
+      "resource": "CnicInvestigation",
+      "outcome": "Succeeded",
+      "correlationId": "corr-20260612210129270",
+      "timestampUtc": "2026-06-12T21:01:29.2704294+00:00",
+      "metadata": {
+        "provider": "Deterministic template fallback",
+        "route": "offline-template: external provider disabled",
+        "model": "taxnet-template-v1",
+        "external": false,
+        "caseId": "case-P001",
+        "promptTokens": 424,
+        "completionTokens": 138
+      }
+    },
+    {
+      "id": "audit-20260612210129263-059",
+      "actor": "RagPolicy.Api",
+      "actorRole": "taxnet-policy-analyst",
+      "action": "RagQuery",
+      "resource": "CnicInvestigation",
+      "outcome": "Succeeded",
+      "correlationId": "corr-20260612210129263",
+      "timestampUtc": "2026-06-12T21:01:29.2635234+00:00",
+      "metadata": {
+        "query": "AssetIncomeMismatch: Observed assets total PKR 73,000,000 against declared annual income PKR 0. UtilityIncomeMismatch: Average monthly utility bill is PKR 310,000. VehicleLuxurySignal: Largest linked vehicle engine capacity is 2700cc. PropertyOwnershipMismatch: Linked property value is PKR 45,000,000.",
+        "chunks": 5,
+        "confidence": 0.98
+      }
+    },
+    {
+      "id": "audit-20260612210129238-058",
+      "actor": "RagPolicy.Api",
+      "actorRole": "taxnet-policy-analyst",
+      "action": "RagQuery",
+      "resource": "AuditExplanation",
+      "outcome": "Succeeded",
+      "correlationId": "corr-20260612210129238",
+      "timestampUtc": "2026-06-12T21:01:29.2388893+00:00",
+      "metadata": {
+        "query": "asset mismatch human review policy",
+        "chunks": 3,
+        "confidence": 0.93
+      }
+    },
+    {
+      "id": "audit-20260612210057849-057",
+      "actor": "TaxNet.AI.CnicInvestigator",
+      "actorRole": "taxnet-auditor",
+      "action": "CnicInvestigation",
+      "resource": "P001",
+      "outcome": "Succeeded",
+      "correlationId": "corr-20260612210057849",
+      "timestampUtc": "2026-06-12T21:00:57.8498788+00:00",
+      "metadata": {
+        "caseId": "case-P001",
+        "records": 6,
+        "signals": 6,
+        "modelProvider": "Deterministic template fallback",
+        "usedExternalProvider": false
+      }
+    },
+    {
+      "id": "audit-20260612210057839-056",
+      "actor": "TaxNet.AI.ModelGateway",
+      "actorRole": "taxnet-model-admin",
+      "action": "ModelInvoked",
+      "resource": "CnicInvestigation",
+      "outcome": "Succeeded",
+      "correlationId": "corr-20260612210057839",
+      "timestampUtc": "2026-06-12T21:00:57.8396393+00:00",
+      "metadata": {
+        "provider": "Deterministic template fallback",
+        "route": "offline-template: external provider disabled",
+        "model": "taxnet-template-v1",
+        "external": false,
+        "caseId": "case-P001",
+        "promptTokens": 424,
+        "completionTokens": 138
+      }
+    },
+    {
+      "id": "audit-20260612210057825-055",
+      "actor": "RagPolicy.Api",
+      "actorRole": "taxnet-policy-analyst",
+      "action": "RagQuery",
+      "resource": "CnicInvestigation",
+      "outcome": "Succeeded",
+      "correlationId": "corr-20260612210057825",
+      "timestampUtc": "2026-06-12T21:00:57.8253473+00:00",
+      "metadata": {
+        "query": "AssetIncomeMismatch: Observed assets total PKR 73,000,000 against declared annual income PKR 0. UtilityIncomeMismatch: Average monthly utility bill is PKR 310,000. VehicleLuxurySignal: Largest linked vehicle engine capacity is 2700cc. PropertyOwnershipMismatch: Linked property value is PKR 45,000,000.",
+        "chunks": 5,
+        "confidence": 0.98
+      }
+    },
+    {
+      "id": "audit-20260612210057797-054",
+      "actor": "RagPolicy.Api",
+      "actorRole": "taxnet-policy-analyst",
+      "action": "RagQuery",
+      "resource": "AuditExplanation",
+      "outcome": "Succeeded",
+      "correlationId": "corr-20260612210057797",
+      "timestampUtc": "2026-06-12T21:00:57.7979606+00:00",
+      "metadata": {
+        "query": "asset mismatch human review policy",
+        "chunks": 3,
+        "confidence": 0.93
+      }
+    },
+    {
+      "id": "audit-20260612204612274-053",
+      "actor": "TaxNet.AI.CnicInvestigator",
+      "actorRole": "taxnet-auditor",
+      "action": "CnicInvestigation",
+      "resource": "P001",
+      "outcome": "Succeeded",
+      "correlationId": "corr-20260612204612274",
+      "timestampUtc": "2026-06-12T20:46:12.2749635+00:00",
+      "metadata": {
+        "caseId": "case-P001",
+        "records": 6,
+        "signals": 6,
+        "modelProvider": "Deterministic template fallback",
+        "usedExternalProvider": false
+      }
+    },
+    {
+      "id": "audit-20260612204612240-052",
+      "actor": "TaxNet.AI.ModelGateway",
+      "actorRole": "taxnet-model-admin",
+      "action": "ModelInvoked",
+      "resource": "CnicInvestigation",
+      "outcome": "Succeeded",
+      "correlationId": "corr-20260612204612240",
+      "timestampUtc": "2026-06-12T20:46:12.2409013+00:00",
+      "metadata": {
+        "provider": "Deterministic template fallback",
+        "route": "offline-template: external provider disabled",
+        "model": "taxnet-template-v1",
+        "external": false,
+        "caseId": "case-P001",
+        "promptTokens": 424,
+        "completionTokens": 138
+      }
+    },
+    {
+      "id": "audit-20260612204612200-051",
+      "actor": "RagPolicy.Api",
+      "actorRole": "taxnet-policy-analyst",
+      "action": "RagQuery",
+      "resource": "CnicInvestigation",
+      "outcome": "Succeeded",
+      "correlationId": "corr-20260612204612200",
+      "timestampUtc": "2026-06-12T20:46:12.2007688+00:00",
+      "metadata": {
+        "query": "AssetIncomeMismatch: Observed assets total PKR 73,000,000 against declared annual income PKR 0. UtilityIncomeMismatch: Average monthly utility bill is PKR 310,000. VehicleLuxurySignal: Largest linked vehicle engine capacity is 2700cc. PropertyOwnershipMismatch: Linked property value is PKR 45,000,000.",
+        "chunks": 5,
+        "confidence": 0.98
+      }
+    },
+    {
+      "id": "audit-20260612204612064-050",
+      "actor": "RagPolicy.Api",
+      "actorRole": "taxnet-policy-analyst",
+      "action": "RagQuery",
+      "resource": "AuditExplanation",
+      "outcome": "Succeeded",
+      "correlationId": "corr-20260612204612064",
+      "timestampUtc": "2026-06-12T20:46:12.064739+00:00",
+      "metadata": {
+        "query": "asset mismatch human review policy",
+        "chunks": 3,
+        "confidence": 0.93
+      }
+    },
+    {
+      "id": "audit-20260612204553290-049",
+      "actor": "TaxNet.AI.CnicInvestigator",
+      "actorRole": "taxnet-auditor",
+      "action": "CnicInvestigation",
+      "resource": "P001",
+      "outcome": "Succeeded",
+      "correlationId": "corr-20260612204553290",
+      "timestampUtc": "2026-06-12T20:45:53.2909907+00:00",
+      "metadata": {
+        "caseId": "case-P001",
+        "records": 6,
+        "signals": 6,
+        "modelProvider": "Deterministic template fallback",
+        "usedExternalProvider": false
+      }
+    },
+    {
+      "id": "audit-20260612204553255-048",
+      "actor": "TaxNet.AI.ModelGateway",
+      "actorRole": "taxnet-model-admin",
+      "action": "ModelInvoked",
+      "resource": "CnicInvestigation",
+      "outcome": "Succeeded",
+      "correlationId": "corr-20260612204553255",
+      "timestampUtc": "2026-06-12T20:45:53.2550824+00:00",
+      "metadata": {
+        "provider": "Deterministic template fallback",
+        "route": "offline-template: external provider disabled",
+        "model": "taxnet-template-v1",
+        "external": false,
+        "caseId": "case-P001",
+        "promptTokens": 424,
+        "completionTokens": 138
+      }
+    },
+    {
+      "id": "audit-20260612204553209-047",
+      "actor": "RagPolicy.Api",
+      "actorRole": "taxnet-policy-analyst",
+      "action": "RagQuery",
+      "resource": "CnicInvestigation",
+      "outcome": "Succeeded",
+      "correlationId": "corr-20260612204553209",
+      "timestampUtc": "2026-06-12T20:45:53.2095654+00:00",
+      "metadata": {
+        "query": "AssetIncomeMismatch: Observed assets total PKR 73,000,000 against declared annual income PKR 0. UtilityIncomeMismatch: Average monthly utility bill is PKR 310,000. VehicleLuxurySignal: Largest linked vehicle engine capacity is 2700cc. PropertyOwnershipMismatch: Linked property value is PKR 45,000,000.",
+        "chunks": 5,
+        "confidence": 0.98
+      }
+    },
+    {
+      "id": "audit-20260612204552859-046",
+      "actor": "RagPolicy.Api",
+      "actorRole": "taxnet-policy-analyst",
+      "action": "RagQuery",
+      "resource": "AuditExplanation",
+      "outcome": "Succeeded",
+      "correlationId": "corr-20260612204552865",
+      "timestampUtc": "2026-06-12T20:45:52.8653262+00:00",
+      "metadata": {
+        "query": "asset mismatch human review policy",
+        "chunks": 3,
+        "confidence": 0.93
+      }
+    },
+    {
+      "id": "audit-20260612204126412-045",
+      "actor": "TaxNet.AI.CnicInvestigator",
+      "actorRole": "taxnet-auditor",
+      "action": "CnicInvestigation",
+      "resource": "P001",
+      "outcome": "Succeeded",
+      "correlationId": "corr-20260612204126412",
+      "timestampUtc": "2026-06-12T20:41:26.412326+00:00",
+      "metadata": {
+        "caseId": "case-P001",
+        "records": 6,
+        "signals": 6,
+        "modelProvider": "Deterministic template fallback",
+        "usedExternalProvider": false
+      }
+    },
+    {
+      "id": "audit-20260612204126402-044",
+      "actor": "TaxNet.AI.ModelGateway",
+      "actorRole": "taxnet-model-admin",
+      "action": "ModelInvoked",
+      "resource": "CnicInvestigation",
+      "outcome": "Succeeded",
+      "correlationId": "corr-20260612204126402",
+      "timestampUtc": "2026-06-12T20:41:26.4024401+00:00",
+      "metadata": {
+        "provider": "Deterministic template fallback",
+        "route": "offline-template: requested provider claude has no configured key",
+        "model": "taxnet-template-v1",
+        "external": false,
+        "caseId": "case-P001",
+        "promptTokens": 424,
+        "completionTokens": 138
+      }
+    },
+    {
+      "id": "audit-20260612204122827-043",
+      "actor": "RagPolicy.Api",
+      "actorRole": "taxnet-policy-analyst",
+      "action": "RagQuery",
+      "resource": "CnicInvestigation",
+      "outcome": "Succeeded",
+      "correlationId": "corr-20260612204122827",
+      "timestampUtc": "2026-06-12T20:41:22.8275154+00:00",
+      "metadata": {
+        "query": "AssetIncomeMismatch: Observed assets total PKR 73,000,000 against declared annual income PKR 0. UtilityIncomeMismatch: Average monthly utility bill is PKR 310,000. VehicleLuxurySignal: Largest linked vehicle engine capacity is 2700cc. PropertyOwnershipMismatch: Linked property value is PKR 45,000,000.",
+        "chunks": 5,
+        "confidence": 0.98
+      }
+    },
+    {
+      "id": "audit-20260612204052626-042",
+      "actor": "TaxNet.AI.CnicInvestigator",
+      "actorRole": "taxnet-auditor",
+      "action": "CnicInvestigation",
+      "resource": "P001",
+      "outcome": "Succeeded",
+      "correlationId": "corr-20260612204052626",
+      "timestampUtc": "2026-06-12T20:40:52.6266909+00:00",
+      "metadata": {
+        "caseId": "case-P001",
+        "records": 6,
+        "signals": 6,
+        "modelProvider": "Deterministic template fallback",
+        "usedExternalProvider": false
+      }
+    },
+    {
+      "id": "audit-20260612204052611-041",
+      "actor": "TaxNet.AI.ModelGateway",
+      "actorRole": "taxnet-model-admin",
+      "action": "ModelInvoked",
+      "resource": "CnicInvestigation",
+      "outcome": "Succeeded",
+      "correlationId": "corr-20260612204052611",
+      "timestampUtc": "2026-06-12T20:40:52.6112838+00:00",
+      "metadata": {
+        "provider": "Deterministic template fallback",
+        "route": "offline-template: external provider disabled",
+        "model": "taxnet-template-v1",
+        "external": false,
+        "caseId": "case-P001",
+        "promptTokens": 424,
+        "completionTokens": 138
+      }
+    },
+    {
+      "id": "audit-20260612204052600-040",
+      "actor": "RagPolicy.Api",
+      "actorRole": "taxnet-policy-analyst",
+      "action": "RagQuery",
+      "resource": "CnicInvestigation",
+      "outcome": "Succeeded",
+      "correlationId": "corr-20260612204052600",
+      "timestampUtc": "2026-06-12T20:40:52.6006907+00:00",
+      "metadata": {
+        "query": "AssetIncomeMismatch: Observed assets total PKR 73,000,000 against declared annual income PKR 0. UtilityIncomeMismatch: Average monthly utility bill is PKR 310,000. VehicleLuxurySignal: Largest linked vehicle engine capacity is 2700cc. PropertyOwnershipMismatch: Linked property value is PKR 45,000,000.",
+        "chunks": 5,
+        "confidence": 0.98
+      }
+    },
+    {
+      "id": "audit-20260612204037975-039",
+      "actor": "TaxNet.AI.CnicInvestigator",
+      "actorRole": "taxnet-auditor",
+      "action": "CnicInvestigation",
+      "resource": "P001",
+      "outcome": "Succeeded",
+      "correlationId": "corr-20260612204037975",
+      "timestampUtc": "2026-06-12T20:40:37.9757633+00:00",
+      "metadata": {
+        "caseId": "case-P001",
+        "records": 6,
+        "signals": 6,
+        "modelProvider": "Deterministic template fallback",
+        "usedExternalProvider": false
+      }
+    },
+    {
+      "id": "audit-20260612204037943-038",
+      "actor": "TaxNet.AI.ModelGateway",
+      "actorRole": "taxnet-model-admin",
+      "action": "ModelInvoked",
+      "resource": "CnicInvestigation",
+      "outcome": "Succeeded",
+      "correlationId": "corr-20260612204037943",
+      "timestampUtc": "2026-06-12T20:40:37.9438368+00:00",
+      "metadata": {
+        "provider": "Deterministic template fallback",
+        "route": "offline-template: external provider disabled",
+        "model": "taxnet-template-v1",
+        "external": false,
+        "caseId": "case-P001",
+        "promptTokens": 424,
+        "completionTokens": 138
+      }
+    },
+    {
+      "id": "audit-20260612204037882-037",
+      "actor": "RagPolicy.Api",
+      "actorRole": "taxnet-policy-analyst",
+      "action": "RagQuery",
+      "resource": "CnicInvestigation",
+      "outcome": "Succeeded",
+      "correlationId": "corr-20260612204037886",
+      "timestampUtc": "2026-06-12T20:40:37.8868964+00:00",
+      "metadata": {
+        "query": "AssetIncomeMismatch: Observed assets total PKR 73,000,000 against declared annual income PKR 0. UtilityIncomeMismatch: Average monthly utility bill is PKR 310,000. VehicleLuxurySignal: Largest linked vehicle engine capacity is 2700cc. PropertyOwnershipMismatch: Linked property value is PKR 45,000,000.",
+        "chunks": 5,
+        "confidence": 0.98
+      }
+    },
     {
       "id": "audit-20260612113336293-036",
       "actor": "TaxNet.AI.ModelGateway",

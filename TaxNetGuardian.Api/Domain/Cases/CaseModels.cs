@@ -68,7 +68,8 @@ public sealed record AssistantRequest(string Question);
 public sealed record CnicInvestigationRequest(
     string Cnic,
     bool AllowExternalProvider,
-    string? PreferredProvider);
+    string? PreferredProvider,
+    string? CaseId = null);
 
 public sealed record CnicInvestigationRecord(
     string Provider,

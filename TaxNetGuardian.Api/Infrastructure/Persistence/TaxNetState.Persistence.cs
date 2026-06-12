@@ -161,11 +161,15 @@ public sealed partial class TaxNetState
         return new
         {
             operationalStore = _platformOptions.Storage.OperationalStore,
+            activeSnapshotStore = UsePostgresSnapshots() ? "PostgreSql" : "JsonSnapshot",
             dataRoot = _dataRoot,
             statePath = _statePath,
             stateExists = stateInfo is not null,
             stateBytes = stateInfo?.Length ?? 0,
             postgres = postgresStatus,
+            startupBehavior = UsePostgresSnapshots()
+                ? "Load/save primary snapshot in PostgreSQL; keep JSON snapshot as local recovery copy."
+                : "Load/save JSON snapshot locally; PostgreSQL is disabled or not configured.",
             objectRoot = _objectRoot,
             objectFiles = Directory.Exists(_objectRoot) ? Directory.GetFiles(_objectRoot, "*", SearchOption.AllDirectories).Length : 0,
             snapshotCollections = new

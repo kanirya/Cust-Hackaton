@@ -262,7 +262,7 @@ public sealed partial class TaxNetState
             throw new InvalidOperationException("CNIC is required for investigation.");
         }
 
-        var person = ResolvePersonByCnic(rawCnic)
+        var person = ResolvePersonForCnicInvestigation(request, rawCnic)
             ?? throw new InvalidOperationException("No sandbox identity matched the supplied CNIC.");
         var token = person.IdentityToken.Value;
         var caseItem = Cases.FirstOrDefault(x => x.PersonId.Equals(person.Id, StringComparison.OrdinalIgnoreCase));
@@ -347,18 +347,41 @@ public sealed partial class TaxNetState
         return decimal.Round(assetSignals * (caseItem.Score.Score / 100m) * 0.035m, 0);
     }
 
+    private SyntheticPerson? ResolvePersonForCnicInvestigation(CnicInvestigationRequest request, string rawCnic)
+    {
+        if (!string.IsNullOrWhiteSpace(request.CaseId))
+        {
+            var caseItem = Cases.FirstOrDefault(x => x.Id.Equals(request.CaseId, StringComparison.OrdinalIgnoreCase))
+                ?? throw new InvalidOperationException($"Case {request.CaseId} was not found.");
+            var casePerson = People.First(x => x.Id.Equals(caseItem.PersonId, StringComparison.OrdinalIgnoreCase));
+            if (!CnicMatchesPerson(casePerson, rawCnic))
+            {
+                throw new InvalidOperationException($"CNIC does not match the selected case subject for {request.CaseId}.");
+            }
+
+            return casePerson;
+        }
+
+        return ResolvePersonByCnic(rawCnic);
+    }
+
     private SyntheticPerson? ResolvePersonByCnic(string cnic)
+    {
+        return People.FirstOrDefault(person => CnicMatchesPerson(person, cnic));
+    }
+
+    private static bool CnicMatchesPerson(SyntheticPerson person, string cnic)
     {
         var normalized = NormalizeCnic(cnic);
         var digits = DigitsOnly(cnic);
-        return People.FirstOrDefault(person =>
+        return
             NormalizeCnic(person.CnicMasked).Equals(normalized, StringComparison.OrdinalIgnoreCase) ||
             DigitsOnly(person.CnicMasked).Equals(digits, StringComparison.OrdinalIgnoreCase) ||
             (!string.IsNullOrWhiteSpace(digits) &&
              digits.Length >= 2 &&
              DigitsOnly(person.CnicMasked).StartsWith(digits[..Math.Min(5, digits.Length)], StringComparison.OrdinalIgnoreCase) &&
              DigitsOnly(person.CnicMasked).EndsWith(digits[^2..], StringComparison.OrdinalIgnoreCase)) ||
-            person.IdentityToken.Value.Equals(cnic, StringComparison.OrdinalIgnoreCase));
+            person.IdentityToken.Value.Equals(cnic, StringComparison.OrdinalIgnoreCase);
     }
 
     private IReadOnlyList<CnicInvestigationRecord> BuildCnicLinkedRecords(string identityToken)

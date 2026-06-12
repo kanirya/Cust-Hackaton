@@ -22,6 +22,7 @@ public sealed record RagChunk(
     string Title,
     string Text,
     IReadOnlyList<string> Keywords,
+    IReadOnlyList<decimal> Embedding,
     PolicyCitation Citation,
     decimal QualityScore,
     DateTimeOffset IndexedAtUtc);

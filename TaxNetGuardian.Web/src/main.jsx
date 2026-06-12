@@ -227,6 +227,7 @@ function App() {
       method: "POST",
       body: JSON.stringify({
         cnic,
+        caseId: selectedCaseId,
         preferredProvider: "claude",
         allowExternalProvider: true
       })
