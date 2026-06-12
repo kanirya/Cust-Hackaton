@@ -652,6 +652,17 @@ app.MapGet("/api/system/workers", (TaxNetState state) => Results.Ok(new
     reportExports = state.Reports.Take(10)
 }));
 
+app.MapGet("/api/system/workers/artifacts", (IConfiguration configuration, int? limit) =>
+{
+    var options = BuildWorkerOptions(configuration);
+    return Results.Ok(new
+    {
+        options.DataRoot,
+        options.ObjectStoreMode,
+        artifacts = ListWorkerArtifacts(options, limit ?? 100)
+    });
+});
+
 app.MapPost("/api/system/workers/run", (TaxNetState state, HttpContext context) =>
     Results.Ok(state.RunWorkerCycle(AuthorizationCatalog.GetCurrentActor(context))));
 
@@ -1357,6 +1368,42 @@ static IQueueClient BuildQueueClient(WorkerOptions options, HttpClient http)
 
 static QueueEnvelope NewQueueEnvelope(string type, string? correlationId, string payloadJson)
     => new($"msg-{DateTimeOffset.UtcNow:yyyyMMddHHmmssfff}-{Guid.NewGuid():N}", type, string.IsNullOrWhiteSpace(correlationId) ? $"corr-{Guid.NewGuid():N}" : correlationId, payloadJson, 0, DateTimeOffset.UtcNow);
+
+static IReadOnlyList<object> ListWorkerArtifacts(WorkerOptions options, int limit)
+{
+    var root = Path.Combine(options.DataRoot, "object-store");
+    if (!Directory.Exists(root))
+    {
+        return [];
+    }
+
+    return Directory.GetFiles(root, "*.json", SearchOption.AllDirectories)
+        .Where(path => !path.EndsWith(".metadata.json", StringComparison.OrdinalIgnoreCase))
+        .OrderByDescending(File.GetLastWriteTimeUtc)
+        .Take(Math.Clamp(limit, 1, 500))
+        .Select(path =>
+        {
+            var relative = Path.GetRelativePath(root, path).Replace('\\', '/');
+            var info = new FileInfo(path);
+            var segments = relative.Split('/', StringSplitOptions.RemoveEmptyEntries);
+            return (object)new
+            {
+                bucket = segments.FirstOrDefault() ?? "",
+                key = string.Join('/', segments.Skip(1)),
+                relativePath = relative,
+                sizeBytes = info.Length,
+                updatedAtUtc = info.LastWriteTimeUtc,
+                artifactType = relative.Contains("/receipts/", StringComparison.OrdinalIgnoreCase)
+                    ? "WorkerReceipt"
+                    : relative.Contains("/runs/", StringComparison.OrdinalIgnoreCase)
+                        ? "WorkerRun"
+                        : relative.Contains("worker-failures", StringComparison.OrdinalIgnoreCase)
+                            ? "WorkerFailure"
+                            : "WorkerArtifact"
+            };
+        })
+        .ToArray();
+}
 
 static IReadOnlyList<QueuedWorkerMessage> DemoWorkerMessages()
 {
