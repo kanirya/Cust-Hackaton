@@ -22,6 +22,22 @@ public sealed class ModelGatewayClient
         _secretProvider = secretProvider;
     }
 
+    /// <summary>
+    /// Global privacy off-switch for live model providers. External calls are allowed by
+    /// default; set MODEL_GATEWAY_ALLOW_EXTERNAL=false (or 0/no) to force deterministic-only
+    /// routing without code changes. The supplied <paramref name="requested"/> flag is ANDed in,
+    /// so an individual caller can still opt out per request.
+    /// </summary>
+    public static bool ExternalProvidersAllowed(bool requested = true)
+    {
+        var raw = Environment.GetEnvironmentVariable("MODEL_GATEWAY_ALLOW_EXTERNAL");
+        var globallyAllowed = string.IsNullOrWhiteSpace(raw)
+            || raw.Equals("true", StringComparison.OrdinalIgnoreCase)
+            || raw.Equals("1", StringComparison.OrdinalIgnoreCase)
+            || raw.Equals("yes", StringComparison.OrdinalIgnoreCase);
+        return globallyAllowed && requested;
+    }
+
     public ModelGatewayConfig GetConfig()
         => GetConfigAsync().GetAwaiter().GetResult();
 
@@ -145,7 +161,7 @@ public sealed class ModelGatewayClient
 
     private async Task<ProviderSelection> SelectProviderAsync(string preferredProvider, bool allowExternalProvider, CancellationToken cancellationToken)
     {
-        if (!allowExternalProvider)
+        if (!ExternalProvidersAllowed(allowExternalProvider))
         {
             return ProviderSelection.Fallback("external provider disabled");
         }
@@ -343,7 +359,7 @@ public sealed class ModelGatewayClient
             !string.IsNullOrWhiteSpace(credentials.ApiKey),
             credentials.ApiKey ?? "",
             Environment.GetEnvironmentVariable("CLAUDE_API_BASE_URL") ?? "https://api.anthropic.com/v1/messages",
-            credentials.Model ?? Environment.GetEnvironmentVariable("CLAUDE_MODEL") ?? "claude-3-5-haiku-latest",
+            credentials.Model ?? Environment.GetEnvironmentVariable("CLAUDE_MODEL") ?? "claude-haiku-4-5-20251001",
             "claude-messages");
     }
 
@@ -445,7 +461,7 @@ public sealed class ModelGatewayClient
             "openai" => ("taxnet/dev/model-gateway/openai", Environment.GetEnvironmentVariable("OPENAI_MODEL") ?? "gpt-4o-mini"),
             "deepseek" => ("taxnet/dev/model-gateway/deepseek", Environment.GetEnvironmentVariable("DEEPSEEK_MODEL") ?? "deepseek-chat"),
             "gemini" => ("taxnet/dev/model-gateway/gemini", Environment.GetEnvironmentVariable("GEMINI_MODEL") ?? "gemini-1.5-flash"),
-            "claude" => ("taxnet/dev/model-gateway/claude", Environment.GetEnvironmentVariable("CLAUDE_MODEL") ?? "claude-3-5-haiku-latest"),
+            "claude" => ("taxnet/dev/model-gateway/claude", Environment.GetEnvironmentVariable("CLAUDE_MODEL") ?? "claude-haiku-4-5-20251001"),
             _ => null
         };
 }

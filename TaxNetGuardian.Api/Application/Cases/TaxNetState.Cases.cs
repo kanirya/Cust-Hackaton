@@ -118,11 +118,23 @@ public sealed partial class TaxNetState
             "This is a decision-support explanation. It does not prove fraud and must be reviewed by an authorized human auditor.");
     }
 
-    public object BuildReport(string caseId)
+    public object BuildReport(string caseId, ModelGatewayClient? modelGatewayClient = null)
     {
         var caseItem = Cases.First(x => x.Id.Equals(caseId, StringComparison.OrdinalIgnoreCase));
         var person = People.First(x => x.Id == caseItem.PersonId);
         var explanation = BuildExplanation(caseId);
+
+        // Draft the report narrative through the Model Gateway. Uses live Claude when a key is
+        // configured, and falls back to the deterministic ReportDraft template otherwise.
+        var draft = InvokeModelGateway(new ModelInvocationRequest(
+            "ReportDraft",
+            $"{explanation.Summary}\nEvidence: {string.Join(", ", explanation.EvidenceIds)}",
+            caseId,
+            "auto",
+            ModelGatewayClient.ExternalProvidersAllowed(true)),
+            modelGatewayClient);
+        var draftedByExternal = draft.UsedExternalProvider && !string.IsNullOrWhiteSpace(draft.Output);
+
         var reportId = $"rpt-{caseId}-{DateTimeOffset.UtcNow:yyyyMMddHHmmss}";
         var watermark = $"TaxNet Guardian | {caseId} | Generated {DateTimeOffset.UtcNow:O}";
         var report = new GeneratedReport(
@@ -162,6 +174,19 @@ public sealed partial class TaxNetState
             evidence = caseItem.Evidence,
             explanation.KeyReasons,
             explanation.Citations,
+            narrative = draft.Output,
+            narrativeModel = new
+            {
+                selectedProvider = draft.SelectedProvider,
+                route = draft.Route,
+                usedExternalProvider = draftedByExternal,
+                invocationId = draft.InvocationId,
+                citations = draft.Citations
+            },
+            correctionHistory = Corrections
+                .Where(x => x.CaseId.Equals(caseId, StringComparison.OrdinalIgnoreCase))
+                .OrderByDescending(x => x.SubmittedAtUtc),
+            finalRecommendation = BuildFinalRecommendation(caseItem),
             disclaimer = explanation.HumanReviewWarning
         };
     }
@@ -174,25 +199,39 @@ public sealed partial class TaxNetState
             .ToArray();
     }
 
-    public object AskAssistant(string caseId, string question)
+    public object AskAssistant(string caseId, string question, ModelGatewayClient? modelGatewayClient = null)
     {
         var explanation = BuildExplanation(caseId);
         var caseItem = Cases.First(x => x.Id.Equals(caseId, StringComparison.OrdinalIgnoreCase));
         var lower = question.ToLowerInvariant();
-        string answer;
+        string deterministicAnswer;
 
         if (lower.Contains("missing") || lower.Contains("verify"))
         {
-            answer = "Recommended next verification steps: confirm asset ownership dates, verify whether business income was declared under another NTN, request updated utility meter ownership, and give the citizen a correction window before escalation.";
+            deterministicAnswer = "Recommended next verification steps: confirm asset ownership dates, verify whether business income was declared under another NTN, request updated utility meter ownership, and give the citizen a correction window before escalation.";
         }
         else if (lower.Contains("citizen") || lower.Contains("explain"))
         {
-            answer = "Citizen-safe explanation: some records linked to this profile appear inconsistent with the latest tax filing. The citizen should review asset ownership, business relationships, and utility records, then submit corrections if any record is outdated or incorrectly linked.";
+            deterministicAnswer = "Citizen-safe explanation: some records linked to this profile appear inconsistent with the latest tax filing. The citizen should review asset ownership, business relationships, and utility records, then submit corrections if any record is outdated or incorrectly linked.";
         }
         else
         {
-            answer = explanation.Summary + " Key reasons: " + string.Join(" ", explanation.KeyReasons.Take(3));
+            deterministicAnswer = explanation.Summary + " Key reasons: " + string.Join(" ", explanation.KeyReasons.Take(3));
         }
+
+        // Route the question through the real Model Gateway (live Claude/etc. when a key is
+        // configured, deterministic fallback otherwise). The gateway adds RAG grounding,
+        // guardrails, PII redaction, cost tracking and an audit event.
+        var invocation = InvokeModelGateway(new ModelInvocationRequest(
+            "AuditExplanation",
+            $"Auditor question about case {caseId}: {question}\nCase summary: {explanation.Summary}",
+            caseId,
+            "auto",
+            ModelGatewayClient.ExternalProvidersAllowed(true)),
+            modelGatewayClient);
+
+        var usedExternal = invocation.UsedExternalProvider && !string.IsNullOrWhiteSpace(invocation.Output);
+        var answer = usedExternal ? invocation.Output : deterministicAnswer;
 
         return new
         {
@@ -200,12 +239,15 @@ public sealed partial class TaxNetState
             caseItem.Score.Score,
             caseItem.Score.RiskBand,
             evidenceIds = explanation.EvidenceIds,
-            citations = explanation.Citations,
+            citations = invocation.Citations.Count > 0 ? invocation.Citations : explanation.Citations,
             warnings = new[] { explanation.HumanReviewWarning },
             modelRoute = new
             {
                 orchestrator = "TaxNet.AI.Orchestrator",
-                selectedModel = "deterministic-demo-model",
+                selectedModel = invocation.SelectedProvider,
+                route = invocation.Route,
+                usedExternalProvider = usedExternal,
+                invocationId = invocation.InvocationId,
                 fallbackOrder = new[] { "external-frontier-llm", "local-model", "template" },
                 piiPolicy = "Case context is masked before external model calls."
             }

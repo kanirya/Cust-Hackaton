@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "savedAtUtc": "2026-06-12T09:40:34.7125588+00:00",
+  "savedAtUtc": "2026-06-12T11:33:36.293627+00:00",
   "people": [
     {
       "id": "P001",
@@ -23987,11 +23987,236 @@
   ],
   "modelInvocations": [
     {
+      "invocationId": "model-20260612113336293-009",
+      "taskType": "AuditExplanation",
+      "selectedProvider": "claude",
+      "route": "claude-messages",
+      "output": "# AuditExplanation: Case [masked-id] Critical Flagging\n\n## Why This Case Was Marked for Critical Review\n\nMuhammad Ali Khan\u0027s case was escalated to **critical priority for human review** based on the following signal correlation:\n\n**Detected Inconsistency:**\n- Declared tax profile does not align with observed patterns in:\n  - Asset ownership (vehicle/property registrations)\n  - Consumption signals (utility usage, transaction patterns)\n  - Business relationships (directorship, ownership, partnership roles)\n\n**Confidence Level:** 98% (prioritization signal only\u2014**not proof of fraud**)\n\n---\n\n## What This Score Means\n\nPer [AuditSop, chunk-rag-003-001], this critical score:\n- \u2713 Prioritizes the case for **human auditor review**\n- \u2713 Triggers mandatory **source verification** and **evidence quality checks**\n- \u2717 Does **NOT** prove tax evasion, fraud, or violation\n- \u2717 Does **NOT** authorize enforcement action\n\n---\n\n## Required Next Steps (Per Policy)\n\nBefore any escalation, the assigned auditor must:\n\n1. **Verify asset signals** \u2013 Cross-check vehicle registrations, property valuations, and ownership dates against declared income [ExciseSchedule, chunk-rag-002-001]\n2. **Correlate business relationships** \u2013 Compare directorship/partnership roles with declared income and tax paid [TaxNotice, chunk-rag-004-001]\n3. **Check utility \u0026 consumption data** \u2013 Confirm consistency with asset ownership timeline\n4. **Provide citizen correction window** \u2013 Allow the taxpayer to respond before any enforcement recommendation\n5. **Document all evidence** \u2013 Include policy citations and evidence identifiers in final report [AuditSop, chunk-rag-005-001]\n\n---\n\n## Safeguards in Place\n\n- \u26A0\uFE0F **Watermark required** on all audit communications\n- \u26A0\uFE0F **Citizen correction opportunity** mandatory before escalation\n- \u26A0\uFE0F **Human review gate** \u2013 AI score does not bypass auditor judgment\n\n**This case requires human investigation. The critical flag is a review trigger, not a determination.**",
+      "usedExternalProvider": true,
+      "guardrailsApplied": [
+        "PII redaction",
+        "evidence ID validation",
+        "citation validation",
+        "no fraud-proven language",
+        "human review warning"
+      ],
+      "citations": [
+        {
+          "title": "Vehicle and asset signal guidance",
+          "url": "sandbox://policy/vehicle-asset-signal",
+          "sourceType": "ExciseSchedule",
+          "chunkId": "chunk-rag-002-001",
+          "capturedAtUtc": "2026-06-08T12:40:17.8027177+00:00"
+        },
+        {
+          "title": "Demo bootstrap audit safeguards",
+          "url": "sandbox://demo/bootstrap-audit-safeguards",
+          "sourceType": "AuditSop",
+          "chunkId": "chunk-rag-005-001",
+          "capturedAtUtc": "2026-06-11T12:40:17.9054227+00:00"
+        },
+        {
+          "title": "Tax compliance review SOP",
+          "url": "sandbox://policy/tax-compliance-review-sop",
+          "sourceType": "AuditSop",
+          "chunkId": "chunk-rag-001-001",
+          "capturedAtUtc": "2026-06-09T12:40:17.8027071+00:00"
+        },
+        {
+          "title": "Punjab property valuation bulletin",
+          "url": "https://example.gov.pk/property-valuation",
+          "sourceType": "PolicyPDF",
+          "chunkId": "chunk-rag-007-001",
+          "capturedAtUtc": "2026-06-11T18:08:56.4929837+00:00"
+        },
+        {
+          "title": "Business ownership income review note",
+          "url": "sandbox://policy/business-ownership-income",
+          "sourceType": "TaxNotice",
+          "chunkId": "chunk-rag-004-001",
+          "capturedAtUtc": "2026-06-06T12:40:17.8027183+00:00"
+        }
+      ],
+      "promptTokens": 77,
+      "completionTokens": 495,
+      "estimatedCostUsd": 0.001144,
+      "invokedAtUtc": "2026-06-12T11:33:36.2934721+00:00"
+    },
+    {
+      "invocationId": "model-20260612112842912-008",
+      "taskType": "AuditExplanation",
+      "selectedProvider": "claude",
+      "route": "claude-messages",
+      "output": "# AuditExplanation Report: Case [masked-id]\n\n## Summary\nMuhammad Ali Khan has been flagged for human review due to inconsistency between declared tax profile and observed asset, consumption, and business signals. **Current AI score: Critical (98% confidence).** This score is a **prioritization signal only and does not prove fraud or non-compliance.**\n\n---\n\n## Flagged Signals (Evidence-Based)\n\n### 1. **Asset Inconsistency Signal**\n- Observed asset holdings (vehicle registrations, property) appear materially inconsistent with declared income.\n- **Required verification steps** [RAG-002-001]:\n  - Correlate asset ownership dates with filing history\n  - Cross-reference utility consumption patterns\n  - Verify business relationship documentation\n  - **Status**: Pending human review and source verification\n\n### 2. **Business Relationship Signal**\n- Business directorship, shareholder, or partnership relationships identified.\n- **Important caveat** [RAG-004-001]: Business relationships alone are not violations; they require correlation with:\n  - Declared income and tax paid\n  - Filer status consistency\n  - Timing of asset purchases relative to business involvement\n  - **Status**: Requires detailed source verification\n\n### 3. **Property Valuation Signal**\n- High-value residential or commercial property flagged.\n- **Required correlation** [RAG-007-001]:\n  - Official valuation tables must be applied\n  - Filer status and utility consumption must be cross-checked\n  - **Status**: Pending property documentation review\n\n---\n\n## Mandatory Safeguards (In Effect)\n\n\u2713 **Human Review Required** [RAG-005-001, RAG-001-001]  \n\u2713 **Citizen Correction Window** \u2013 Taxpayer must be notified and given opportunity to provide evidence  \n\u2713 **Source Verification** \u2013 All signals must be corroborated with official documents  \n\u2713 **Evidence Quality Check** \u2013 AI score does not substitute for audit officer judgment  \n\n---\n\n## Next Steps\n\n1. **Audit Officer Assignment**: Case requires qualified human review before any enforcement action.\n2. **Evidence Collection**: Obtain property deeds, business registration documents, utility bills, and bank statements.\n3. **Taxpayer Notification**: Provide citizen correction window with specific signal details.\n4. **Escalation Decision**: Only after human verification and taxpayer response should enforcement be considered.\n\n---\n\n## Important Disclaimer\n\n**This AI score (98% Critical) is a prioritization tool only.** It does not constitute proof of tax evasion, fraud, or non-compliance. All enforcement recommendations require human audit officer review, documented evidence, and compliance with citizen correction safeguards per [RAG-001-001].",
+      "usedExternalProvider": true,
+      "guardrailsApplied": [
+        "PII redaction",
+        "evidence ID validation",
+        "citation validation",
+        "no fraud-proven language",
+        "human review warning"
+      ],
+      "citations": [
+        {
+          "title": "Vehicle and asset signal guidance",
+          "url": "sandbox://policy/vehicle-asset-signal",
+          "sourceType": "ExciseSchedule",
+          "chunkId": "chunk-rag-002-001",
+          "capturedAtUtc": "2026-06-08T12:40:17.8027177+00:00"
+        },
+        {
+          "title": "Demo bootstrap audit safeguards",
+          "url": "sandbox://demo/bootstrap-audit-safeguards",
+          "sourceType": "AuditSop",
+          "chunkId": "chunk-rag-005-001",
+          "capturedAtUtc": "2026-06-11T12:40:17.9054227+00:00"
+        },
+        {
+          "title": "Tax compliance review SOP",
+          "url": "sandbox://policy/tax-compliance-review-sop",
+          "sourceType": "AuditSop",
+          "chunkId": "chunk-rag-001-001",
+          "capturedAtUtc": "2026-06-09T12:40:17.8027071+00:00"
+        },
+        {
+          "title": "Punjab property valuation bulletin",
+          "url": "https://example.gov.pk/property-valuation",
+          "sourceType": "PolicyPDF",
+          "chunkId": "chunk-rag-007-001",
+          "capturedAtUtc": "2026-06-11T18:08:56.4929837+00:00"
+        },
+        {
+          "title": "Business ownership income review note",
+          "url": "sandbox://policy/business-ownership-income",
+          "sourceType": "TaxNotice",
+          "chunkId": "chunk-rag-004-001",
+          "capturedAtUtc": "2026-06-06T12:40:17.8027183+00:00"
+        }
+      ],
+      "promptTokens": 69,
+      "completionTokens": 670,
+      "estimatedCostUsd": 0.001478,
+      "invokedAtUtc": "2026-06-12T11:28:42.9128459+00:00"
+    },
+    {
+      "invocationId": "model-20260612112806967-007",
+      "taskType": "AuditExplanation",
+      "selectedProvider": "claude",
+      "route": "claude-messages",
+      "output": "# AuditExplanation: Case [masked-id] Critical Marking\n\n## Why This Case Was Marked Critical\n\nMuhammad Ali Khan\u0027s case received a **Critical priority flag** (98% confidence) based on **signal inconsistency**, not proven violation:\n\n### Primary Signals Triggering Review\nPer [RAG-1, ExciseSchedule]:\n- **Asset signals**: Luxury vehicles, high engine capacity registrations, and/or high-value residential/commercial property registered to the filer\n- **Income mismatch**: These assets are materially inconsistent with declared income on tax filings\n\nPer [RAG-5, TaxNotice]:\n- **Business relationships**: Directorship, shareholder, or partnership roles that may correlate with undeclared or inconsistent economic activity\n\n### What \u0022Critical\u0022 Means\n- **Prioritization signal only** [RAG-3, AuditSop]: The score does not prove fraud or violation\n- **Requires human review** before any enforcement action\n- **Confidence level (98%)** reflects signal strength, not guilt\n\n---\n\n## Required Next Steps (Mandatory Safeguards)\n\nPer [RAG-2, AuditSop] and [RAG-3, AuditSop]:\n\n1. **Source verification**: Confirm asset ownership dates, registration documents, and utility consumption patterns\n2. **Income correlation**: Cross-check declared income against business relationships [RAG-5]\n3. **Property valuation**: If real estate involved, apply official valuation tables [RAG-4, Punjab bulletin]\n4. **Citizen correction window**: Provide filer opportunity to explain or correct discrepancies\n5. **Evidence documentation**: Cite specific assets, dates, and policy sections in final report\n\n---\n\n## Important Limitations\n\n\u26A0\uFE0F **This score does not prove:**\n- Tax evasion\n- Fraud\n- Violation of any law\n\n**Human audit officer judgment is required** to determine if signals reflect legitimate business activity, inheritance, loans, or actual non-compliance.\n\n---\n\n**Watermark**: AI-assisted prioritization | Human review mandatory | Citation-backed | Citizen correction required",
+      "usedExternalProvider": true,
+      "guardrailsApplied": [
+        "PII redaction",
+        "evidence ID validation",
+        "citation validation",
+        "no fraud-proven language",
+        "human review warning"
+      ],
+      "citations": [
+        {
+          "title": "Vehicle and asset signal guidance",
+          "url": "sandbox://policy/vehicle-asset-signal",
+          "sourceType": "ExciseSchedule",
+          "chunkId": "chunk-rag-002-001",
+          "capturedAtUtc": "2026-06-08T12:40:17.8027177+00:00"
+        },
+        {
+          "title": "Demo bootstrap audit safeguards",
+          "url": "sandbox://demo/bootstrap-audit-safeguards",
+          "sourceType": "AuditSop",
+          "chunkId": "chunk-rag-005-001",
+          "capturedAtUtc": "2026-06-11T12:40:17.9054227+00:00"
+        },
+        {
+          "title": "Tax compliance review SOP",
+          "url": "sandbox://policy/tax-compliance-review-sop",
+          "sourceType": "AuditSop",
+          "chunkId": "chunk-rag-001-001",
+          "capturedAtUtc": "2026-06-09T12:40:17.8027071+00:00"
+        },
+        {
+          "title": "Punjab property valuation bulletin",
+          "url": "https://example.gov.pk/property-valuation",
+          "sourceType": "PolicyPDF",
+          "chunkId": "chunk-rag-007-001",
+          "capturedAtUtc": "2026-06-11T18:08:56.4929837+00:00"
+        },
+        {
+          "title": "Business ownership income review note",
+          "url": "sandbox://policy/business-ownership-income",
+          "sourceType": "TaxNotice",
+          "chunkId": "chunk-rag-004-001",
+          "capturedAtUtc": "2026-06-06T12:40:17.8027183+00:00"
+        }
+      ],
+      "promptTokens": 77,
+      "completionTokens": 490,
+      "estimatedCostUsd": 0.001134,
+      "invokedAtUtc": "2026-06-12T11:28:06.967854+00:00"
+    },
+    {
+      "invocationId": "model-20260612112745477-006",
+      "taskType": "AuditExplanation",
+      "selectedProvider": "Deterministic template fallback",
+      "route": "offline-template: external provider disabled",
+      "output": "Muhammad Ali Khan was flagged for human review because the declared tax profile is inconsistent with observed asset, consumption, and business signals. The current score is 98/100 (Critical) with 98% confidence. RAG confidence 98%. Key grounded reasons: AssetIncomeMismatch: Observed assets total PKR 73,000,000 against declared annual income PKR 0. UtilityIncomeMismatch: Average monthly utility bill is PKR 310,000. VehicleLuxurySignal: Largest linked vehicle engine capacity is 2700cc. Provider fallback: No external provider selected or configured.",
+      "usedExternalProvider": false,
+      "guardrailsApplied": [
+        "PII redaction",
+        "evidence ID validation",
+        "citation validation",
+        "no fraud-proven language",
+        "human review warning"
+      ],
+      "citations": [
+        {
+          "title": "Vehicle and asset signal guidance",
+          "url": "sandbox://policy/vehicle-asset-signal",
+          "sourceType": "ExciseSchedule",
+          "chunkId": "chunk-rag-002-001",
+          "capturedAtUtc": "2026-06-08T12:40:17.8027177+00:00"
+        },
+        {
+          "title": "Demo bootstrap audit safeguards",
+          "url": "sandbox://demo/bootstrap-audit-safeguards",
+          "sourceType": "AuditSop",
+          "chunkId": "chunk-rag-005-001",
+          "capturedAtUtc": "2026-06-11T12:40:17.9054227+00:00"
+        },
+        {
+          "title": "Tax compliance review SOP",
+          "url": "sandbox://policy/tax-compliance-review-sop",
+          "sourceType": "AuditSop",
+          "chunkId": "chunk-rag-001-001",
+          "capturedAtUtc": "2026-06-09T12:40:17.8027071+00:00"
+        },
+        {
+          "title": "Punjab property valuation bulletin",
+          "url": "https://example.gov.pk/property-valuation",
+          "sourceType": "PolicyPDF",
+          "chunkId": "chunk-rag-007-001",
+          "capturedAtUtc": "2026-06-11T18:08:56.4929837+00:00"
+        },
+        {
+          "title": "Business ownership income review note",
+          "url": "sandbox://policy/business-ownership-income",
+          "sourceType": "TaxNotice",
+          "chunkId": "chunk-rag-004-001",
+          "capturedAtUtc": "2026-06-06T12:40:17.8027183+00:00"
+        }
+      ],
+      "promptTokens": 21,
+      "completionTokens": 138,
+      "estimatedCostUsd": 0,
+      "invokedAtUtc": "2026-06-12T11:27:45.4779798+00:00"
+    },
+    {
       "invocationId": "model-20260612085421355-005",
       "taskType": "AuditExplanation",
       "selectedProvider": "Deterministic template fallback",
       "route": "offline-template: external provider disabled",
       "output": "Muhammad Ali Khan was flagged for human review because the declared tax profile is inconsistent with observed asset, consumption, and business signals. The current score is 98/100 (Critical) with 98% confidence. RAG confidence 98%. Key grounded reasons: AssetIncomeMismatch: Observed assets total PKR 73,000,000 against declared annual income PKR 0. UtilityIncomeMismatch: Average monthly utility bill is PKR 310,000. VehicleLuxurySignal: Largest linked vehicle engine capacity is 2700cc. Provider fallback: No external provider selected or configured.",
+      "usedExternalProvider": false,
       "guardrailsApplied": [
         "PII redaction",
         "evidence ID validation",
@@ -24047,6 +24272,7 @@
       "selectedProvider": "Deterministic template fallback",
       "route": "offline-template: external provider disabled",
       "output": "Muhammad Ali Khan was flagged for human review because the declared tax profile is inconsistent with observed asset, consumption, and business signals. The current score is 98/100 (Critical) with 98% confidence. RAG confidence 98%. Key grounded reasons: AssetIncomeMismatch: Observed assets total PKR 73,000,000 against declared annual income PKR 0. UtilityIncomeMismatch: Average monthly utility bill is PKR 310,000. VehicleLuxurySignal: Largest linked vehicle engine capacity is 2700cc. Provider fallback: No external provider selected or configured.",
+      "usedExternalProvider": false,
       "guardrailsApplied": [
         "PII redaction",
         "evidence ID validation",
@@ -24102,6 +24328,7 @@
       "selectedProvider": "Deterministic template fallback",
       "route": "offline-template: no provider keys configured",
       "output": "Muhammad Ali Khan was flagged for human review because the declared tax profile is inconsistent with observed asset, consumption, and business signals. The current score is 98/100 (Critical) with 98% confidence. RAG confidence 98%. Key grounded reasons: AssetIncomeMismatch: Observed assets total PKR 73,000,000 against declared annual income PKR 0. UtilityIncomeMismatch: Average monthly utility bill is PKR 310,000. VehicleLuxurySignal: Largest linked vehicle engine capacity is 2700cc. Provider fallback: No external provider selected or configured.",
+      "usedExternalProvider": false,
       "guardrailsApplied": [
         "PII redaction",
         "evidence ID validation",
@@ -24157,6 +24384,7 @@
       "selectedProvider": "Deterministic template fallback",
       "route": "offline-template: external provider disabled",
       "output": "Muhammad Ali Khan was flagged for human review because the declared tax profile is inconsistent with observed asset, consumption, and business signals. The current score is 98/100 (Critical) with 98% confidence. RAG confidence 98%. Key grounded reasons: AssetIncomeMismatch: Observed assets total PKR 73,000,000 against declared annual income PKR 0. UtilityIncomeMismatch: Average monthly utility bill is PKR 310,000. VehicleLuxurySignal: Largest linked vehicle engine capacity is 2700cc. Provider fallback: No external provider selected or configured.",
+      "usedExternalProvider": false,
       "guardrailsApplied": [
         "PII redaction",
         "evidence ID validation",
@@ -24212,6 +24440,7 @@
       "selectedProvider": "Deterministic template fallback",
       "route": "offline-template: no provider keys configured",
       "output": "Model gateway deterministic response for PolicyQuestion: Explain human review policy. Retrieved 5 policy context chunk(s) with 94% confidence. Provider fallback: No external provider selected or configured.",
+      "usedExternalProvider": false,
       "guardrailsApplied": [
         "PII redaction",
         "evidence ID validation",
@@ -24263,6 +24492,142 @@
     }
   ],
   "auditEvents": [
+    {
+      "id": "audit-20260612113336293-036",
+      "actor": "TaxNet.AI.ModelGateway",
+      "actorRole": "taxnet-model-admin",
+      "action": "ModelInvoked",
+      "resource": "AuditExplanation",
+      "outcome": "Succeeded",
+      "correlationId": "corr-20260612113336293",
+      "timestampUtc": "2026-06-12T11:33:36.2934807+00:00",
+      "metadata": {
+        "provider": "claude",
+        "route": "claude-messages",
+        "model": "claude-haiku-4-5-20251001",
+        "external": true,
+        "caseId": "case-P001",
+        "promptTokens": 77,
+        "completionTokens": 495
+      }
+    },
+    {
+      "id": "audit-20260612113327243-035",
+      "actor": "RagPolicy.Api",
+      "actorRole": "taxnet-policy-analyst",
+      "action": "RagQuery",
+      "resource": "AuditExplanation",
+      "outcome": "Succeeded",
+      "correlationId": "corr-20260612113327243",
+      "timestampUtc": "2026-06-12T11:33:27.2438622+00:00",
+      "metadata": {
+        "query": "AssetIncomeMismatch: Observed assets total PKR 73,000,000 against declared annual income PKR 0. UtilityIncomeMismatch: Average monthly utility bill is PKR 310,000. VehicleLuxurySignal: Largest linked vehicle engine capacity is 2700cc. PropertyOwnershipMismatch: Linked property value is PKR 45,000,000.",
+        "chunks": 5,
+        "confidence": 0.98
+      }
+    },
+    {
+      "id": "audit-20260612112842912-034",
+      "actor": "TaxNet.AI.ModelGateway",
+      "actorRole": "taxnet-model-admin",
+      "action": "ModelInvoked",
+      "resource": "AuditExplanation",
+      "outcome": "Succeeded",
+      "correlationId": "corr-20260612112842912",
+      "timestampUtc": "2026-06-12T11:28:42.9128602+00:00",
+      "metadata": {
+        "provider": "claude",
+        "route": "claude-messages",
+        "model": "claude-haiku-4-5-20251001",
+        "external": true,
+        "caseId": "case-P001",
+        "promptTokens": 69,
+        "completionTokens": 670
+      }
+    },
+    {
+      "id": "audit-20260612112833641-033",
+      "actor": "RagPolicy.Api",
+      "actorRole": "taxnet-policy-analyst",
+      "action": "RagQuery",
+      "resource": "AuditExplanation",
+      "outcome": "Succeeded",
+      "correlationId": "corr-20260612112833641",
+      "timestampUtc": "2026-06-12T11:28:33.6417879+00:00",
+      "metadata": {
+        "query": "AssetIncomeMismatch: Observed assets total PKR 73,000,000 against declared annual income PKR 0. UtilityIncomeMismatch: Average monthly utility bill is PKR 310,000. VehicleLuxurySignal: Largest linked vehicle engine capacity is 2700cc. PropertyOwnershipMismatch: Linked property value is PKR 45,000,000.",
+        "chunks": 5,
+        "confidence": 0.98
+      }
+    },
+    {
+      "id": "audit-20260612112806967-032",
+      "actor": "TaxNet.AI.ModelGateway",
+      "actorRole": "taxnet-model-admin",
+      "action": "ModelInvoked",
+      "resource": "AuditExplanation",
+      "outcome": "Succeeded",
+      "correlationId": "corr-20260612112806967",
+      "timestampUtc": "2026-06-12T11:28:06.9678663+00:00",
+      "metadata": {
+        "provider": "claude",
+        "route": "claude-messages",
+        "model": "claude-haiku-4-5-20251001",
+        "external": true,
+        "caseId": "case-P001",
+        "promptTokens": 77,
+        "completionTokens": 490
+      }
+    },
+    {
+      "id": "audit-20260612112755240-031",
+      "actor": "RagPolicy.Api",
+      "actorRole": "taxnet-policy-analyst",
+      "action": "RagQuery",
+      "resource": "AuditExplanation",
+      "outcome": "Succeeded",
+      "correlationId": "corr-20260612112755240",
+      "timestampUtc": "2026-06-12T11:27:55.2406646+00:00",
+      "metadata": {
+        "query": "AssetIncomeMismatch: Observed assets total PKR 73,000,000 against declared annual income PKR 0. UtilityIncomeMismatch: Average monthly utility bill is PKR 310,000. VehicleLuxurySignal: Largest linked vehicle engine capacity is 2700cc. PropertyOwnershipMismatch: Linked property value is PKR 45,000,000.",
+        "chunks": 5,
+        "confidence": 0.98
+      }
+    },
+    {
+      "id": "audit-20260612112745478-030",
+      "actor": "TaxNet.AI.ModelGateway",
+      "actorRole": "taxnet-model-admin",
+      "action": "ModelInvoked",
+      "resource": "AuditExplanation",
+      "outcome": "Succeeded",
+      "correlationId": "corr-20260612112745478",
+      "timestampUtc": "2026-06-12T11:27:45.4780453+00:00",
+      "metadata": {
+        "provider": "Deterministic template fallback",
+        "route": "offline-template: external provider disabled",
+        "model": "taxnet-template-v1",
+        "external": false,
+        "caseId": "case-P001",
+        "promptTokens": 21,
+        "completionTokens": 138
+      }
+    },
+    {
+      "id": "audit-20260612112745426-029",
+      "actor": "RagPolicy.Api",
+      "actorRole": "taxnet-policy-analyst",
+      "action": "RagQuery",
+      "resource": "AuditExplanation",
+      "outcome": "Succeeded",
+      "correlationId": "corr-20260612112745432",
+      "timestampUtc": "2026-06-12T11:27:45.4321085+00:00",
+      "metadata": {
+        "query": "AssetIncomeMismatch: Observed assets total PKR 73,000,000 against declared annual income PKR 0. UtilityIncomeMismatch: Average monthly utility bill is PKR 310,000. VehicleLuxurySignal: Largest linked vehicle engine capacity is 2700cc. PropertyOwnershipMismatch: Linked property value is PKR 45,000,000.",
+        "chunks": 5,
+        "confidence": 0.98
+      }
+    },
     {
       "id": "audit-20260612085421355-028",
       "actor": "TaxNet.AI.ModelGateway",

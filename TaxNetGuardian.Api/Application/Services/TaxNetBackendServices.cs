@@ -213,8 +213,13 @@ public sealed class RiskScoringService
 public sealed class CaseManagementService
 {
     private readonly TaxNetState _state;
+    private readonly ModelGatewayClient _modelGatewayClient;
 
-    public CaseManagementService(TaxNetState state) => _state = state;
+    public CaseManagementService(TaxNetState state, ModelGatewayClient modelGatewayClient)
+    {
+        _state = state;
+        _modelGatewayClient = modelGatewayClient;
+    }
 
     public CaseItem Assign(string caseId, CaseAssignmentRequest request, string actor)
         => _state.AssignCase(caseId, request, actor);
@@ -227,7 +232,7 @@ public sealed class CaseManagementService
 
     public AuditExplanation Explain(string caseId) => _state.BuildExplanation(caseId);
 
-    public object BuildReport(string caseId) => _state.BuildReport(caseId);
+    public object BuildReport(string caseId) => _state.BuildReport(caseId, _modelGatewayClient);
 
     public object GetCaseWorkspace(string caseId)
     {

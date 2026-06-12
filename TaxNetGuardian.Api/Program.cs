@@ -5,6 +5,9 @@ using Serilog.Formatting.Compact;
 using TaxNetGuardian.Api;
 using TaxNetGuardian.Worker.Shared;
 
+// QuestPDF community license (free for non-commercial / hackathon use). Required before any PDF render.
+QuestPDF.Settings.License = QuestPDF.Infrastructure.LicenseType.Community;
+
 var builder = WebApplication.CreateBuilder(args);
 var platformOptions = new TaxNetPlatformOptions();
 builder.Configuration.GetSection(TaxNetPlatformOptions.SectionName).Bind(platformOptions);
@@ -128,6 +131,19 @@ var app = builder.Build();
 app.UseMiddleware<GlobalExceptionMiddleware>();
 app.UseSerilogRequestLogging();
 app.UseCors();
+app.Use(async (context, next) =>
+{
+    var stopwatch = System.Diagnostics.Stopwatch.StartNew();
+    try
+    {
+        await next();
+    }
+    finally
+    {
+        stopwatch.Stop();
+        TaxNetMetrics.RecordRequest(context.Response.StatusCode, stopwatch.Elapsed.TotalMilliseconds);
+    }
+});
 app.UseMiddleware<CorrelationIdMiddleware>();
 app.UseMiddleware<RequestAuditMiddleware>();
 app.UseRateLimiter();
@@ -429,14 +445,14 @@ app.MapGet("/api/identity/entities", (TaxNetState state) => Results.Ok(new
 
 app.MapGet("/api/identity/evaluation", (IdentityResolutionService identityService) => Results.Ok(identityService.GetEvaluation()));
 
-app.MapPost("/api/assistant/cases/{caseId}/ask", (TaxNetState state, string caseId, AssistantRequest request) =>
+app.MapPost("/api/assistant/cases/{caseId}/ask", (TaxNetState state, ModelGatewayClient modelGatewayClient, string caseId, AssistantRequest request) =>
 {
     if (state.Cases.All(x => !x.Id.Equals(caseId, StringComparison.OrdinalIgnoreCase)))
     {
         return Results.NotFound(new { message = $"Case {caseId} was not found." });
     }
 
-    return Results.Ok(state.AskAssistant(caseId, request.Question));
+    return Results.Ok(state.AskAssistant(caseId, request.Question, modelGatewayClient));
 });
 
 app.MapPost("/api/reports/cases/{caseId}", (TaxNetState state, CaseManagementService cases, string caseId) =>
@@ -465,6 +481,89 @@ app.MapGet("/api/reports/{reportId}", (TaxNetState state, string reportId) =>
 {
     var report = state.Reports.FirstOrDefault(x => x.Id.Equals(reportId, StringComparison.OrdinalIgnoreCase));
     return report is null ? Results.NotFound(new { message = $"Report {reportId} was not found." }) : Results.Ok(report);
+});
+
+// Phase 6 / §8.13: generate a full PDF audit report (case summary, score, evidence, graph
+// snapshot, citations, AI narrative, correction history, final recommendation, watermark).
+app.MapPost("/api/reports/cases/{caseId}/pdf", (TaxNetState state, GraphIntelligenceService graphService, ModelGatewayClient modelGatewayClient, string caseId) =>
+{
+    var caseItem = state.Cases.FirstOrDefault(x => x.Id.Equals(caseId, StringComparison.OrdinalIgnoreCase));
+    if (caseItem is null)
+    {
+        return Results.NotFound(new { message = $"Case {caseId} was not found." });
+    }
+
+    var graph = graphService.BuildNeighborhood(caseItem.EntityId);
+    var (bytes, report) = state.BuildReportPdf(caseId, graph, modelGatewayClient);
+    return Results.File(bytes, "application/pdf", $"{report.Id}.pdf");
+});
+
+// Download a previously generated report as PDF from the audit-reports bucket.
+app.MapGet("/api/reports/{reportId}/pdf", (TaxNetState state, string reportId) =>
+{
+    var bytes = state.GetReportPdf(reportId);
+    return bytes is null
+        ? Results.NotFound(new { message = $"PDF for report {reportId} was not found. Generate it via POST /api/reports/cases/{{caseId}}/pdf." })
+        : Results.File(bytes, "application/pdf", $"{reportId}.pdf");
+});
+
+// §8.13: CSV export of the case worklist for supervisors.
+app.MapGet("/api/exports/cases.csv", (TaxNetState state) =>
+    Results.File(System.Text.Encoding.UTF8.GetBytes(state.ExportCasesCsv()), "text/csv", "taxnet-cases.csv"));
+
+// Phase 8 / §21.2: Prometheus-format scrape endpoint for the core metrics.
+app.MapGet("/metrics", (TaxNetState state) =>
+{
+    var api = TaxNetMetrics.Snapshot();
+    var summary = state.GetDashboardSummary();
+    var modelCost = state.ModelInvocations.Sum(x => x.EstimatedCostUsd);
+    var sb = new System.Text.StringBuilder();
+
+    void Metric(string name, string help, string type, double value)
+    {
+        sb.Append("# HELP ").Append(name).Append(' ').Append(help).Append('\n');
+        sb.Append("# TYPE ").Append(name).Append(' ').Append(type).Append('\n');
+        sb.Append(name).Append(' ').Append(value.ToString(System.Globalization.CultureInfo.InvariantCulture)).Append('\n');
+    }
+
+    Metric("taxnet_api_request_count", "Total API requests handled.", "counter", api.RequestCount);
+    Metric("taxnet_api_error_count", "Total API 5xx responses.", "counter", api.ErrorCount);
+    Metric("taxnet_api_error_rate", "API 5xx error rate.", "gauge", api.ErrorRate);
+    Metric("taxnet_api_request_latency_ms_avg", "Average API request latency in milliseconds.", "gauge", api.AvgLatencyMs);
+    Metric("taxnet_identity_resolution_precision", "Entity resolution precision on synthetic labels.", "gauge", (double)summary.EntityResolutionPrecision);
+    Metric("taxnet_identity_resolution_recall", "Entity resolution recall on synthetic labels.", "gauge", (double)summary.EntityResolutionRecall);
+    Metric("taxnet_profiles_total", "Total synthetic profiles.", "gauge", summary.TotalProfiles);
+    Metric("taxnet_cases_total", "Total open cases.", "gauge", summary.TotalCases);
+    Metric("taxnet_model_invocation_count", "Model gateway invocations.", "counter", state.ModelInvocations.Count);
+    Metric("taxnet_model_cost_estimate_usd", "Estimated cumulative model cost in USD.", "gauge", (double)modelCost);
+    Metric("taxnet_rag_chunks_total", "Indexed RAG chunks.", "gauge", state.RagChunks.Count);
+
+    sb.Append("# HELP taxnet_risk_score_distribution Cases by risk band.\n# TYPE taxnet_risk_score_distribution gauge\n");
+    sb.Append("taxnet_risk_score_distribution{band=\"Critical\"} ").Append(summary.CriticalCases).Append('\n');
+    sb.Append("taxnet_risk_score_distribution{band=\"High\"} ").Append(summary.HighCases).Append('\n');
+    sb.Append("taxnet_risk_score_distribution{band=\"Medium\"} ").Append(summary.MediumCases).Append('\n');
+
+    return Results.Text(sb.ToString(), "text/plain; version=0.0.4");
+});
+
+// Friendly JSON view of the same metrics for the System Control UI.
+app.MapGet("/api/system/metrics", (TaxNetState state) =>
+{
+    var api = TaxNetMetrics.Snapshot();
+    var summary = state.GetDashboardSummary();
+    return Results.Ok(new
+    {
+        meter = TaxNetMetrics.MeterName,
+        scrapeEndpoint = "/metrics",
+        api = new { api.RequestCount, api.ErrorCount, api.ErrorRate, api.AvgLatencyMs },
+        identity = new { precision = summary.EntityResolutionPrecision, recall = summary.EntityResolutionRecall },
+        cases = new { total = summary.TotalCases, critical = summary.CriticalCases, high = summary.HighCases, medium = summary.MediumCases },
+        profiles = summary.TotalProfiles,
+        estimatedRecoverableTax = summary.EstimatedRecoverableTax,
+        model = new { invocationCount = state.ModelInvocations.Count, estimatedCostUsd = state.ModelInvocations.Sum(x => x.EstimatedCostUsd) },
+        rag = new { documents = state.RagDocuments.Count, chunks = state.RagChunks.Count },
+        workers = state.Workers.Count
+    });
 });
 
 app.MapPost("/api/ingestion/run", async (TaxNetPipelineOrchestrator orchestrator, PipelineRunRequest? request, CancellationToken cancellationToken) =>
@@ -790,7 +889,7 @@ app.MapPost("/api/orchestrator/cases/{caseId}/explain", (TaxNetState state, AiOr
         return Results.NotFound(new { message = $"Case {caseId} was not found." });
     }
 
-    return Results.Ok(orchestrator.ExplainCase(caseId, allowExternalProvider == true, preferredProvider ?? "auto"));
+    return Results.Ok(orchestrator.ExplainCase(caseId, ModelGatewayClient.ExternalProvidersAllowed(allowExternalProvider ?? true), preferredProvider ?? "auto"));
 });
 
 app.MapGet("/api/system/architecture", () => Results.Ok(new
@@ -983,7 +1082,8 @@ app.MapGet("/sandbox/admin/seed-presets", () => Results.Ok(new
         new { name = "balanced-demo", count = 120, suspiciousPercent = 24, noisePercent = 18, purpose = "General judging demo with mixed risk bands." },
         new { name = "high-risk-demo", count = 180, suspiciousPercent = 45, noisePercent = 20, purpose = "Stress case queue, reports, and graph investigation." },
         new { name = "clean-baseline", count = 80, suspiciousPercent = 8, noisePercent = 10, purpose = "False-positive and precision story." },
-        new { name = "noisy-connectors", count = 160, suspiciousPercent = 28, noisePercent = 55, purpose = "Identity resolution ambiguity and correction workflow." }
+        new { name = "noisy-connectors", count = 160, suspiciousPercent = 28, noisePercent = 55, purpose = "Identity resolution ambiguity and correction workflow." },
+        new { name = "national-scale", count = 500, suspiciousPercent = 12, noisePercent = 12, purpose = "Design-doc minimum scale (§24.1): 500 persons across all domains for a believable national demo." }
     }
 }));
 
@@ -999,6 +1099,7 @@ app.MapPost("/sandbox/admin/seed-preset/{presetName}", (TaxNetState state, HttpC
         "high-risk-demo" => new SandboxGenerateRequest(180, 45, 20),
         "clean-baseline" => new SandboxGenerateRequest(80, 8, 10),
         "noisy-connectors" => new SandboxGenerateRequest(160, 28, 55),
+        "national-scale" => new SandboxGenerateRequest(500, 12, 12),
         _ => new SandboxGenerateRequest(120, 24, 18)
     };
 

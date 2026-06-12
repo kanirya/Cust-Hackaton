@@ -25,6 +25,30 @@ public sealed partial class TaxNetState
         return item;
     }
 
+    private ObjectStoreItem StoreObjectBytes(string bucket, string key, string contentType, byte[] content)
+    {
+        var path = ObjectPath(bucket, key);
+        var directory = Path.GetDirectoryName(path);
+        if (!string.IsNullOrWhiteSpace(directory))
+        {
+            Directory.CreateDirectory(directory);
+        }
+
+        File.WriteAllBytes(path, content ?? []);
+        var item = new ObjectStoreItem(
+            $"s3://{bucket}/{key}",
+            bucket,
+            key,
+            contentType,
+            content?.LongLength ?? 0,
+            DateTimeOffset.UtcNow);
+        ObjectStore.Insert(0, item);
+        return item;
+    }
+
+    private string ObjectPath(string bucket, string key)
+        => Path.Combine(_objectRoot, bucket, key.Replace('/', Path.DirectorySeparatorChar));
+
     private bool LoadSnapshot()
     {
         if (UsePostgresSnapshots())

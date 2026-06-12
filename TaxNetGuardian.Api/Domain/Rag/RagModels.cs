@@ -54,6 +54,7 @@ public sealed record ModelInvocationResponse(
     string SelectedProvider,
     string Route,
     string Output,
+    bool UsedExternalProvider,
     IReadOnlyList<string> GuardrailsApplied,
     IReadOnlyList<PolicyCitation> Citations,
     int PromptTokens,

@@ -20,7 +20,8 @@ Explainable graph intelligence MVP for the CUST hackathon problem: Graph AI for 
 - AI Orchestrator / Model Gateway demo route with deterministic fallback when no provider is configured
 - Worker/SQS-style pipeline status
 - Cognito-ready role/scope metadata with development header auth
-- Runtime report generation endpoint
+- Runtime report generation endpoint (JSON), plus PDF audit-report export and CSV case export
+- Prometheus `/metrics` scrape endpoint and JSON metrics surface (request/latency/error, identity precision/recall, risk distribution, model invocations/cost)
 - Stitch-inspired UI patterns: fixed analyst sidebar, command search, KPI cards, regional risk map, case worklist, graph workspace, evidence drawer, and assistant drawer
 
 The hackathon MVP runs as one .NET API/static host for speed, but the code and API surface follow the service boundaries in `docs/TaxNetGuardian_System_Design.md`. The React source lives in `TaxNetGuardian.Web` and builds into `TaxNetGuardian.Api/wwwroot`.
@@ -101,6 +102,11 @@ GET  /api/cases/{caseId}
 GET  /api/graph/entities/{entityId}/neighborhood
 POST /api/assistant/cases/{caseId}/ask
 POST /api/reports/cases/{caseId}
+POST /api/reports/cases/{caseId}/pdf
+GET  /api/reports/{reportId}/pdf
+GET  /api/exports/cases.csv
+GET  /api/system/metrics
+GET  /metrics
 POST /api/ingestion/run
 GET  /api/system/workers
 GET  /api/system/rag
@@ -193,6 +199,33 @@ Production target:
 - Cognito OAuth client credentials for internal services
 - AWS Secrets Manager for provider/model/database secrets
 - SQS, S3, CloudWatch, Redis, PostgreSQL, Graph DB, Vector DB
+
+## Enabling Live AI (Claude)
+
+The Model Gateway makes real Anthropic/OpenAI/Gemini/DeepSeek calls; with no key configured it
+returns a deterministic, citation-grounded fallback. To switch every AI surface (case assistant,
+case explanation, report narrative) to live Claude, set an environment variable before running:
+
+```powershell
+$env:CLAUDE_API_KEY='sk-ant-...'          # required to go live
+$env:CLAUDE_MODEL='claude-haiku-4-5-20251001' # optional override (default)
+$env:MODEL_GATEWAY_DEFAULT_PROVIDER='claude'  # optional; 'auto' also picks the only keyed provider
+```
+
+The key is read from the environment first, so no secret store or file edit is required, and the
+raw key is never returned by any endpoint. External calls are on by default whenever a key exists;
+set `MODEL_GATEWAY_ALLOW_EXTERNAL=false` to force deterministic-only routing without code changes.
+
+Verify it is live:
+
+```powershell
+Invoke-RestMethod -Uri 'http://localhost:5187/api/system/model-gateway' | ConvertTo-Json -Depth 6
+# claude provider should report hasApiKey = true
+
+Invoke-RestMethod -Method Post -Uri 'http://localhost:5187/api/assistant/cases/<caseId>/ask' `
+  -ContentType 'application/json' -Body '{"question":"Why was this flagged?"}'
+# modelRoute.usedExternalProvider should be true and selectedModel = claude
+```
 
 ## Demo Boundaries
 

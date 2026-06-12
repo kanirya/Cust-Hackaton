@@ -158,6 +158,7 @@ public sealed partial class TaxNetState
             providerResult.Provider,
             providerResult.Route,
             output,
+            providerResult.UsedExternalProvider,
             ["PII redaction", "evidence ID validation", "citation validation", "no fraud-proven language", "human review warning"],
             citations,
             promptTokens,

@@ -1,0 +1,13 @@
+<Solution>
+  <Project Path="TaxNetGuardian.Api/TaxNetGuardian.Api.csproj" />
+  <Project Path="TaxNetGuardian.Worker.Shared/TaxNetGuardian.Worker.Shared.csproj" />
+  <Project Path="TaxNetGuardian.Worker.Cli/TaxNetGuardian.Worker.Cli.csproj" />
+  <Project Path="TaxNetGuardian.Workers.Ingestion/TaxNetGuardian.Workers.Ingestion.csproj" />
+  <Project Path="TaxNetGuardian.Workers.IdentityResolution/TaxNetGuardian.Workers.IdentityResolution.csproj" />
+  <Project Path="TaxNetGuardian.Workers.GraphIntelligence/TaxNetGuardian.Workers.GraphIntelligence.csproj" />
+  <Project Path="TaxNetGuardian.Workers.RiskScoring/TaxNetGuardian.Workers.RiskScoring.csproj" />
+  <Project Path="TaxNetGuardian.Workers.RagPolicy/TaxNetGuardian.Workers.RagPolicy.csproj" />
+  <Project Path="TaxNetGuardian.Workers.Report/TaxNetGuardian.Workers.Report.csproj" />
+  <Project Path="TaxNetGuardian.Workers.AuditLog/TaxNetGuardian.Workers.AuditLog.csproj" />
+  <Project Path="TaxNetGuardian.AppHost/TaxNetGuardian.AppHost.csproj" />
+</Solution>
