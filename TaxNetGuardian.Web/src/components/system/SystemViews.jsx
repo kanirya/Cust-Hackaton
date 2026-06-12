@@ -12,11 +12,12 @@ import {
   Workflow
 } from "lucide-react";
 import { EmptyState, Panel } from "../common/Primitives.jsx";
+import { RagFlowAnimation } from "./RagFlowAnimation.jsx";
 
 function pct(value) {
   return `${Math.round(Number(value || 0) * 100)}%`;
 }
-function RagWorkspace({ rag, feedRagDocument, queryRag, ragResult, modelGateway, invokeModel, modelResult, selectedCaseId, saveModelKey }) {
+function RagWorkspace({ rag, feedRagDocument, queryRag, ragResult, modelGateway, invokeModel, modelResult, selectedCaseId, saveModelKey, ragAnimation = true }) {
   return (
     <div className="page-stack">
       <div className="hero-strip">
@@ -24,12 +25,12 @@ function RagWorkspace({ rag, feedRagDocument, queryRag, ragResult, modelGateway,
           <p className="eyebrow">RAG Policy Service</p>
           <h3>Ground explanations in policy chunks, citations, and model gateway guardrails.</h3>
         </div>
-        <span className="risk-pill low">{rag?.chunkCount || 0} chunks indexed</span>
+        <span className="risk-pill low">{rag?.status?.chunkCount ?? rag?.chunkCount ?? 0} chunks indexed</span>
       </div>
       <div className="system-grid">
         <Panel title="Policy Ingestion & Retrieval" subtitle="Index source text, query context, and inspect citations." icon={Layers3}>
           <RagFeedCenter feedRagDocument={feedRagDocument} />
-          <RagQueryCenter queryRag={queryRag} ragResult={ragResult} />
+          <RagQueryCenter queryRag={queryRag} ragResult={ragResult} ragAnimation={ragAnimation} />
         </Panel>
         <Panel title="Model Gateway Test Bench" subtitle="Invoke local/template or external-ready routes with redaction." icon={Sparkles}>
           <ModelKeyCenter modelGateway={modelGateway} saveModelKey={saveModelKey} />
@@ -158,7 +159,7 @@ function BackendSystems({ workers, infra, audit, objectStore, notifications, per
   );
 }
 
-function System({ workers, rag, authz, modelGateway, infra, audit, objectStore, notifications, persistence, feedRagDocument, queryRag, ragResult, invokeModel, modelResult, selectedCaseId, saveModelKey }) {
+function System({ workers, rag, authz, modelGateway, infra, audit, objectStore, notifications, persistence, feedRagDocument, queryRag, ragResult, invokeModel, modelResult, selectedCaseId, saveModelKey, ragAnimation = true }) {
   return (
     <div className="page-stack">
       <div className="system-grid">
@@ -188,9 +189,9 @@ function System({ workers, rag, authz, modelGateway, infra, audit, objectStore, 
         </Panel>
       </div>
       <div className="system-grid">
-        <Panel title="RAG Policy Memory" subtitle={`${rag?.chunkCount || 0} indexed chunks with citation metadata.`} icon={Layers3}>
+        <Panel title="RAG Policy Memory" subtitle={`${rag?.status?.chunkCount ?? rag?.chunkCount ?? 0} indexed chunks with citation metadata.`} icon={Layers3}>
           <RagFeedCenter feedRagDocument={feedRagDocument} />
-          <RagQueryCenter queryRag={queryRag} ragResult={ragResult} />
+          <RagQueryCenter queryRag={queryRag} ragResult={ragResult} ragAnimation={ragAnimation} />
           <div className="cards-grid">
             {rag?.documents?.map((doc) => (
               <article className="small-card" key={doc.id}>
@@ -318,18 +319,26 @@ function RagFeedCenter({ feedRagDocument }) {
   );
 }
 
-function RagQueryCenter({ queryRag, ragResult }) {
+function RagQueryCenter({ queryRag, ragResult, ragAnimation = true }) {
   const [query, setQuery] = useState("What policy supports human review before escalation?");
   const [taskType, setTaskType] = useState("AuditExplanation");
+  const [running, setRunning] = useState(false);
 
   async function submit() {
-    await queryRag({
-      query,
-      taskType,
-      jurisdiction: "Pakistan",
-      topK: 5,
-      tags: ["audit", "human-review", "citizen"]
-    });
+    if (running) return;
+    setRunning(true);
+    try {
+      await queryRag({
+        query,
+        taskType,
+        jurisdiction: "Pakistan",
+        topK: 5,
+        tags: ["audit", "human-review", "citizen"]
+      });
+    } finally {
+      // brief tail so the final stage animation reads as "complete"
+      setTimeout(() => setRunning(false), 400);
+    }
   }
 
   return (
@@ -344,17 +353,9 @@ function RagQueryCenter({ queryRag, ragResult }) {
         </select></label>
       </div>
       <div className="upload-strip">
-        <button onClick={submit}><Search size={15} /> Query RAG</button>
+        <button onClick={submit} disabled={running}><Search size={15} /> {running ? "Retrieving…" : "Query RAG"}</button>
       </div>
-      {ragResult && (
-        <div className="result-box">
-          <strong>{pct(ragResult.retrievalConfidence)} retrieval confidence</strong>
-          <p>{ragResult.rewrittenQuery}</p>
-          <div className="citation-list">
-            {ragResult.citations.map((citation) => <span key={citation.chunkId}>{citation.title}</span>)}
-          </div>
-        </div>
-      )}
+      {ragAnimation && (running || ragResult) && <RagFlowAnimation result={ragResult} running={running} />}
     </div>
   );
 }

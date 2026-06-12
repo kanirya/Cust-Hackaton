@@ -11,6 +11,7 @@ public sealed class TaxNetPlatformOptions
     public RateLimitOptions RateLimits { get; init; } = new();
     public ObservabilityOptions Observability { get; init; } = new();
     public StorageOptions Storage { get; init; } = new();
+    public RagOptions Rag { get; init; } = new();
 }
 
 public sealed class AuthOptions
@@ -59,4 +60,10 @@ public sealed class StorageOptions
     public string GraphStore { get; init; } = "InMemoryGraph";
     public string VectorStore { get; init; } = "LexicalRagIndex";
     public string ObjectStore { get; init; } = "LocalStackOrFile";
+}
+
+public sealed class RagOptions
+{
+    public int EmbeddingTimeoutSeconds { get; init; } = 10;
+    public int DefaultTopK { get; init; } = 5;
 }

@@ -33,13 +33,25 @@ public sealed record RagQueryRequest(
     int TopK,
     IReadOnlyList<string> Tags);
 
+public sealed record RagRankedChunk(
+    string ChunkId,
+    string DocumentId,
+    string Title,
+    string SourceType,
+    decimal Relevance,
+    decimal Score,
+    int MatchedTerms);
+
 public sealed record RagQueryResult(
     string Query,
     string RewrittenQuery,
     IReadOnlyList<RagChunk> Chunks,
     IReadOnlyList<PolicyCitation> Citations,
     IReadOnlyList<string> QualityChecks,
-    decimal RetrievalConfidence);
+    decimal RetrievalConfidence,
+    string RetrievalPath = "deterministic_fallback",
+    IReadOnlyList<RagRankedChunk>? Ranked = null,
+    IReadOnlyList<string>? QueryTerms = null);
 
 public sealed record ModelInvocationRequest(
     string TaskType,

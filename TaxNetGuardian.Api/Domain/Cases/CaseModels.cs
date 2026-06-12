@@ -104,6 +104,23 @@ public sealed record CaseAssignmentRequest(string AssignedTo);
 
 public sealed record CaseDecisionRequest(string Decision, string Notes);
 
+// Pre-model context for a streaming CNIC investigation (records/signals/prompt are built
+// without calling the model, so the endpoint can stream the narrative separately).
+public sealed record CnicInvestigationContext(
+    string CnicMasked,
+    object Subject,
+    object? CaseContext,
+    IReadOnlyList<CnicInvestigationRecord> MatchedRecords,
+    IReadOnlyList<CnicInvestigationSignal> Signals,
+    string Prompt,
+    string FallbackNarrative,
+    IReadOnlyList<string> Findings,
+    IReadOnlyList<string> RecommendedActions,
+    string PersonId,
+    string? CaseId,
+    string PreferredProvider,
+    bool AllowExternalProvider);
+
 public sealed record CaseTimelineEvent(
     string Id,
     string CaseId,

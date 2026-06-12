@@ -26,5 +26,11 @@ public sealed record TaxNetSnapshot
     public List<NotificationItem> Notifications { get; init; } = [];
     public List<ObjectStoreItem> ObjectStore { get; init; } = [];
     public List<CitizenCorrection> Corrections { get; init; } = [];
+    public List<FailureRule> FailureRules { get; init; } = [];
+    public List<ChatMessage> ChatMessages { get; init; } = [];
+    public Dictionary<string, bool> FeatureFlags { get; init; } = new(StringComparer.OrdinalIgnoreCase);
+    public List<TrainingExample> TrainingExamples { get; init; } = [];
+    public List<ModelTrainingRun> ModelRuns { get; init; } = [];
+    public string InferenceMode { get; init; } = "BigLlm";
     public Dictionary<string, ProviderConfigUpdateRequest> ProviderConfigs { get; init; } = new(StringComparer.OrdinalIgnoreCase);
 }

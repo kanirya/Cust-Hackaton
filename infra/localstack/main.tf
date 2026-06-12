@@ -6,7 +6,10 @@ locals {
     "taxnet-dev-risk-score-jobs",
     "taxnet-dev-rag-index-jobs",
     "taxnet-dev-report-jobs",
-    "taxnet-dev-audit-log-jobs"
+    "taxnet-dev-audit-log-jobs",
+    "taxnet-dev-public-data-connector-jobs",
+    "taxnet-dev-notification-jobs",
+    "taxnet-dev-embedding-jobs"
   ])
 
   bucket_names = toset([
@@ -103,6 +106,8 @@ resource "aws_cloudwatch_log_group" "services" {
     "/taxnet/dev/workers/rag-policy",
     "/taxnet/dev/workers/report",
     "/taxnet/dev/workers/audit-log",
+    "/taxnet/dev/workers/public-data-connector",
+    "/taxnet/dev/workers/notification",
     "/taxnet/dev/localstack"
   ])
 

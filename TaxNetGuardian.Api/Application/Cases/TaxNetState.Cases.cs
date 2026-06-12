@@ -222,9 +222,16 @@ public sealed partial class TaxNetState
         // Route the question through the real Model Gateway (live Claude/etc. when a key is
         // configured, deterministic fallback otherwise). The gateway adds RAG grounding,
         // guardrails, PII redaction, cost tracking and an audit event.
+        var facts = BuildCaseFactSheet(caseItem);
+        var transcript = BuildChatTranscript(caseId);
         var invocation = InvokeModelGateway(new ModelInvocationRequest(
             "AuditExplanation",
-            $"Auditor question about case {caseId}: {question}\nCase summary: {explanation.Summary}",
+            $"{transcript}You are assisting a Pakistani tax auditor with case {caseId}.\n" +
+            $"Answer the auditor's question precisely using ONLY the verified case facts below. " +
+            $"If the facts do not contain the answer, say so instead of guessing.\n\n" +
+            $"=== VERIFIED CASE FACTS ===\n{facts}\n\n" +
+            $"Case summary: {explanation.Summary}\n" +
+            $"Auditor question: {question}",
             caseId,
             "auto",
             ModelGatewayClient.ExternalProvidersAllowed(true)),
@@ -232,6 +239,7 @@ public sealed partial class TaxNetState
 
         var usedExternal = invocation.UsedExternalProvider && !string.IsNullOrWhiteSpace(invocation.Output);
         var answer = usedExternal ? invocation.Output : deterministicAnswer;
+        answer = answer.Replace("[masked-id]", caseId);
 
         return new
         {
@@ -252,6 +260,198 @@ public sealed partial class TaxNetState
                 piiPolicy = "Case context is masked before external model calls."
             }
         };
+    }
+
+    // Builds the full CNIC investigation context WITHOUT calling the model, so the streaming
+    // endpoint can resolve records/signals first and then stream the narrative separately.
+    // Persisted assistant chat per case (survives restarts via snapshot).
+    public IReadOnlyList<ChatMessage> GetChat(string caseId)
+        => ChatMessages
+            .Where(x => x.CaseId.Equals(caseId, StringComparison.OrdinalIgnoreCase))
+            .OrderBy(x => x.CreatedAtUtc)
+            .ToArray();
+
+    public ChatMessage AppendChat(string caseId, string role, string text)
+    {
+        lock (_lock)
+        {
+            var message = new ChatMessage(
+                $"chat-{DateTimeOffset.UtcNow:yyyyMMddHHmmssfff}-{ChatMessages.Count + 1:000}",
+                caseId,
+                role,
+                text,
+                DateTimeOffset.UtcNow);
+            ChatMessages.Add(message);
+            SaveSnapshot();
+            return message;
+        }
+    }
+
+    // Recent transcript used to give the model short conversational memory.
+    public string BuildChatTranscript(string caseId, int maxTurns = 6)
+    {
+        var recent = GetChat(caseId).TakeLast(maxTurns * 2).ToArray();
+        if (recent.Length == 0) return "";
+        var lines = recent.Select(m => $"{(m.Role == "user" ? "Auditor" : "Assistant")}: {m.Text}");
+        return "Prior conversation:\n" + string.Join("\n", lines) + "\n\n";
+    }
+
+    public CnicInvestigationContext PrepareCnicInvestigation(CnicInvestigationRequest request)
+    {
+        var rawCnic = (request.Cnic ?? "").Trim();
+        if (string.IsNullOrWhiteSpace(rawCnic))
+        {
+            throw new InvalidOperationException("CNIC is required for investigation.");
+        }
+
+        var person = ResolvePersonByCnic(rawCnic)
+            ?? throw new InvalidOperationException("No sandbox identity matched the supplied CNIC.");
+        var token = person.IdentityToken.Value;
+        var caseItem = Cases.FirstOrDefault(x => x.PersonId.Equals(person.Id, StringComparison.OrdinalIgnoreCase));
+        var records = BuildCnicLinkedRecords(token);
+        var signals = BuildCnicInvestigationSignals(person, records, caseItem);
+        var prompt = BuildCnicInvestigationPrompt(person, caseItem, records, signals);
+        var fallbackNarrative = BuildDeterministicCnicNarrative(person, caseItem, records, signals);
+        var findings = signals
+            .OrderByDescending(x => x.Severity == "Critical")
+            .ThenByDescending(x => x.Severity == "High")
+            .Select(x => x.Detail)
+            .Take(6)
+            .ToArray();
+        var actions = BuildCnicRecommendedActions(caseItem, records, true).ToArray();
+
+        return new CnicInvestigationContext(
+            person.CnicMasked,
+            new
+            {
+                person.Id,
+                person.FullName,
+                person.FatherName,
+                person.City,
+                person.Province,
+                identityTokenType = person.IdentityToken.TokenType
+            },
+            caseItem is null ? null : new
+            {
+                caseItem.Id,
+                caseItem.Status,
+                caseItem.Score.Score,
+                caseItem.Score.RiskBand,
+                caseItem.Score.Confidence,
+                caseItem.Score.RecommendedAction
+            },
+            records,
+            signals,
+            prompt,
+            fallbackNarrative,
+            findings,
+            actions,
+            person.Id,
+            caseItem?.Id,
+            string.IsNullOrWhiteSpace(request.PreferredProvider) ? "claude" : request.PreferredProvider.Trim(),
+            ModelGatewayClient.ExternalProvidersAllowed(request.AllowExternalProvider));
+    }
+
+    // Emits the audit event + snapshot after a streamed CNIC investigation completes.
+    public void CompleteCnicStream(string personId, int recordCount, int signalCount, string provider, bool usedExternal)
+    {
+        lock (_lock)
+        {
+            AddAuditEvent("TaxNet.AI.CnicInvestigator", "taxnet-auditor", "CnicInvestigationStream", personId, "Succeeded", new Dictionary<string, object>
+            {
+                ["records"] = recordCount,
+                ["signals"] = signalCount,
+                ["modelProvider"] = provider,
+                ["usedExternalProvider"] = usedExternal
+            });
+            SaveSnapshot();
+        }
+    }
+
+    // Builds the assistant prompt + deterministic fallback without calling the model,
+    // so the streaming endpoint can stream the answer separately.
+    public (bool Found, string Prompt, string FallbackAnswer, decimal Score, string RiskBand, IReadOnlyList<string> EvidenceIds, IReadOnlyList<PolicyCitation> Citations) PrepareAssistant(string caseId, string question)
+    {
+        var caseItem = Cases.FirstOrDefault(x => x.Id.Equals(caseId, StringComparison.OrdinalIgnoreCase));
+        if (caseItem is null)
+        {
+            return (false, "", "", 0, "", [], []);
+        }
+
+        var explanation = BuildExplanation(caseId);
+        var lower = (question ?? "").ToLowerInvariant();
+        string fallback;
+        if (lower.Contains("missing") || lower.Contains("verify"))
+        {
+            fallback = "Recommended next verification steps: confirm asset ownership dates, verify whether business income was declared under another NTN, request updated utility meter ownership, and give the citizen a correction window before escalation.";
+        }
+        else if (lower.Contains("citizen") || lower.Contains("explain"))
+        {
+            fallback = "Citizen-safe explanation: some records linked to this profile appear inconsistent with the latest tax filing. The citizen should review asset ownership, business relationships, and utility records, then submit corrections if any record is outdated or incorrectly linked.";
+        }
+        else
+        {
+            fallback = explanation.Summary + " Key reasons: " + string.Join(" ", explanation.KeyReasons.Take(3));
+        }
+
+        var prompt = BuildAssistantPrompt(caseItem, explanation, question ?? "");
+        return (true, prompt, fallback, caseItem.Score.Score, caseItem.Score.RiskBand, explanation.EvidenceIds, explanation.Citations);
+    }
+
+    // Builds a richly-grounded prompt for the in-case AI assistant: the auditor's question plus the
+    // full risk picture (score, drivers with evidence, linked-record signals, recent activity) so the
+    // model answers from concrete data rather than a one-line summary.
+    private string BuildAssistantPrompt(CaseItem caseItem, AuditExplanation explanation, string question)
+    {
+        var person = People.FirstOrDefault(x => x.Id == caseItem.PersonId);
+        var drivers = caseItem.Score.Components
+            .Where(c => c.Score > 0)
+            .OrderByDescending(c => c.Score)
+            .Take(6)
+            .Select(c => $"- {c.Name} ({c.Score}/{c.MaxScore}): {c.Explanation}")
+            .ToArray();
+
+        var evidenceLines = caseItem.Evidence
+            .Take(8)
+            .Select(e => $"- {e.Id} [{e.Type}] {e.Title}: {e.Description} (source {e.Source})")
+            .ToArray();
+
+        var timelineLines = GetTimeline(caseItem.Id)
+            .Take(5)
+            .Select(t => $"- {t.TimestampUtc:yyyy-MM-dd} {t.EventType}: {t.Summary}")
+            .ToArray();
+
+        var citationLines = explanation.Citations
+            .Take(6)
+            .Select((c, i) => $"[{i + 1}] {c.Title} ({c.SourceType}, {c.ChunkId})")
+            .ToArray();
+
+        return $"""
+               AUDITOR QUESTION
+               {question}
+
+               CASE UNDER REVIEW: {caseItem.Id}
+               - Subject: {person?.FullName} ({person?.CnicMasked}), {person?.City}, {person?.Province}
+               - Risk score: {caseItem.Score.Score}/100 ({caseItem.Score.RiskBand}), {caseItem.Score.Confidence:P0} confidence
+               - Status: {caseItem.Status}
+               - Recommended action (engine): {caseItem.Score.RecommendedAction}
+
+               RISK DRIVERS
+               {(drivers.Length == 0 ? "(none above threshold)" : string.Join("\n", drivers))}
+
+               EVIDENCE ON FILE
+               {(evidenceLines.Length == 0 ? "(no structured evidence)" : string.Join("\n", evidenceLines))}
+
+               POLICY CITATIONS
+               {(citationLines.Length == 0 ? "(none)" : string.Join("\n", citationLines))}
+
+               RECENT CASE ACTIVITY
+               {(timelineLines.Length == 0 ? "(no timeline events)" : string.Join("\n", timelineLines))}
+
+               Answer the auditor's question directly and concisely, grounded in the data above. Cite evidence
+               IDs and [n] policy markers where relevant. If the question cannot be answered from this data,
+               say what additional information is needed. Do not assert that fraud is proven.
+               """;
     }
 
     public CnicInvestigationResult InvestigateByCnic(CnicInvestigationRequest request, ModelGatewayClient? modelGatewayClient = null)
@@ -282,6 +482,7 @@ public sealed partial class TaxNetState
         var fallbackNarrative = BuildDeterministicCnicNarrative(person, caseItem, records, signals);
         var usedExternal = invocation.UsedExternalProvider && !string.IsNullOrWhiteSpace(invocation.Output);
         var narrative = usedExternal ? invocation.Output : fallbackNarrative;
+        narrative = narrative.Replace("[masked-id]", MaskCnicForDisplay(person.CnicMasked));
         var findings = signals
             .OrderByDescending(x => x.Severity == "Critical")
             .ThenByDescending(x => x.Severity == "High")
@@ -351,14 +552,96 @@ public sealed partial class TaxNetState
     {
         var normalized = NormalizeCnic(cnic);
         var digits = DigitsOnly(cnic);
-        return People.FirstOrDefault(person =>
+
+        // 1. Exact: normalized masked form, full 13-digit match, or canonical identity token.
+        var exact = People.FirstOrDefault(person =>
             NormalizeCnic(person.CnicMasked).Equals(normalized, StringComparison.OrdinalIgnoreCase) ||
-            DigitsOnly(person.CnicMasked).Equals(digits, StringComparison.OrdinalIgnoreCase) ||
-            (!string.IsNullOrWhiteSpace(digits) &&
-             digits.Length >= 2 &&
-             DigitsOnly(person.CnicMasked).StartsWith(digits[..Math.Min(5, digits.Length)], StringComparison.OrdinalIgnoreCase) &&
-             DigitsOnly(person.CnicMasked).EndsWith(digits[^2..], StringComparison.OrdinalIgnoreCase)) ||
+            (digits.Length >= 13 && DigitsOnly(person.CnicMasked).Equals(digits, StringComparison.Ordinal)) ||
             person.IdentityToken.Value.Equals(cnic, StringComparison.OrdinalIgnoreCase));
+        if (exact is not null)
+        {
+            return exact;
+        }
+
+        if (digits.Length >= 6)
+        {
+            // 2. Unique digit-substring containment (handles partial entry).
+            var contains = People
+                .Where(person =>
+                {
+                    var d = DigitsOnly(person.CnicMasked);
+                    return d.Length > 0 && d.Contains(digits, StringComparison.Ordinal);
+                })
+                .ToArray();
+            if (contains.Length == 1)
+            {
+                return contains[0];
+            }
+
+            // 3. Unique block (first 5) + check digit (last) — masked-CNIC aware.
+            var blockTail = People
+                .Where(person =>
+                {
+                    var d = DigitsOnly(person.CnicMasked);
+                    return d.Length >= 6 && d[..5].Equals(digits[..5], StringComparison.Ordinal) && d[^1] == digits[^1];
+                })
+                .ToArray();
+            if (blockTail.Length == 1)
+            {
+                return blockTail[0];
+            }
+
+            // 4. Still ambiguous → return the deterministic first containment match.
+            if (contains.Length > 1)
+            {
+                return contains[0];
+            }
+        }
+
+        return null;
+    }
+
+    // Compact, factual case dossier used to ground the assistant's answers in verified data
+    // (subject identity, risk score/components, and every linked provider record).
+    private string BuildCaseFactSheet(CaseItem caseItem)
+    {
+        var person = People.FirstOrDefault(p => p.Id.Equals(caseItem.PersonId, StringComparison.OrdinalIgnoreCase));
+        var lines = new List<string>();
+
+        if (person is not null)
+        {
+            lines.Add($"Subject: {person.FullName} (father: {person.FatherName}); CNIC {person.CnicMasked}; {person.City}, {person.Province}.");
+            var ntn = TaxProfiles.FirstOrDefault(t => t.IdentityToken.Value == person.IdentityToken.Value)?.Ntn;
+            if (!string.IsNullOrWhiteSpace(ntn))
+            {
+                lines.Add($"NTN: {ntn}.");
+            }
+        }
+
+        lines.Add($"Risk score: {caseItem.Score.Score}/100 ({caseItem.Score.RiskBand}); status {caseItem.Status}; recommended action {caseItem.Score.RecommendedAction}.");
+
+        if (person is not null)
+        {
+            var records = BuildCnicLinkedRecords(person.IdentityToken.Value);
+            if (records.Count > 0)
+            {
+                lines.Add($"Linked provider records ({records.Count}):");
+                lines.AddRange(records.Take(20).Select(r => $" - [{r.Provider}/{r.RecordType}] {r.DisplayName}: {r.Summary}"));
+            }
+        }
+
+        var components = caseItem.Score.Components
+            .Where(c => c.Score > 0)
+            .OrderByDescending(c => c.Score)
+            .Take(8)
+            .ToArray();
+        if (components.Length > 0)
+        {
+            lines.Add("Risk components:");
+            lines.AddRange(components.Select(c => $" - {c.Name}: {c.Score}/{c.MaxScore} — {c.Explanation}"));
+        }
+
+        return string.Join("\n", lines);
     }
 
     private IReadOnlyList<CnicInvestigationRecord> BuildCnicLinkedRecords(string identityToken)
@@ -426,33 +709,64 @@ public sealed partial class TaxNetState
         return signals.DistinctBy(x => x.Name).ToArray();
     }
 
-    private static string BuildCnicInvestigationPrompt(
+    private string BuildCnicInvestigationPrompt(
         SyntheticPerson person,
         CaseItem? caseItem,
         IReadOnlyList<CnicInvestigationRecord> records,
         IReadOnlyList<CnicInvestigationSignal> signals)
     {
-        var recordLines = string.Join("\n", records.Select(x => $"- {x.Provider}/{x.RecordType}/{x.RecordId}: {x.Summary}"));
-        var signalLines = string.Join("\n", signals.Select(x => $"- {x.Severity} {x.Name}: {x.Detail}"));
+        var recordLines = records.Count == 0
+            ? "(no linked provider records found)"
+            : string.Join("\n", records.Select(x => $"- {x.Provider}/{x.RecordType}/{x.RecordId}: {x.Summary}"));
+        var signalLines = signals.Count == 0
+            ? "(no deterministic risk signals raised)"
+            : string.Join("\n", signals.Select(x => $"- [{x.Severity}] {x.Name}: {x.Detail}"));
+
+        // Quantified financial snapshot so the model can reason about magnitude of mismatch.
+        var taxProfile = TaxProfiles.FirstOrDefault(t => t.IdentityToken.Value == person.IdentityToken.Value);
+        var declaredIncome = taxProfile?.DeclaredAnnualIncome ?? 0m;
+        var filerStatus = taxProfile?.FilerStatus ?? "Unknown";
+        var vehicleValue = Vehicles.Where(v => v.OwnerIdentityToken.Value == person.IdentityToken.Value).Sum(v => v.EstimatedValue);
+        var propertyValue = Properties.Where(p => p.OwnerIdentityToken.Value == person.IdentityToken.Value).Sum(p => p.EstimatedValue);
+        var annualUtility = UtilityBills.Where(u => u.OwnerIdentityToken.Value == person.IdentityToken.Value).Sum(u => u.AverageMonthlyBill) * 12m;
+        var travelSpend = Travel.Where(t => t.TravelerIdentityToken.Value == person.IdentityToken.Value).Sum(t => t.EstimatedSpend);
+        var totalAssets = vehicleValue + propertyValue;
+
         return $"""
-               Investigate this taxpayer by CNIC identity linkage.
-               CNIC is the stable identifier in Pakistan. Names may vary across vehicle registration, utility bills, salary/tax records, or business records, but records sharing the same CNIC identity token should be assessed together.
+               Investigate this taxpayer using CNIC identity linkage. CNIC is Pakistan's stable national
+               identifier: names may differ across vehicle, utility, tax/salary, and business systems, but
+               records sharing the same CNIC identity token belong to one subject and must be assessed together.
 
-               Subject:
-               {person.FullName}, {person.CnicMasked}, {person.City}, {person.Province}
+               SUBJECT
+               - Name: {person.FullName} ({person.UrduName})
+               - CNIC (masked): {person.CnicMasked}
+               - Location: {person.City}, {person.Province}
 
-               Case:
-               {(caseItem is null ? "No risk case exists." : $"{caseItem.Id}; score {caseItem.Score.Score}/100 {caseItem.Score.RiskBand}; status {caseItem.Status}.")}
+               TAX POSITION
+               - Filer status: {filerStatus}
+               - Declared annual income: PKR {declaredIncome:N0}
 
-               Matched CNIC-linked records:
+               OBSERVED FINANCIAL FOOTPRINT (from linked records)
+               - Vehicles: PKR {vehicleValue:N0}
+               - Property: PKR {propertyValue:N0}
+               - Total declared-asset value: PKR {totalAssets:N0}
+               - Annualised utility spend: PKR {annualUtility:N0}
+               - Travel spend (24 months): PKR {travelSpend:N0}
+
+               RISK CASE
+               {(caseItem is null ? "No risk case currently exists for this subject." : $"{caseItem.Id} · score {caseItem.Score.Score}/100 ({caseItem.Score.RiskBand}) · {caseItem.Score.Confidence:P0} confidence · status {caseItem.Status}.")}
+
+               MATCHED CNIC-LINKED RECORDS
                {recordLines}
 
-               Deterministic signals:
+               DETERMINISTIC SIGNALS
                {signalLines}
 
-               Return a concise auditor-ready narrative with these headings:
-               Assessment, CNIC linkage, Key mismatches, Evidence to verify, Recommended next steps, Human review warning.
-               Do not return JSON. Do not say fraud is proven.
+               Produce an auditor-ready Markdown narrative with these headings:
+               **Assessment**, **CNIC linkage**, **Key mismatches** (quantify the gap between declared income
+               and observed assets/consumption), **Evidence to verify**, **Recommended next steps**,
+               **Human review note**.
+               Do not return JSON. Do not state that fraud or evasion is proven — these are indicators for review.
                """;
     }
 

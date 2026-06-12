@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from "react";
-import { Activity, ArrowRight, BadgeCheck, Bot, CheckCircle2, ClipboardCheck, FileText, Fingerprint, Network, Scale, UserCircle, Users } from "lucide-react";
+import { Activity, ArrowRight, BadgeCheck, Bot, CheckCircle2, ClipboardCheck, FileText, Fingerprint, Network, Scale, Sparkles, UserCircle, Users } from "lucide-react";
 import { EmptyState, InfoRows, JsonPreview, Panel, RadialScore } from "../components/common/Primitives.jsx";
 import { GraphCanvas } from "../components/graph/GraphCanvas.jsx";
 import { AssistantAnswer } from "../components/assistant/AssistantDrawer.jsx";
+import { Markdown } from "../components/common/Markdown.jsx";
 
 function pct(value) {
   return `${Math.round(Number(value || 0) * 100)}%`;
@@ -11,7 +12,7 @@ function pct(value) {
 function riskClass(value) {
   return String(value || "low").toLowerCase();
 }
-function Investigation({ selectedCase, graph, query, setQuery, askAssistant, generateReport, assignSelectedCase, requestClarification, recordDecision, assistantAnswer, investigateCnic, cnicInvestigation }) {
+function Investigation({ selectedCase, graph, query, setQuery, askAssistant, generateReport, assignSelectedCase, requestClarification, recordDecision, assistantAnswer, investigateCnic, cnicInvestigation, explainCase, busy, ff = () => true }) {
   const [cnic, setCnic] = useState("");
 
   useEffect(() => {
@@ -84,8 +85,9 @@ function Investigation({ selectedCase, graph, query, setQuery, askAssistant, gen
           <div className="assistant-box">
             <textarea value={query} onChange={(e) => setQuery(e.target.value)} />
             <div className="button-row">
-              <button onClick={() => askAssistant(query)}><Bot size={16} /> Ask</button>
-              <button onClick={generateReport}><FileText size={16} /> Report</button>
+              <button onClick={() => askAssistant(query)} disabled={busy}><Bot size={16} /> Ask</button>
+              {ff("deepExplain") && <button onClick={explainCase} disabled={busy}><Sparkles size={16} /> Deep explain</button>}
+              <button onClick={generateReport} disabled={busy}><FileText size={16} /> Report</button>
             </div>
             {assistantAnswer && <AssistantAnswer answer={assistantAnswer} />}
           </div>
@@ -96,7 +98,9 @@ function Investigation({ selectedCase, graph, query, setQuery, askAssistant, gen
               CNIC
               <input value={cnic} onChange={(e) => setCnic(e.target.value)} placeholder="42201-***01" />
             </label>
-            <button onClick={() => investigateCnic(cnic)}><Fingerprint size={16} /> Investigate CNIC</button>
+            <button onClick={() => investigateCnic(cnic)} disabled={busy}>
+              <Fingerprint size={16} /> {busy ? "Investigating…" : "Investigate CNIC"}
+            </button>
           </div>
           {cnicInvestigation && <CnicInvestigationResult result={cnicInvestigation} />}
         </Panel>
@@ -140,7 +144,7 @@ function CnicInvestigationResult({ result }) {
     <div className="cnic-result">
       <div className="result-box">
         <strong>{result.status} - {result.cnicMasked}</strong>
-        <p>{result.aiNarrative}</p>
+        <Markdown content={result.aiNarrative} />
         <small>{result.model?.selectedProvider} via {result.model?.route}</small>
       </div>
       <div className="investigation-sections">

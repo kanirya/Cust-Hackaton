@@ -156,9 +156,11 @@ public sealed class GovernmentProviderRegistry : IGovernmentProviderRegistry
 
     public GovernmentProviderRegistry(TaxNetState state)
     {
+        var simulator = new SandboxFailureSimulator(state);
         var list = new IGovernmentDataProvider[]
         {
-            new SandboxGovernmentDataProvider(state),
+            // Wrap the sandbox provider so the canonical pipeline path honors active failure rules (Req 3).
+            new FailureSimulatingGovernmentDataProvider(new SandboxGovernmentDataProvider(state), simulator),
             new NadraGovernmentDataProvider(),
             new FbrGovernmentDataProvider(),
             new ExciseGovernmentDataProvider()

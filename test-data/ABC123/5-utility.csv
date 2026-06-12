@@ -1,0 +1,2 @@
+personId,meterToken,utilityType,averageMonthlyBill,latestBillAmount,city
+ABC123,METER-ABC123,Electricity,380000,395000,Karachi

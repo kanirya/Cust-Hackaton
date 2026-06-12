@@ -143,7 +143,8 @@ public sealed partial class TaxNetState
 
     private RiskScore CalculateRiskScore(SyntheticPerson person, ResolvedEntity entity)
     {
-        var tax = TaxProfiles.First(x => x.IdentityToken.Value == person.IdentityToken.Value);
+        var tax = TaxProfiles.FirstOrDefault(x => x.IdentityToken.Value == person.IdentityToken.Value)
+            ?? new TaxProfile($"synthetic-tax-{person.Id}", person.IdentityToken, $"NTN-{person.Id}", "Unknown", 0m, 0m, DateTimeOffset.UtcNow.Year, DateTimeOffset.UtcNow);
         var vehicles = Vehicles.Where(x => x.OwnerIdentityToken.Value == person.IdentityToken.Value).ToArray();
         var properties = Properties.Where(x => x.OwnerIdentityToken.Value == person.IdentityToken.Value).ToArray();
         var utility = UtilityBills.Where(x => x.OwnerIdentityToken.Value == person.IdentityToken.Value).ToArray();
@@ -242,8 +243,11 @@ public sealed partial class TaxNetState
     private IReadOnlyList<EvidenceItem> BuildEvidence(SyntheticPerson person)
     {
         var evidence = new List<EvidenceItem>();
-        var tax = TaxProfiles.First(x => x.IdentityToken.Value == person.IdentityToken.Value);
-        evidence.Add(new EvidenceItem($"ev-tax-{person.Id}", "TaxReturn", "Latest tax profile", $"{tax.FilerStatus}; declared annual income PKR {tax.DeclaredAnnualIncome:N0}; tax paid PKR {tax.TaxPaid:N0}.", tax.DeclaredAnnualIncome, "FBR Sandbox", tax.SourceUpdatedAtUtc));
+        var tax = TaxProfiles.FirstOrDefault(x => x.IdentityToken.Value == person.IdentityToken.Value);
+        if (tax is not null)
+        {
+            evidence.Add(new EvidenceItem($"ev-tax-{person.Id}", "TaxReturn", "Latest tax profile", $"{tax.FilerStatus}; declared annual income PKR {tax.DeclaredAnnualIncome:N0}; tax paid PKR {tax.TaxPaid:N0}.", tax.DeclaredAnnualIncome, "FBR Sandbox", tax.SourceUpdatedAtUtc));
+        }
 
         evidence.AddRange(Vehicles.Where(x => x.OwnerIdentityToken.Value == person.IdentityToken.Value)
             .Select(x => new EvidenceItem($"ev-{x.ProviderRecordId}", "Vehicle", $"{x.Make} {x.Model}", $"{x.EngineCc}cc vehicle estimated at PKR {x.EstimatedValue:N0}.", x.EstimatedValue, "Excise Sandbox", x.SourceUpdatedAtUtc)));
@@ -318,6 +322,8 @@ public sealed partial class TaxNetState
             new("GraphIntelligence.Worker", "taxnet-dev-graph-build-jobs", 0, Entities.Count, 0, "Healthy", DateTimeOffset.UtcNow.AddMinutes(-4)),
             new("RiskScoring.Worker", "taxnet-dev-risk-score-jobs", 0, Entities.Count, 0, "Healthy", DateTimeOffset.UtcNow.AddMinutes(-3)),
             new("RagPolicy.Worker", "taxnet-dev-rag-index-jobs", 0, RagDocuments.Count, 0, "Healthy", DateTimeOffset.UtcNow.AddMinutes(-2)),
+            new("PublicDataConnector.Worker", "taxnet-dev-public-data-connector-jobs", 0, 0, 0, "Idle", DateTimeOffset.UtcNow),
+            new("Notification.Worker", "taxnet-dev-notification-jobs", 0, 0, 0, "Idle", DateTimeOffset.UtcNow),
             new("Report.Worker", "taxnet-dev-report-jobs", Math.Min(1, Reports.Count), 4 + Reports.Count, 0, Reports.Count > 0 ? "Healthy" : "Idle", DateTimeOffset.UtcNow.AddMinutes(-20)),
             new("AuditLog.Worker", "taxnet-dev-audit-log-jobs", 0, 480 + TimelineEvents.Count, 0, "Healthy", DateTimeOffset.UtcNow.AddMinutes(-1))
         ]);

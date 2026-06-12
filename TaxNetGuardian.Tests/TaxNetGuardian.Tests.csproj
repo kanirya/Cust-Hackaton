@@ -1,0 +1,31 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+  </PropertyGroup>
+
+  <!-- TaxNetState lives in the Web SDK Api project and depends on ASP.NET Core
+       abstractions (IWebHostEnvironment, IConfiguration), so the test project
+       needs the ASP.NET Core shared framework reference. -->
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.12.0" />
+    <PackageReference Include="xunit" Version="2.9.2" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="2.8.2" />
+    <PackageReference Include="FsCheck" Version="3.3.2" />
+    <PackageReference Include="FsCheck.Xunit" Version="3.3.2" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\TaxNetGuardian.Api\TaxNetGuardian.Api.csproj" />
+    <ProjectReference Include="..\TaxNetGuardian.Worker.Shared\TaxNetGuardian.Worker.Shared.csproj" />
+  </ItemGroup>
+
+</Project>

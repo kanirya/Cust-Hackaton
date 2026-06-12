@@ -27,7 +27,8 @@ public static class AuthorizationCatalog
         new("/api/assistant", ["taxnet-admin", "taxnet-auditor", "taxnet-senior-auditor", "taxnet-policy-analyst"]),
         new("/api/reports", ["taxnet-admin", "taxnet-auditor", "taxnet-senior-auditor"]),
         new("/api/ingestion", ["taxnet-admin", "taxnet-data-engineer", "taxnet-sandbox-admin"]),
-        new("/api/identity", ["taxnet-admin", "taxnet-security-admin", "taxnet-data-engineer"])
+        new("/api/identity", ["taxnet-admin", "taxnet-security-admin", "taxnet-data-engineer"]),
+        new("/api/orchestrator", ["taxnet-admin", "taxnet-auditor", "taxnet-senior-auditor", "taxnet-policy-analyst"])
     ];
 
     public static IReadOnlyList<AuthzRole> Roles { get; } =

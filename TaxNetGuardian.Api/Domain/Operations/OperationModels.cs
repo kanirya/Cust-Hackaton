@@ -20,6 +20,38 @@ public sealed record NotificationItem(
     string Status,
     DateTimeOffset CreatedAtUtc);
 
+// Persisted assistant conversation turn (per case), so chat history survives restarts.
+public sealed record ChatMessage(
+    string Id,
+    string CaseId,
+    string Role,
+    string Text,
+    DateTimeOffset CreatedAtUtc);
+
+public sealed record FeatureFlagUpdateRequest(string Key, bool Enabled);
+
+public sealed record FeatureFlagView(string Key, string Label, string Description, string Category, bool Enabled);
+
+// Unified, ranked search result used by the global command search and entity lookup.
+public sealed record SearchHit(
+    string Kind,
+    string MatchType,
+    decimal Confidence,
+    string? PersonId,
+    string? CaseId,
+    string FullName,
+    string? UrduName,
+    string? FatherName,
+    string CnicMasked,
+    string? Ntn,
+    string City,
+    string Province,
+    string? RiskBand,
+    int? Score,
+    string Snippet);
+
+public sealed record SearchResponse(string Query, int Count, IReadOnlyList<SearchHit> Items);
+
 public sealed record ObjectStoreItem(
     string Uri,
     string Bucket,

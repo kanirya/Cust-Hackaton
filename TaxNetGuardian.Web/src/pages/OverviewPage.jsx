@@ -14,6 +14,7 @@ import {
   ShieldCheck
 } from "lucide-react";
 import { FeedItem, Metric, Panel } from "../components/common/Primitives.jsx";
+import { PakistanRiskMap } from "../components/map/PakistanRiskMap.jsx";
 
 function money(value) {
   return `PKR ${Number(value || 0).toLocaleString()}`;
@@ -33,7 +34,7 @@ function compact(value) {
   if (n >= 1_000_000) return `PKR ${(n / 1_000_000).toFixed(1)}M`;
   return money(n);
 }
-function Overview({ summary, cases, providers, rag, setPage, setSelectedCaseId }) {
+function Overview({ summary, cases, providers, rag, setPage, setSelectedCaseId, ff = () => true }) {
   const riskDistribution = useMemo(() => {
     const total = Math.max(1, cases.length);
     return [
@@ -59,10 +60,12 @@ function Overview({ summary, cases, providers, rag, setPage, setSelectedCaseId }
         <Metric icon={Gauge} label="ER precision" value={pct(summary?.entityResolutionPrecision)} trend="Optimized" risk="low" />
         <Metric icon={ClipboardCheck} label="False positive target" value="3.8%" trend="Steady" risk="medium" />
       </div>
-      <div className="overview-layout">
-        <Panel title="Regional Risk Map" subtitle="Synthetic clusters by city and signal strength." icon={Globe2}>
-          <RiskMap summary={summary} />
-        </Panel>
+      <div className={`overview-layout ${ff("regionalMap") ? "" : "no-map"}`}>
+        {ff("regionalMap") && (
+          <Panel title="Regional Risk Map" subtitle="Live case clusters mapped to real locations across Pakistan." icon={Globe2}>
+            <PakistanRiskMap casesByCity={summary?.casesByCity} onSelectCity={() => setPage("queue")} />
+          </Panel>
+        )}
         <div className="stack">
           <Panel title="Risk Distribution" icon={PieChart}>
             {riskDistribution.map((item) => (

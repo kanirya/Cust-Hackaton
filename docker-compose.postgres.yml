@@ -1,0 +1,18 @@
+services:
+  postgres:
+    image: postgres:17
+    container_name: taxnet-postgres
+    restart: unless-stopped
+    ports:
+      - "5433:5432"
+    environment:
+      - POSTGRES_USER=taxnet
+      - POSTGRES_PASSWORD=taxnet_dev_pw
+      - POSTGRES_DB=taxnetguardian
+    volumes:
+      - "./.appdata/postgres:/var/lib/postgresql/data"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U taxnet -d taxnetguardian"]
+      interval: 5s
+      timeout: 5s
+      retries: 10

@@ -57,6 +57,9 @@ public sealed partial class TaxNetState
     public List<AuditEvent> AuditEvents { get; } = [];
     public List<NotificationItem> Notifications { get; } = [];
     public List<ObjectStoreItem> ObjectStore { get; } = [];
+    public List<FailureRule> FailureRules { get; } = [];
+    public List<ChatMessage> ChatMessages { get; } = [];
+    public Dictionary<string, bool> FeatureFlags { get; } = new(StringComparer.OrdinalIgnoreCase);
     public Dictionary<string, ProviderConfigUpdateRequest> ProviderConfigs { get; } = new(StringComparer.OrdinalIgnoreCase);
     public IReadOnlyList<CitizenCorrection> Corrections => _corrections;
 
@@ -87,6 +90,7 @@ public sealed partial class TaxNetState
             ObjectStore.Clear();
             ProviderConfigs.Clear();
             _corrections.Clear();
+            FailureRules.Clear();
 
             SeedProviders();
             SeedPolicyDocuments();
@@ -123,6 +127,13 @@ public sealed partial class TaxNetState
                 matchResult.RequiresHumanReview);
 
             Entities.Add(entity);
+
+            // A person with no linked provider records (e.g. an identity-only feed) has nothing to
+            // score yet — skip case creation so the risk pipeline never fails on sparse data.
+            if (linkedRecords.Count == 0)
+            {
+                continue;
+            }
 
             var score = CalculateRiskScore(person, entity);
             if (score.Score < 31)
@@ -256,7 +267,20 @@ public sealed partial class TaxNetState
             });
         }
 
-        return new GraphNeighborhood(nodes, edges);
+        // Defensive dedup: collapse any nodes that share the same type+label (e.g. duplicate
+        // provider records from repeated dataset feeds) so the graph shows each entity once.
+        var dedupedNodes = nodes
+            .GroupBy(n => $"{n.Type}|{n.Label}")
+            .Select(g => g.First())
+            .ToList();
+        var keepIds = dedupedNodes.Select(n => n.Id).ToHashSet(StringComparer.OrdinalIgnoreCase);
+        var dedupedEdges = edges
+            .Where(e => keepIds.Contains(e.Target) || e.Target.Equals(entity.Id, StringComparison.OrdinalIgnoreCase))
+            .GroupBy(e => $"{e.Source}->{e.Target}")
+            .Select(g => g.First())
+            .ToList();
+
+        return new GraphNeighborhood(dedupedNodes, dedupedEdges);
     }
 
     private static (string Provider, string Route) SelectModelRoute(string taskType, string preferredProvider, bool allowExternal)

@@ -190,10 +190,12 @@ public sealed partial class TaxNetState
                     now));
                 return;
             case "vehicle":
+                var vehReg = Get(row, "registrationNumberMasked", "registration") is { Length: > 0 } reg ? reg : $"FEED-{personId}";
+                Vehicles.RemoveAll(x => x.OwnerIdentityToken.Value == token.Value && x.RegistrationNumberMasked == vehReg);
                 Vehicles.Add(new VehicleRecord(
-                    $"feed-veh-{personId}-{Vehicles.Count(x => x.OwnerIdentityToken.Value == token.Value) + 1}",
+                    $"feed-veh-{personId}-{vehReg}",
                     token,
-                    Get(row, "registrationNumberMasked", "registration") is { Length: > 0 } reg ? reg : $"FEED-{personId}",
+                    vehReg,
                     Get(row, "make") is { Length: > 0 } make ? make : "Unknown",
                     Get(row, "model") is { Length: > 0 } model ? model : "Vehicle",
                     GetInt(row, "engineCc", "cc", defaultValue: 1300),
@@ -203,10 +205,12 @@ public sealed partial class TaxNetState
                     now));
                 return;
             case "property":
+                var propToken = Get(row, "propertyToken") is { Length: > 0 } pt ? pt : $"prop-{batchId}-{personId}";
+                Properties.RemoveAll(x => x.OwnerIdentityToken.Value == token.Value && x.PropertyToken == propToken);
                 Properties.Add(new PropertyRecord(
-                    $"feed-prop-{personId}-{Properties.Count(x => x.OwnerIdentityToken.Value == token.Value) + 1}",
+                    $"feed-prop-{personId}-{propToken}",
                     token,
-                    Get(row, "propertyToken") is { Length: > 0 } propertyToken ? propertyToken : $"prop-{batchId}-{personId}",
+                    propToken,
                     Get(row, "city") is { Length: > 0 } city ? city : person.City,
                     Get(row, "area") is { Length: > 0 } area ? area : "Unspecified Area",
                     Get(row, "propertyType", "type") is { Length: > 0 } propertyType ? propertyType : "Residential",
@@ -214,10 +218,12 @@ public sealed partial class TaxNetState
                     now));
                 return;
             case "utility":
+                var meterToken = Get(row, "meterToken", "meterNumber") is { Length: > 0 } mt ? mt : $"meter-{batchId}-{personId}";
+                UtilityBills.RemoveAll(x => x.OwnerIdentityToken.Value == token.Value && x.MeterToken == meterToken);
                 UtilityBills.Add(new UtilityBillRecord(
-                    $"feed-util-{personId}-{UtilityBills.Count(x => x.OwnerIdentityToken.Value == token.Value) + 1}",
+                    $"feed-util-{personId}-{meterToken}",
                     token,
-                    Get(row, "meterToken", "meterNumber") is { Length: > 0 } meter ? meter : $"meter-{batchId}-{personId}",
+                    meterToken,
                     Get(row, "utilityType") is { Length: > 0 } utilityType ? utilityType : "Electricity",
                     GetDecimal(row, "averageMonthlyBill", "avgMonthlyBill"),
                     GetDecimal(row, "latestBillAmount", "latestBill"),
@@ -225,9 +231,11 @@ public sealed partial class TaxNetState
                     now));
                 return;
             case "business":
+                var companyReg = Get(row, "companyRegistrationNumber", "registration") is { Length: > 0 } cr ? cr : $"SECP-{batchId}-{personId}";
+                Businesses.RemoveAll(x => x.RelatedIdentityToken.Value == token.Value && x.CompanyRegistrationNumber == companyReg);
                 Businesses.Add(new BusinessRecord(
-                    $"feed-biz-{personId}-{Businesses.Count(x => x.RelatedIdentityToken.Value == token.Value) + 1}",
-                    Get(row, "companyRegistrationNumber", "registration") is { Length: > 0 } companyReg ? companyReg : $"SECP-{batchId}-{personId}",
+                    $"feed-biz-{personId}-{companyReg}",
+                    companyReg,
                     Get(row, "companyName") is { Length: > 0 } company ? company : $"{person.FullName} Enterprises",
                     Get(row, "relationshipType", "relation") is { Length: > 0 } relation ? relation : "Director",
                     token,
@@ -235,10 +243,12 @@ public sealed partial class TaxNetState
                     now));
                 return;
             case "travel":
+                var destination = Get(row, "destination") is { Length: > 0 } d ? d : "International";
+                Travel.RemoveAll(x => x.TravelerIdentityToken.Value == token.Value && x.Destination == destination);
                 Travel.Add(new TravelRecord(
-                    $"feed-travel-{personId}-{Travel.Count(x => x.TravelerIdentityToken.Value == token.Value) + 1}",
+                    $"feed-travel-{personId}-{destination.GetHashCode():X}",
                     token,
-                    Get(row, "destination") is { Length: > 0 } destination ? destination : "International",
+                    destination,
                     GetInt(row, "tripsInLast24Months", "trips", defaultValue: 1),
                     GetDecimal(row, "estimatedSpend", "spend"),
                     now));

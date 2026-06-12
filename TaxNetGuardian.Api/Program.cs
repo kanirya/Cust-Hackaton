@@ -39,8 +39,20 @@ builder.Services.AddSingleton<ISecretProvider>(_ => SecretProviderFactory.Create
 builder.Services.AddSingleton<ModelGatewayClient>();
 builder.Services.AddSingleton<CognitoIdentityProviderStatus>();
 
+// Embedding-based RAG with a pluggable vector store (Req 5). The provider/store are selected by
+// TaxNet:Storage:VectorStore. "LexicalRagIndex" (default) reports IsConfigured = false, forcing the
+// deterministic lexical fallback; "InMemoryEmbedding" enables embedding retrieval over the in-memory
+// vector store. pgvector/Qdrant/OpenSearch are future implementations behind the same interfaces.
+var useEmbeddingVectorStore = platformOptions.Storage.VectorStore.Equals("InMemoryEmbedding", StringComparison.OrdinalIgnoreCase);
+builder.Services.AddSingleton<IEmbeddingProvider>(_ => new DeterministicEmbeddingProvider(useEmbeddingVectorStore));
+builder.Services.AddSingleton<IVectorStore, InMemoryVectorStore>();
+
 builder.Services.AddSingleton<IGovernmentProviderRegistry>(sp =>
     new GovernmentProviderRegistry(sp.GetRequiredService<TaxNetState>()));
+// Shared sandbox failure-rule enforcement boundary (Req 3). The direct /sandbox/{provider}/*
+// read endpoints consult this same point so reads honor active rules on every path.
+builder.Services.AddSingleton<SandboxFailureSimulator>(sp =>
+    new SandboxFailureSimulator(sp.GetRequiredService<TaxNetState>()));
 builder.Services.AddSingleton<IngestionPipelineService>();
 builder.Services.AddSingleton<IdentityResolutionService>();
 builder.Services.AddSingleton<GraphIntelligenceService>();
@@ -51,6 +63,14 @@ builder.Services.AddSingleton<RagPolicyService>();
 builder.Services.AddSingleton<AiOrchestratorService>();
 builder.Services.AddSingleton<AuditLogService>();
 builder.Services.AddSingleton<PostgresOperationalSchemaService>();
+
+// Background worker that distils the local custom model from frontier-LLM teacher examples.
+builder.Services.AddHostedService<CustomModelTrainingWorker>();
+
+// Pluggable notification channels (Req 2 AC 5,6). Only InApp is implemented; the registry falls
+// back to InApp when a requested channel has no configured implementation.
+builder.Services.AddSingleton<INotificationChannel, InAppNotificationChannel>();
+builder.Services.AddSingleton<INotificationChannelRegistry, NotificationChannelRegistry>();
 
 builder.Services.AddHealthChecks();
 
@@ -127,6 +147,17 @@ builder.Services.AddRateLimiter(options =>
 });
 
 var app = builder.Build();
+
+// Wire the embedding/vector-store services into the singleton state once at startup (Req 5).
+// When an embedding provider is configured, existing indexed chunks are back-filled so the
+// embedding retrieval path can serve pre-seeded content; otherwise this is a safe no-op and
+// retrieval/indexing use the deterministic lexical fallback.
+{
+    var ragState = app.Services.GetRequiredService<TaxNetState>();
+    ragState.ConfigureRagServices(
+        app.Services.GetRequiredService<IEmbeddingProvider>(),
+        app.Services.GetRequiredService<IVectorStore>());
+}
 
 app.UseMiddleware<GlobalExceptionMiddleware>();
 app.UseSerilogRequestLogging();
@@ -279,6 +310,64 @@ app.MapGet("/api/authz", (TaxNetPlatformOptions options) => Results.Ok(new
 
 app.MapGet("/api/auth/cognito/status", async (CognitoIdentityProviderStatus cognito, CancellationToken cancellationToken) =>
     Results.Ok(await cognito.GetStatusAsync(cancellationToken)));
+
+// Feature flags — readable by the SPA (any role) to gate UI; writable by admins via /api/system.
+app.MapGet("/api/feature-flags", (TaxNetState state) => Results.Ok(new { items = state.GetFeatureFlags() }));
+
+app.MapPut("/api/system/feature-flags/{key}", (TaxNetState state, HttpContext context, string key, FeatureFlagUpdate request) =>
+{
+    var (found, flag) = state.SetFeatureFlag(key, request.Enabled, AuthorizationCatalog.GetCurrentActor(context));
+    return found ? Results.Ok(flag) : Results.NotFound(new { message = $"Unknown feature flag '{key}'." });
+});
+
+// ---- Custom model (knowledge distillation) control plane ----
+
+// Status + metrics + run history for the locally-trained model.
+app.MapGet("/api/system/custom-model", (TaxNetState state) => Results.Ok(state.GetCustomModelStatus()));
+
+// Recent captured teacher examples (redacted previews).
+app.MapGet("/api/system/custom-model/examples", (TaxNetState state, int? limit) =>
+    Results.Ok(state.GetTrainingExamples(limit ?? 25)));
+
+// Manually trigger a training run (admin / model-admin).
+app.MapPost("/api/system/custom-model/train", (TaxNetState state, HttpContext context) =>
+{
+    if (!AuthorizationCatalog.HasRole(context, "taxnet-admin", "taxnet-model-admin"))
+    {
+        return Results.Json(new { message = "Forbidden. Requires admin or model-admin role." }, statusCode: StatusCodes.Status403Forbidden);
+    }
+
+    var run = state.TrainCustomModel(AuthorizationCatalog.GetCurrentActor(context));
+    return Results.Ok(run);
+});
+
+// Switch inference routing between the frontier LLM and the local custom model.
+app.MapPut("/api/system/custom-model/mode", (TaxNetState state, HttpContext context, InferenceModeRequest request) =>
+{
+    if (!AuthorizationCatalog.HasRole(context, "taxnet-admin", "taxnet-model-admin"))
+    {
+        return Results.Json(new { message = "Forbidden. Requires admin or model-admin role." }, statusCode: StatusCodes.Status403Forbidden);
+    }
+
+    var mode = state.SetInferenceMode(request.Mode, AuthorizationCatalog.GetCurrentActor(context));
+    return Results.Ok(new { mode });
+});
+
+// Preview the custom model's answer for an arbitrary prompt without affecting routing.
+app.MapPost("/api/system/custom-model/test", (TaxNetState state, CustomModelTestRequest request) =>
+{
+    var (ok, response, confidence, version) = state.TestCustomModel(request.TaskType ?? "AuditExplanation", request.Prompt ?? "");
+    return Results.Ok(new { ok, response, confidence = Math.Round(confidence, 3), version, ready = state.CustomModelReady });
+});
+
+// Export the captured teacher corpus as JSONL for offline fine-tuning of a real local model.
+// format=chat (default, OpenAI messages[]) or format=instruction (prompt/response).
+app.MapGet("/api/system/custom-model/export", (TaxNetState state, string? format) =>
+{
+    var jsonl = state.ExportTrainingJsonl(format ?? "chat");
+    var fileName = $"taxnet-training-{(format ?? "chat")}-{DateTimeOffset.UtcNow:yyyyMMddHHmmss}.jsonl";
+    return Results.File(System.Text.Encoding.UTF8.GetBytes(jsonl), "application/jsonl", fileName);
+});
 
 app.MapGet("/api/dashboard/summary", (TaxNetState state) => Results.Ok(state.GetDashboardSummary()));
 
@@ -455,6 +544,117 @@ app.MapPost("/api/assistant/cases/{caseId}/ask", (TaxNetState state, ModelGatewa
     return Results.Ok(state.AskAssistant(caseId, request.Question, modelGatewayClient));
 });
 
+// Streaming assistant answer (SSE) — same flow as the CNIC stream, for the in-app assistant.
+app.MapPost("/api/assistant/cases/{caseId}/ask/stream", async (TaxNetState state, ModelGatewayClient modelGatewayClient, HttpContext context, string caseId, AssistantRequest request) =>
+{
+    var response = context.Response;
+    response.Headers.Append("Content-Type", "text/event-stream");
+    response.Headers.Append("Cache-Control", "no-cache");
+    response.Headers.Append("X-Accel-Buffering", "no");
+
+    async Task SendAsync(string eventName, object payload)
+    {
+        var json = System.Text.Json.JsonSerializer.Serialize(payload);
+        await response.WriteAsync($"event: {eventName}\ndata: {json}\n\n", context.RequestAborted);
+        await response.Body.FlushAsync(context.RequestAborted);
+    }
+
+    var prep = state.PrepareAssistant(caseId, request.Question);
+    if (!prep.Found)
+    {
+        await SendAsync("error", new { message = $"Case {caseId} was not found." });
+        return;
+    }
+
+    // Persist the auditor's question and give the model short conversational memory.
+    state.AppendChat(caseId, "user", request.Question ?? "");
+    var transcript = state.BuildChatTranscript(caseId);
+    var prompt = transcript + prep.Prompt;
+
+    await SendAsync("meta", new { prep.Score, riskBand = prep.RiskBand, evidenceIds = prep.EvidenceIds, citations = prep.Citations });
+
+    var builder = new System.Text.StringBuilder();
+    var produced = false;
+    var servedByCustom = false;
+    var customVersionTag = "";
+
+    var customRoute = state.TryCustomInference("AuditExplanation", prompt);
+    var localLlm = state.RouteToLocalLlm;
+    if (customRoute.Serve)
+    {
+        servedByCustom = true;
+        customVersionTag = $"taxnet-custom-v{customRoute.Version}";
+        foreach (var word in customRoute.Output.Split(' '))
+        {
+            builder.Append(word).Append(' ');
+            await SendAsync("delta", new { text = word + " " });
+            await Task.Delay(6, context.RequestAborted);
+        }
+    }
+    else
+    {
+        try
+        {
+            await foreach (var delta in modelGatewayClient.StreamAsync(localLlm ? "ollama" : "auto", true, "AuditExplanation", prompt, [], context.RequestAborted))
+            {
+                produced = true;
+                builder.Append(delta);
+                await SendAsync("delta", new { text = delta });
+            }
+
+            if (!produced)
+            {
+                foreach (var word in prep.FallbackAnswer.Split(' '))
+                {
+                    builder.Append(word).Append(' ');
+                    await SendAsync("delta", new { text = word + " " });
+                    await Task.Delay(12, context.RequestAborted);
+                }
+            }
+        }
+        catch (OperationCanceledException)
+        {
+            // Client disconnected mid-stream — still persist whatever was generated.
+            var partial = builder.ToString().Trim().Replace("[masked-id]", caseId);
+            if (partial.Length > 0) state.AppendChat(caseId, "assistant", partial);
+            return;
+        }
+    }
+
+    var answer = builder.ToString().Trim().Replace("[masked-id]", caseId);
+    state.AppendChat(caseId, "assistant", answer);
+
+    // Capture the frontier teacher signal for knowledge distillation (never the local LLM's output).
+    if (produced && answer.Length > 0 && !localLlm)
+    {
+        state.RecordTrainingExample("AuditExplanation", prompt, answer, "claude");
+    }
+
+    await SendAsync("done", new
+    {
+        answer,
+        score = prep.Score,
+        riskBand = prep.RiskBand,
+        evidenceIds = prep.EvidenceIds,
+        citations = prep.Citations,
+        model = new
+        {
+            selectedProvider = servedByCustom ? customVersionTag : (produced ? (localLlm ? "taxnet-local-llm" : "claude") : "deterministic-template"),
+            usedExternalProvider = produced,
+            servedLocally = servedByCustom || (localLlm && produced),
+            confidence = servedByCustom ? Math.Round(customRoute.Confidence, 3) : (double?)null
+        }
+    });
+});
+
+// Persisted chat history for a case (survives restarts).
+app.MapGet("/api/assistant/cases/{caseId}/history", (TaxNetState state, string caseId) =>
+    Results.Ok(new { items = state.GetChat(caseId) }));
+
+// Unified high-accuracy entity search (CNIC, NTN, profile ID, case ID, and fuzzy name).
+app.MapGet("/api/search", (TaxNetState state, string? q, int? limit) =>
+    Results.Ok(state.SearchEntities(q ?? "", limit ?? 8)));
+
 app.MapPost("/api/investigations/cnic", (TaxNetState state, ModelGatewayClient modelGatewayClient, CnicInvestigationRequest request) =>
 {
     try
@@ -465,6 +665,125 @@ app.MapPost("/api/investigations/cnic", (TaxNetState state, ModelGatewayClient m
     {
         return Results.BadRequest(new { message = ex.Message });
     }
+});
+
+// Streaming CNIC investigation (Server-Sent Events). Emits a `meta` event with the resolved
+// records/signals immediately, streams the AI narrative as `delta` events as the model produces
+// it, then a `done` event with findings, recommended actions, and the full formatted narrative.
+app.MapPost("/api/investigations/cnic/stream", async (TaxNetState state, ModelGatewayClient modelGatewayClient, HttpContext context, CnicInvestigationRequest request) =>
+{
+    var response = context.Response;
+    response.Headers.Append("Content-Type", "text/event-stream");
+    response.Headers.Append("Cache-Control", "no-cache");
+    response.Headers.Append("X-Accel-Buffering", "no");
+
+    async Task SendAsync(string eventName, object payload)
+    {
+        var json = System.Text.Json.JsonSerializer.Serialize(payload);
+        await response.WriteAsync($"event: {eventName}\ndata: {json}\n\n", context.RequestAborted);
+        await response.Body.FlushAsync(context.RequestAborted);
+    }
+
+    CnicInvestigationContext ctx;
+    try
+    {
+        ctx = state.PrepareCnicInvestigation(request);
+    }
+    catch (InvalidOperationException ex)
+    {
+        await SendAsync("error", new { message = ex.Message });
+        return;
+    }
+
+    await SendAsync("meta", new
+    {
+        cnicMasked = ctx.CnicMasked,
+        subject = ctx.Subject,
+        caseContext = ctx.CaseContext,
+        matchedRecords = ctx.MatchedRecords,
+        signals = ctx.Signals
+    });
+
+    var builder = new System.Text.StringBuilder();
+    var produced = false;
+    var servedByCustom = false;
+    var customVersionTag = "";
+
+    // Inference routing: when the local model is enabled & eligible, stream its answer instead of
+    // calling the frontier provider. Otherwise stream the frontier model and capture it for training.
+    var localLlm = state.RouteToLocalLlm;
+    var customRoute = state.TryCustomInference("CnicInvestigation", ctx.Prompt);
+    if (customRoute.Serve)
+    {
+        servedByCustom = true;
+        customVersionTag = $"taxnet-custom-v{customRoute.Version}";
+        foreach (var word in customRoute.Output.Split(' '))
+        {
+            builder.Append(word).Append(' ');
+            await SendAsync("delta", new { text = word + " " });
+            await Task.Delay(6, context.RequestAborted);
+        }
+    }
+    else
+    {
+        try
+        {
+            await foreach (var delta in modelGatewayClient.StreamAsync(
+                localLlm ? "ollama" : ctx.PreferredProvider, localLlm || ctx.AllowExternalProvider, "CnicInvestigation", ctx.Prompt, [], context.RequestAborted))
+            {
+                produced = true;
+                builder.Append(delta);
+                await SendAsync("delta", new { text = delta });
+            }
+        }
+        catch (OperationCanceledException)
+        {
+            return;
+        }
+
+        // No external streaming provider available — stream the deterministic narrative word-by-word
+        // so the UX is identical offline.
+        if (!produced)
+        {
+            foreach (var word in ctx.FallbackNarrative.Split(' '))
+            {
+                builder.Append(word).Append(' ');
+                await SendAsync("delta", new { text = word + " " });
+                await Task.Delay(12, context.RequestAborted);
+            }
+        }
+    }
+
+    var narrative = builder.ToString().Trim();
+    narrative = narrative.Replace("[masked-id]", TaxNetState.MaskCnicForDisplay(ctx.CnicMasked));
+
+    // Capture the frontier teacher signal for knowledge distillation (only from a true frontier
+    // model — never the local LLM's own output).
+    if (produced && narrative.Length > 0 && !localLlm)
+    {
+        state.RecordTrainingExample("CnicInvestigation", ctx.Prompt, narrative, "claude");
+    }
+
+    var usedExternal = produced;
+    var cnicProviderLabel = servedByCustom ? customVersionTag : (usedExternal ? (localLlm ? "taxnet-local-llm" : "claude") : "deterministic-template");
+    state.CompleteCnicStream(ctx.PersonId, ctx.MatchedRecords.Count, ctx.Signals.Count, cnicProviderLabel, usedExternal);
+
+    await SendAsync("done", new
+    {
+        status = "Completed",
+        cnicMasked = ctx.CnicMasked,
+        aiNarrative = narrative,
+        findings = ctx.Findings,
+        recommendedActions = ctx.RecommendedActions,
+        model = new
+        {
+            selectedProvider = cnicProviderLabel,
+            route = servedByCustom ? "custom-model-local" : (usedExternal ? (localLlm ? "ollama-local" : "claude-messages") : "offline-template"),
+            usedExternalProvider = usedExternal,
+            servedLocally = servedByCustom || (localLlm && usedExternal),
+            confidence = servedByCustom ? Math.Round(customRoute.Confidence, 3) : (double?)null
+        }
+    });
 });
 
 app.MapPost("/api/reports/cases/{caseId}", (TaxNetState state, CaseManagementService cases, string caseId) =>
@@ -704,6 +1023,16 @@ app.MapGet("/api/system/object-store", (TaxNetState state) => Results.Ok(new
 
 app.MapGet("/api/system/persistence", (TaxNetState state) => Results.Ok(state.GetPersistenceStatus()));
 
+// Feature flags — control which UI features are exposed. Read by the SPA on load.
+app.MapGet("/api/system/feature-flags", (TaxNetState state) =>
+    Results.Ok(new { items = state.GetFeatureFlags(), map = state.GetFeatureFlagMap() }));
+
+app.MapPut("/api/system/feature-flags", (TaxNetState state, HttpContext context, FeatureFlagUpdateRequest request) =>
+{
+    var (ok, flag) = state.SetFeatureFlag(request.Key, request.Enabled, AuthorizationCatalog.GetCurrentActor(context));
+    return ok ? Results.Ok(new { flag, map = state.GetFeatureFlagMap() }) : Results.NotFound(new { message = $"Unknown feature flag '{request.Key}'." });
+});
+
 app.MapPost("/api/system/storage/migrate", async (PostgresOperationalSchemaService postgres, CancellationToken cancellationToken) =>
     Results.Ok(await postgres.EnsureSchemaAsync(cancellationToken)));
 
@@ -800,6 +1129,36 @@ app.MapGet("/api/connectors/providers", async (IGovernmentProviderRegistry regis
             replacementStrategy = "Implement IGovernmentDataProvider and register in GovernmentProviderRegistry"
         }),
         note = "SandboxGovernmentDataProvider is active. Register NadraGovernmentDataProvider/FbrGovernmentDataProvider when official APIs are available."
+    });
+});
+
+// Public Data Connector ingest contract (Req 1 AC 4, 9). The worker fetches + stores the raw
+// snapshot, then posts extracted text + provenance here. Approval classification, content-hash
+// recording, RAG submission, and audit are owned in-process by TaxNetState.IngestPublicData.
+// Falls under the existing /api/connectors authorization policy enforced by the global middleware.
+app.MapPost("/api/connectors/public-data/fetch", (TaxNetState state, HttpContext context, PublicDataIngestRequest request) =>
+{
+    if (request is null || string.IsNullOrWhiteSpace(request.SourceUrl))
+    {
+        return Results.BadRequest(new { message = "sourceUrl is required." });
+    }
+
+    var result = state.IngestPublicData(request, AuthorizationCatalog.GetCurrentActor(context));
+    return Results.Ok(result);
+});
+
+// Notification delivery contract (Req 2 AC 2,3,6,7,8,9,10). The Notification.Worker posts the
+// notification id here; delivery, idempotency, channel fallback, and audit are owned in-process by
+// TaxNetState.DeliverNotification. Falls under the existing /api/system authorization policy.
+app.MapPost("/api/system/notifications/{id}/deliver", (TaxNetState state, INotificationChannelRegistry channels, HttpContext context, string id) =>
+{
+    var (item, result, outcome) = state.DeliverNotification(id, channels, AuthorizationCatalog.GetCurrentActor(context));
+    return Results.Ok(new
+    {
+        item,
+        outcome,
+        channelUsed = result.ChannelUsed,
+        requestedChannelUnavailable = result.RequestedChannelUnavailable
     });
 });
 
@@ -902,6 +1261,22 @@ app.MapPost("/api/orchestrator/cases/{caseId}/explain", (TaxNetState state, AiOr
     }
 
     return Results.Ok(orchestrator.ExplainCase(caseId, ModelGatewayClient.ExternalProvidersAllowed(allowExternalProvider ?? true), preferredProvider ?? "auto"));
+});
+
+// Req 6 — Explainability Evidence Guardrail. Claims are withheld until the guardrail finishes
+// classifying them. Validated → 200 with the ValidatedExplanation; missing case → 404;
+// EvaluationFailed → 502 with no claims presented as evidence-backed.
+app.MapPost("/api/orchestrator/cases/{caseId}/explain-guarded", (TaxNetState state, HttpContext context, string caseId) =>
+{
+    if (state.Cases.All(x => !x.Id.Equals(caseId, StringComparison.OrdinalIgnoreCase)))
+    {
+        return Results.NotFound(new { message = $"Case {caseId} was not found." });
+    }
+
+    var (status, result, error) = state.ValidateExplanation(caseId, AuthorizationCatalog.GetCurrentActor(context));
+    return status == GuardrailStatus.Validated
+        ? Results.Ok(result)
+        : Results.Json(new { message = "Guardrail validation failed.", error }, statusCode: 502);
 });
 
 app.MapGet("/api/system/architecture", () => Results.Ok(new
@@ -1172,6 +1547,54 @@ app.MapGet("/sandbox/admin/profiles/{syntheticPersonId}", (TaxNetState state, st
     return person is null ? Results.NotFound(new { message = $"Synthetic profile {syntheticPersonId} was not found." }) : Results.Ok(BuildSandboxProfile(state, person));
 });
 
+// Sandbox Failure & Latency Simulator admin endpoints (Req 3). All fall under the existing
+// /sandbox/admin authorization policy enforced by the global middleware — no per-endpoint role check.
+app.MapPost("/sandbox/admin/failure-rules", (TaxNetState state, HttpContext context, FailureRuleRequest request) =>
+{
+    var (rule, error) = state.CreateFailureRule(request, AuthorizationCatalog.GetCurrentActor(context));
+    return rule is null
+        ? Results.BadRequest(new { message = error })
+        : Results.Ok(rule);
+});
+
+app.MapDelete("/sandbox/admin/failure-rules/{ruleId}", (TaxNetState state, HttpContext context, string ruleId) =>
+{
+    var removed = state.DeleteFailureRule(ruleId, AuthorizationCatalog.GetCurrentActor(context));
+    return removed
+        ? Results.Ok(new { removed = true })
+        : Results.NotFound(new { message = $"Failure rule {ruleId} was not found." });
+});
+
+app.MapGet("/sandbox/admin/failure-rules", (TaxNetState state) =>
+    Results.Ok(new { items = state.FailureRules, total = state.FailureRules.Count }));
+
+// Sandbox Profile Editing & Asset Authoring endpoints (Req 4). Both fall under the existing
+// /sandbox/admin authorization policy enforced by the global middleware — no per-endpoint role check.
+// Outcome → status: Updated→200 (updated profile), NotFound→404, ValidationError→400, LimitReached→409.
+app.MapPatch("/sandbox/admin/profiles/{syntheticPersonId}", (TaxNetState state, HttpContext context, string syntheticPersonId, ProfilePatchRequest request) =>
+{
+    var (outcome, profile, error) = state.PatchProfile(syntheticPersonId, request, AuthorizationCatalog.GetCurrentActor(context));
+    return outcome switch
+    {
+        ProfileEditOutcome.Updated => Results.Ok(BuildSandboxProfile(state, (SyntheticPerson)profile!)),
+        ProfileEditOutcome.NotFound => Results.NotFound(new { message = $"Synthetic profile {syntheticPersonId} was not found." }),
+        ProfileEditOutcome.LimitReached => Results.Json(new { message = error }, statusCode: StatusCodes.Status409Conflict),
+        _ => Results.BadRequest(new { message = error })
+    };
+});
+
+app.MapPost("/sandbox/admin/profiles/{syntheticPersonId}/assets", (TaxNetState state, HttpContext context, string syntheticPersonId, AssetAuthorRequest request) =>
+{
+    var (outcome, profile, error) = state.AddProfileAsset(syntheticPersonId, request, AuthorizationCatalog.GetCurrentActor(context));
+    return outcome switch
+    {
+        ProfileEditOutcome.Updated => Results.Ok(BuildSandboxProfile(state, (SyntheticPerson)profile!)),
+        ProfileEditOutcome.NotFound => Results.NotFound(new { message = $"Synthetic profile {syntheticPersonId} was not found." }),
+        ProfileEditOutcome.LimitReached => Results.Json(new { message = error }, statusCode: StatusCodes.Status409Conflict),
+        _ => Results.BadRequest(new { message = error })
+    };
+});
+
 app.MapGet("/sandbox/nadra/identity/{identityToken}", (TaxNetState state, string identityToken) =>
 {
     var person = FindByIdentityToken(state, identityToken);
@@ -1256,8 +1679,12 @@ app.MapGet("/sandbox/fbr/withholding/{identityToken}", (TaxNetState state, strin
     return Results.Ok(new { provider = "FBR Sandbox", identityToken, tax.Ntn, items = withholding });
 });
 
-app.MapGet("/sandbox/excise/vehicles", (TaxNetState state, string identityToken) =>
-    Results.Ok(new { provider = "Excise Sandbox", items = state.Vehicles.Where(x => x.OwnerIdentityToken.Value.Equals(identityToken, StringComparison.OrdinalIgnoreCase)) }));
+app.MapGet("/sandbox/excise/vehicles", (TaxNetState state, SandboxFailureSimulator simulator, string identityToken, CancellationToken ct) =>
+{
+    var records = state.Vehicles.Where(x => x.OwnerIdentityToken.Value.Equals(identityToken, StringComparison.OrdinalIgnoreCase)).ToArray();
+    return ApplyFailureRule(simulator, "EXCISE-PB", records, r => r with { SourceUpdatedAtUtc = SandboxStaleAsOf() },
+        shaped => new { provider = "Excise Sandbox", items = shaped }, ct);
+});
 
 app.MapGet("/sandbox/excise/vehicle/{registrationNumber}", (TaxNetState state, string registrationNumber) =>
 {
@@ -1265,8 +1692,12 @@ app.MapGet("/sandbox/excise/vehicle/{registrationNumber}", (TaxNetState state, s
     return vehicle is null ? Results.NotFound() : Results.Ok(new { provider = "Excise Sandbox", vehicle });
 });
 
-app.MapGet("/sandbox/secp/companies", (TaxNetState state, string identityToken) =>
-    Results.Ok(new { provider = "SECP Sandbox", items = state.Businesses.Where(x => x.RelatedIdentityToken.Value.Equals(identityToken, StringComparison.OrdinalIgnoreCase)) }));
+app.MapGet("/sandbox/secp/companies", (TaxNetState state, SandboxFailureSimulator simulator, string identityToken, CancellationToken ct) =>
+{
+    var records = state.Businesses.Where(x => x.RelatedIdentityToken.Value.Equals(identityToken, StringComparison.OrdinalIgnoreCase)).ToArray();
+    return ApplyFailureRule(simulator, "SECP", records, r => r with { SourceUpdatedAtUtc = SandboxStaleAsOf() },
+        shaped => new { provider = "SECP Sandbox", items = shaped }, ct);
+});
 
 app.MapGet("/sandbox/secp/company/{companyRegistrationNumber}", (TaxNetState state, string companyRegistrationNumber) =>
 {
@@ -1274,8 +1705,12 @@ app.MapGet("/sandbox/secp/company/{companyRegistrationNumber}", (TaxNetState sta
     return company is null ? Results.NotFound() : Results.Ok(new { provider = "SECP Sandbox", company });
 });
 
-app.MapGet("/sandbox/property/ownership", (TaxNetState state, string identityToken) =>
-    Results.Ok(new { provider = "Property Sandbox", items = state.Properties.Where(x => x.OwnerIdentityToken.Value.Equals(identityToken, StringComparison.OrdinalIgnoreCase)) }));
+app.MapGet("/sandbox/property/ownership", (TaxNetState state, SandboxFailureSimulator simulator, string identityToken, CancellationToken ct) =>
+{
+    var records = state.Properties.Where(x => x.OwnerIdentityToken.Value.Equals(identityToken, StringComparison.OrdinalIgnoreCase)).ToArray();
+    return ApplyFailureRule(simulator, "PROPERTY", records, r => r with { SourceUpdatedAtUtc = SandboxStaleAsOf() },
+        shaped => new { provider = "Property Sandbox", items = shaped }, ct);
+});
 
 app.MapGet("/sandbox/property/transactions", (TaxNetState state, string identityToken) =>
 {
@@ -1288,8 +1723,12 @@ app.MapGet("/sandbox/property/transactions", (TaxNetState state, string identity
     return Results.Ok(new { provider = "Property Sandbox", identityToken, items = transactions });
 });
 
-app.MapGet("/sandbox/utilities/bills", (TaxNetState state, string identityToken) =>
-    Results.Ok(new { provider = "Utility Sandbox", items = state.UtilityBills.Where(x => x.OwnerIdentityToken.Value.Equals(identityToken, StringComparison.OrdinalIgnoreCase)) }));
+app.MapGet("/sandbox/utilities/bills", (TaxNetState state, SandboxFailureSimulator simulator, string identityToken, CancellationToken ct) =>
+{
+    var records = state.UtilityBills.Where(x => x.OwnerIdentityToken.Value.Equals(identityToken, StringComparison.OrdinalIgnoreCase)).ToArray();
+    return ApplyFailureRule(simulator, "UTILITY", records, r => r with { SourceUpdatedAtUtc = SandboxStaleAsOf() },
+        shaped => new { provider = "Utility Sandbox", items = shaped }, ct);
+});
 
 app.MapGet("/sandbox/utilities/meters/{meterNumber}", (TaxNetState state, string meterNumber) =>
 {
@@ -1297,8 +1736,12 @@ app.MapGet("/sandbox/utilities/meters/{meterNumber}", (TaxNetState state, string
     return meter is null ? Results.NotFound() : Results.Ok(new { provider = "Utility Sandbox", meter });
 });
 
-app.MapGet("/sandbox/travel/history", (TaxNetState state, string identityToken) =>
-    Results.Ok(new { provider = "Travel Sandbox", items = state.Travel.Where(x => x.TravelerIdentityToken.Value.Equals(identityToken, StringComparison.OrdinalIgnoreCase)) }));
+app.MapGet("/sandbox/travel/history", (TaxNetState state, SandboxFailureSimulator simulator, string identityToken, CancellationToken ct) =>
+{
+    var records = state.Travel.Where(x => x.TravelerIdentityToken.Value.Equals(identityToken, StringComparison.OrdinalIgnoreCase)).ToArray();
+    return ApplyFailureRule(simulator, "TRAVEL", records, r => r with { SourceUpdatedAtUtc = SandboxStaleAsOf() },
+        shaped => new { provider = "Travel Sandbox", items = shaped }, ct);
+});
 
 app.MapGet("/api/citizen/me", (TaxNetState state) =>
 {
@@ -1406,4 +1849,38 @@ static object BuildSandboxProfile(TaxNetState state, SyntheticPerson person)
         businesses = state.Businesses.Where(x => x.RelatedIdentityToken.Value == person.IdentityToken.Value),
         travel = state.Travel.Where(x => x.TravelerIdentityToken.Value == person.IdentityToken.Value)
     };
+}
+
+// Strictly-before-now as-of timestamp used when aging records for StaleData (Req 3 AC 10).
+static DateTimeOffset SandboxStaleAsOf() => DateTimeOffset.UtcNow.AddDays(-365);
+
+// Shared HTTP mapping for sandbox failure rules on the direct /sandbox/{provider}/* reads (Req 3).
+// Resolves the active decision (applying any injected latency, AC 12) and maps it to the response:
+//   Offline     → HTTP 503, no normal records (AC 7)
+//   RateLimited → HTTP 429 (AC 8)
+//   ServerError → HTTP 500 (AC 9)
+//   StaleData   → records with as-of timestamps aged strictly before now (AC 10)
+//   PartialData → a strict, smaller subset (AC 11)
+//   None        → the normal response unchanged (AC 14)
+static async Task<IResult> ApplyFailureRule<T>(
+    SandboxFailureSimulator simulator,
+    string providerCode,
+    IReadOnlyList<T> normalRecords,
+    Func<T, T> ageRecord,
+    Func<IReadOnlyList<T>, object> buildResponse,
+    CancellationToken ct = default)
+{
+    var decision = await simulator.ApplyAsync(providerCode, ct).ConfigureAwait(false);
+    switch (decision.Application)
+    {
+        case FailureApplication.Offline:
+            return Results.Json(new { provider = providerCode, status = "Offline" }, statusCode: StatusCodes.Status503ServiceUnavailable);
+        case FailureApplication.RateLimited:
+            return Results.StatusCode(StatusCodes.Status429TooManyRequests);
+        case FailureApplication.ServerError:
+            return Results.StatusCode(StatusCodes.Status500InternalServerError);
+        default:
+            var shaped = simulator.ShapeRecords(decision, normalRecords, ageRecord);
+            return Results.Ok(buildResponse(shaped));
+    }
 }

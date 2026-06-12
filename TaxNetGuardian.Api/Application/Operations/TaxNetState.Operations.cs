@@ -109,6 +109,11 @@ public sealed partial class TaxNetState
     {
         lock (_lock)
         {
+            // Producer-side metadata: the ids that would be enqueued to taxnet-dev-notification-jobs
+            // for the Notification.Worker (Req 2). The inline flush below remains as the File-mode
+            // synchronous fallback so the demo "Run worker cycle" button still shows progress without
+            // a separately running worker.
+            var queuedNotificationIds = EnqueueQueuedNotificationIds();
             var queuedNotifications = Notifications.Where(x => x.Status == "Queued").ToArray();
             Notifications.RemoveAll(x => x.Status == "Queued");
             foreach (var notification in queuedNotifications)
@@ -119,6 +124,7 @@ public sealed partial class TaxNetState
             AddAuditEvent(actor, "taxnet-admin", "WorkerCycleExecuted", "system-workers", "Succeeded", new Dictionary<string, object>
             {
                 ["notificationsSent"] = queuedNotifications.Length,
+                ["notificationJobIds"] = queuedNotificationIds,
                 ["ragChunks"] = RagChunks.Count,
                 ["reports"] = Reports.Count
             });

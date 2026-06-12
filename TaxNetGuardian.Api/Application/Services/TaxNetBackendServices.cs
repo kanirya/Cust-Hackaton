@@ -267,12 +267,19 @@ public sealed class CaseManagementService
 public sealed class RagPolicyService
 {
     private readonly TaxNetState _state;
+    private readonly IEmbeddingProvider _embeddings;
+    private readonly IVectorStore _vectorStore;
 
-    public RagPolicyService(TaxNetState state) => _state = state;
+    public RagPolicyService(TaxNetState state, IEmbeddingProvider embeddings, IVectorStore vectorStore)
+    {
+        _state = state;
+        _embeddings = embeddings;
+        _vectorStore = vectorStore;
+    }
 
     public ImportJob Feed(RagFeedRequest request) => _state.FeedRagDocument(request);
 
-    public RagQueryResult Query(RagQueryRequest request) => _state.QueryRag(request);
+    public RagQueryResult Query(RagQueryRequest request) => _state.QueryRag(request, _embeddings, _vectorStore);
 
     public object GetIndexStatus() => new
     {

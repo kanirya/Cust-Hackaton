@@ -143,11 +143,12 @@ public sealed class ModelGatewayClient
         var groundedPrompt = BuildGroundedPrompt(prompt, contextChunks);
         try
         {
-            using var http = new HttpClient { Timeout = TimeSpan.FromSeconds(45) };
+            using var http = new HttpClient { Timeout = TimeSpan.FromSeconds(120) };
             return selected.Provider.ToLowerInvariant() switch
             {
                 "openai" => await InvokeOpenAiCompatibleAsync(http, selected, systemPrompt, groundedPrompt, cancellationToken),
                 "deepseek" => await InvokeOpenAiCompatibleAsync(http, selected, systemPrompt, groundedPrompt, cancellationToken),
+                "ollama" => await InvokeOpenAiCompatibleAsync(http, selected, systemPrompt, groundedPrompt, cancellationToken),
                 "gemini" => await InvokeGeminiAsync(http, selected, systemPrompt, groundedPrompt, cancellationToken),
                 "claude" => await InvokeClaudeAsync(http, selected, systemPrompt, groundedPrompt, cancellationToken),
                 _ => new ModelGatewayProviderResult("Deterministic template fallback", "offline-template", "deterministic-template", "", false, $"Unsupported provider {selected.Provider}.")
@@ -156,6 +157,82 @@ public sealed class ModelGatewayClient
         catch (Exception ex)
         {
             return new ModelGatewayProviderResult(selected.Provider, selected.Route, selected.Model, "", false, ex.Message);
+        }
+    }
+
+    // Streams an OpenAI-compatible chat completion (Ollama / vLLM / LM Studio) token-by-token.
+    private async IAsyncEnumerable<string> StreamOpenAiCompatibleAsync(
+        ProviderSelection selected,
+        string systemPrompt,
+        string groundedPrompt,
+        [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken)
+    {
+        using var http = new HttpClient { Timeout = TimeSpan.FromSeconds(300) };
+        using var request = new HttpRequestMessage(HttpMethod.Post, selected.Endpoint);
+        if (!string.IsNullOrWhiteSpace(selected.ApiKey))
+        {
+            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", selected.ApiKey);
+        }
+
+        request.Content = JsonContent(new
+        {
+            model = selected.Model,
+            temperature = 0.2,
+            stream = true,
+            messages = new object[]
+            {
+                new { role = "system", content = systemPrompt },
+                new { role = "user", content = groundedPrompt }
+            }
+        });
+
+        using var response = await http.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
+        if (!response.IsSuccessStatusCode)
+        {
+            yield break;
+        }
+
+        using var stream = await response.Content.ReadAsStreamAsync(cancellationToken);
+        using var reader = new StreamReader(stream);
+        while (!cancellationToken.IsCancellationRequested)
+        {
+            var line = await reader.ReadLineAsync(cancellationToken);
+            if (line is null)
+            {
+                break;
+            }
+
+            if (string.IsNullOrWhiteSpace(line) || !line.StartsWith("data:", StringComparison.Ordinal))
+            {
+                continue;
+            }
+
+            var payload = line[5..].Trim();
+            if (payload is "[DONE]")
+            {
+                break;
+            }
+
+            string? piece = null;
+            try
+            {
+                using var doc = JsonDocument.Parse(payload);
+                if (doc.RootElement.TryGetProperty("choices", out var choices) && choices.GetArrayLength() > 0 &&
+                    choices[0].TryGetProperty("delta", out var delta) &&
+                    delta.TryGetProperty("content", out var content))
+                {
+                    piece = content.GetString();
+                }
+            }
+            catch (JsonException)
+            {
+                piece = null;
+            }
+
+            if (!string.IsNullOrEmpty(piece))
+            {
+                yield return piece;
+            }
         }
     }
 
@@ -171,7 +248,8 @@ public sealed class ModelGatewayClient
             await OpenAiAsync(cancellationToken),
             await DeepSeekAsync(cancellationToken),
             await GeminiAsync(cancellationToken),
-            await ClaudeAsync(cancellationToken)
+            await ClaudeAsync(cancellationToken),
+            await OllamaAsync(cancellationToken)
         };
 
         if (!string.IsNullOrWhiteSpace(preferredProvider) && !preferredProvider.Equals("auto", StringComparison.OrdinalIgnoreCase))
@@ -200,7 +278,8 @@ public sealed class ModelGatewayClient
             await OpenAiAsync(cancellationToken),
             await DeepSeekAsync(cancellationToken),
             await GeminiAsync(cancellationToken),
-            await ClaudeAsync(cancellationToken)
+            await ClaudeAsync(cancellationToken),
+            await OllamaAsync(cancellationToken)
         };
 
         return providers
@@ -267,7 +346,7 @@ public sealed class ModelGatewayClient
         request.Content = JsonContent(new
         {
             model = selected.Model,
-            max_tokens = 900,
+            max_tokens = 3000,
             temperature = 0.2,
             system = systemPrompt,
             messages = new[] { new { role = "user", content = prompt } }
@@ -288,23 +367,173 @@ public sealed class ModelGatewayClient
     private StringContent JsonContent(object value)
         => new(JsonSerializer.Serialize(value, _jsonOptions), Encoding.UTF8, "application/json");
 
+    // Streams model output token-by-token. For Claude it parses Anthropic's SSE
+    // (content_block_delta) and yields text deltas. For any other/unconfigured provider it
+    // yields nothing, so callers fall back to streaming their deterministic text themselves.
+    public async IAsyncEnumerable<string> StreamAsync(
+        string preferredProvider,
+        bool allowExternalProvider,
+        string taskType,
+        string prompt,
+        IReadOnlyList<RagChunk> contextChunks,
+        [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken = default)
+    {
+        var selected = await SelectProviderAsync(preferredProvider, allowExternalProvider, cancellationToken);
+        var systemPrompt = BuildSystemPrompt(taskType);
+        var groundedPrompt = BuildGroundedPrompt(prompt, contextChunks);
+
+        // Local fine-tuned model (Ollama / OpenAI-compatible) streaming.
+        if (selected.Provider.Equals("ollama", StringComparison.OrdinalIgnoreCase))
+        {
+            await foreach (var piece in StreamOpenAiCompatibleAsync(selected, systemPrompt, groundedPrompt, cancellationToken))
+            {
+                yield return piece;
+            }
+
+            yield break;
+        }
+
+        if (!selected.Provider.Equals("claude", StringComparison.OrdinalIgnoreCase))
+        {
+            yield break;
+        }
+
+        using var http = new HttpClient { Timeout = TimeSpan.FromSeconds(120) };
+        using var request = new HttpRequestMessage(HttpMethod.Post, selected.Endpoint);
+        request.Headers.Add("x-api-key", selected.ApiKey);
+        request.Headers.Add("anthropic-version", Environment.GetEnvironmentVariable("CLAUDE_API_VERSION") ?? "2023-06-01");
+        request.Content = JsonContent(new
+        {
+            model = selected.Model,
+            max_tokens = 3000,
+            temperature = 0.2,
+            system = systemPrompt,
+            stream = true,
+            messages = new[] { new { role = "user", content = groundedPrompt } }
+        });
+
+        using var response = await http.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
+        if (!response.IsSuccessStatusCode)
+        {
+            yield break;
+        }
+
+        using var stream = await response.Content.ReadAsStreamAsync(cancellationToken);
+        using var reader = new StreamReader(stream);
+        while (!reader.EndOfStream && !cancellationToken.IsCancellationRequested)
+        {
+            var line = await reader.ReadLineAsync(cancellationToken);
+            if (string.IsNullOrWhiteSpace(line) || !line.StartsWith("data:", StringComparison.Ordinal))
+            {
+                continue;
+            }
+
+            var payload = line[5..].Trim();
+            if (payload is "[DONE]")
+            {
+                break;
+            }
+
+            string? piece = null;
+            try
+            {
+                using var doc = JsonDocument.Parse(payload);
+                if (doc.RootElement.TryGetProperty("type", out var type) &&
+                    type.GetString() == "content_block_delta" &&
+                    doc.RootElement.TryGetProperty("delta", out var delta) &&
+                    delta.TryGetProperty("text", out var text))
+                {
+                    piece = text.GetString();
+                }
+            }
+            catch (JsonException)
+            {
+                piece = null;
+            }
+
+            if (!string.IsNullOrEmpty(piece))
+            {
+                yield return piece;
+            }
+        }
+    }
+
     private static string BuildSystemPrompt(string taskType)
-        => $"""
-           You are TaxNet Guardian's model gateway for {taskType}.
-           Use only provided evidence and RAG context.
-           Do not claim fraud is proven.
-           Include human review and citizen correction safeguards.
-           Keep explanations concise, auditable, and citation-aware.
-           """;
+    {
+        // Shared analyst charter: domain framing, evidence discipline, calibrated language, safeguards.
+        const string baseCharter = """
+            You are TaxNet Guardian's senior tax-compliance intelligence analyst, supporting auditors at
+            a Pakistani revenue authority (FBR context). You reason over consolidated records linked by
+            CNIC — Pakistan's stable national identity number — across tax filings (filer/non-filer, NTN,
+            declared income), vehicle registration (Excise), property, utility consumption, SECP business
+            directorships, and travel history.
+
+            Operating principles:
+            - Ground every claim strictly in the supplied evidence, signals, and RAG policy context. Never
+              invent figures, records, names, or laws. If the data is insufficient, say so plainly.
+            - Quantify. When you cite a mismatch, state the concrete numbers (e.g. declared income vs.
+              asset value vs. utility spend) and the magnitude of the gap.
+            - Use calibrated, professional language. These are risk indicators that require human review,
+              not proof. Never state or imply that fraud, evasion, or guilt is proven or certain.
+            - Reference the relevant evidence IDs and policy citations (use the [n] markers from the RAG
+              context) inline where they support a point.
+            - Respect privacy: treat CNIC and identity tokens as sensitive; refer to masked identifiers.
+            - Always preserve the human-in-the-loop and citizen-correction safeguards.
+
+            Formatting: write clean, well-structured Markdown with short section headings and tight bullet
+            points. Be thorough but not verbose — every sentence should carry analytic weight.
+            """;
+
+        var taskGuidance = taskType?.Trim().ToLowerInvariant() switch
+        {
+            "cnicinvestigation" => """
+                Task: CNIC-linked investigation. Assess all records sharing the subject's CNIC together,
+                even when names differ across systems. Sections: **Assessment**, **CNIC linkage**,
+                **Key mismatches** (quantified), **Evidence to verify**, **Recommended next steps**,
+                **Human review note**.
+                """,
+            "auditexplanation" => """
+                Task: Auditor explanation. Explain why the case was flagged and what drives the risk score.
+                Sections: **Summary**, **Risk drivers** (each tied to evidence), **What to verify**,
+                **Recommended action**, **Human review note**.
+                """,
+            "citizenexplanation" => """
+                Task: Citizen-facing explanation. Use plain, respectful, non-accusatory language a taxpayer
+                can understand. Explain which records appear inconsistent, that this is under review (not a
+                finding of wrongdoing), and how to submit a correction. Avoid internal jargon and scores.
+                """,
+            "reportdraft" => """
+                Task: Formal audit report draft. Produce a structured, citable document. Sections:
+                **Executive summary**, **Subject & linkage**, **Findings** (each with evidence IDs &
+                citations), **Recommended disposition**, **Limitations & human-review disclaimer**.
+                """,
+            "policyquestion" => """
+                Task: Policy question. Answer strictly from the provided policy context and cite the [n]
+                sources. If the context does not cover the question, say so rather than guessing.
+                """,
+            _ => $"Task: {taskType}. Apply the operating principles above and structure the answer clearly."
+        };
+
+        return baseCharter + "\n\n" + taskGuidance;
+    }
 
     private static string BuildGroundedPrompt(string prompt, IReadOnlyList<RagChunk> contextChunks)
     {
+        if (contextChunks.Count == 0)
+        {
+            return $"""
+                   {prompt}
+
+                   RAG policy context: (none retrieved — rely only on the evidence and signals above, and
+                   do not fabricate citations.)
+                   """;
+        }
+
         var context = string.Join("\n\n", contextChunks.Take(6).Select((chunk, index) => $"[{index + 1}] {chunk.Title} ({chunk.Citation.SourceType}, {chunk.Citation.ChunkId})\n{chunk.Text}"));
         return $"""
-               User prompt:
                {prompt}
 
-               RAG context:
+               RAG policy context (cite these as [n] where relevant):
                {context}
                """;
     }
@@ -361,6 +590,31 @@ public sealed class ModelGatewayClient
             Environment.GetEnvironmentVariable("CLAUDE_API_BASE_URL") ?? "https://api.anthropic.com/v1/messages",
             credentials.Model ?? Environment.GetEnvironmentVariable("CLAUDE_MODEL") ?? "claude-haiku-4-5-20251001",
             "claude-messages");
+    }
+
+    // Local fine-tuned model served by Ollama (or any OpenAI-compatible local server such as vLLM
+    // or LM Studio). This is the "our own LLM" path: train a small base model on the exported
+    // teacher data, register it in Ollama, and route to it here. It is opt-in via OLLAMA_ENABLED so
+    // it never hijacks auto-routing; no API key is required for a local server.
+    private Task<ProviderSelection> OllamaAsync(CancellationToken cancellationToken)
+    {
+        var enabledRaw = Environment.GetEnvironmentVariable("OLLAMA_ENABLED");
+        var enabled = !string.IsNullOrWhiteSpace(enabledRaw)
+            && (enabledRaw.Equals("true", StringComparison.OrdinalIgnoreCase)
+                || enabledRaw == "1"
+                || enabledRaw.Equals("yes", StringComparison.OrdinalIgnoreCase));
+        var baseUrl = (Environment.GetEnvironmentVariable("OLLAMA_BASE_URL") ?? "http://localhost:11434/v1").TrimEnd('/');
+        var endpoint = baseUrl.EndsWith("/chat/completions", StringComparison.OrdinalIgnoreCase)
+            ? baseUrl
+            : $"{baseUrl}/chat/completions";
+        var model = Environment.GetEnvironmentVariable("OLLAMA_MODEL") ?? "taxnet-guardian";
+        return Task.FromResult(new ProviderSelection(
+            "ollama",
+            enabled,
+            "ollama-local",
+            endpoint,
+            model,
+            "ollama-openai-compatible"));
     }
 
     private async Task<string?> ResolveApiKeyAsync(string environmentVariable, string secretName, CancellationToken cancellationToken)
@@ -452,6 +706,7 @@ public sealed class ModelGatewayClient
             "deepseek" or "deep-seek" => "deepseek",
             "gemini" or "google" => "gemini",
             "claude" or "anthropic" => "claude",
+            "ollama" or "local" or "taxnet" or "custom" => "ollama",
             var value => value
         };
 
@@ -487,3 +742,4 @@ public sealed record ModelSecretDiagnostic(
     string Endpoint,
     int? StatusCode,
     string? Error);
+

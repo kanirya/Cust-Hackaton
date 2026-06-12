@@ -126,6 +126,12 @@ public sealed partial class TaxNetState
                 Notifications = Notifications.ToList(),
                 ObjectStore = ObjectStore.ToList(),
                 Corrections = _corrections.ToList(),
+                FailureRules = FailureRules.ToList(),
+                ChatMessages = ChatMessages.ToList(),
+                FeatureFlags = new Dictionary<string, bool>(FeatureFlags, StringComparer.OrdinalIgnoreCase),
+                TrainingExamples = TrainingExamples.ToList(),
+                ModelRuns = ModelRuns.ToList(),
+                InferenceMode = InferenceMode,
                 ProviderConfigs = new Dictionary<string, ProviderConfigUpdateRequest>(ProviderConfigs, StringComparer.OrdinalIgnoreCase)
             };
 
@@ -210,6 +216,11 @@ public sealed partial class TaxNetState
         ObjectStore.Clear();
         ProviderConfigs.Clear();
         _corrections.Clear();
+        FailureRules.Clear();
+        ChatMessages.Clear();
+        FeatureFlags.Clear();
+        TrainingExamples.Clear();
+        ModelRuns.Clear();
 
         People.AddRange(snapshot.People);
         TaxProfiles.AddRange(snapshot.TaxProfiles);
@@ -233,6 +244,12 @@ public sealed partial class TaxNetState
         Notifications.AddRange(snapshot.Notifications);
         ObjectStore.AddRange(snapshot.ObjectStore);
         _corrections.AddRange(snapshot.Corrections);
+        FailureRules.AddRange(snapshot.FailureRules);
+        ChatMessages.AddRange(snapshot.ChatMessages);
+        foreach (var flag in snapshot.FeatureFlags) { FeatureFlags[flag.Key] = flag.Value; }
+        TrainingExamples.AddRange(snapshot.TrainingExamples);
+        ModelRuns.AddRange(snapshot.ModelRuns);
+        InferenceMode = string.IsNullOrWhiteSpace(snapshot.InferenceMode) ? "BigLlm" : snapshot.InferenceMode;
         foreach (var item in snapshot.ProviderConfigs)
         {
             ProviderConfigs[item.Key] = item.Value;
